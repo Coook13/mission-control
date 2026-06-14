@@ -14,7 +14,7 @@
 - [x] 3. KINETIC TYPE: per-word masked staggered reveals (WordReveal in motion.tsx) on story head, contact lead, story+work page-head titles. DONE & verified.
 - [x] 4. WORK INDEX: staggered scroll-in rows + bigger lag-follow hover preview (settle-zoom). DONE & verified.
 - [~] 5. SCROLL-VELOCITY MOTION: image skew by velocity DONE (ParallaxImg useVelocity skewY). TODO: velocity-reactive marquee speed.
-- [ ] 6. STORY PAGE: pinned scrubbed parallax layers; facts numbers scale/þcount on enter; timeline draws in.
+- [x] 6. STORY PAGE: facts pop-scale-in, timeline growing spine + rows slide-in, portrait parallax (StoryFX). DONE & verified.
 - [ ] 7. ROUTE TRANSITIONS: cover-panel wipe between pages (Barba equivalent via template.tsx + overlay).
 - [ ] 8. IMAGE TREATMENT: clip-path reveal on images (mask wipe), subtle hover scale, grain consistency.
 - [ ] 9. MAGNETIC + CURSOR: magnetic nav/links, cursor label states ("view"), refine.
@@ -38,3 +38,5 @@
 - 2026-06-14: item 3 KINETIC TYPE done & verified (WordReveal per-word masked stagger; "THE story" etc.). Committed ef534bf. NEXT: item 4 work-index scrubbed reveals + bigger sticky hover image, then item 6 story-page pinned scenes — these are the bigger needle-movers toward the reference feel.
 
 - 2026-06-14: item 4 WORK INDEX done & verified — GSAP staggered row scroll-in + bigger (400x290) lag-follow hover preview w/ settle-zoom; removed outer Reveal wrappers so rows cascade. Committed. NEXT: item 6 story-page pinned scrubbed scenes (facts scale-in, timeline draw-in), then transitions/clip-reveals/magnetic/polish.
+
+- 2026-06-14: item 6 STORY PAGE done & verified — StoryFX adds facts pop-in, timeline spine draw + rows slide-in, portrait parallax; facts/timeline moved off framer Reveal to GSAP. Committed. NEXT: item 7 page transitions (continuous own-content wipe), 8 image clip-reveals + hover scale, 9 magnetic + cursor labels, 5b velocity marquee, 10 polish/mobile/perf.
