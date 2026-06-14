@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { nav, profile, workIndex } from "@/lib/site-data";
-import { Lines, ParallaxImg, Reveal } from "./motion";
+import { Lines, ParallaxImg, Reveal, WordReveal } from "./motion";
 import { Marquee } from "./Marquee";
 import { PixelMicky } from "./PixelMicky";
 import { HoverIndex } from "./HoverIndex";
@@ -80,14 +80,12 @@ export function StoryTeaser() {
         <div className="sec-label label">01 / My story</div>
         <div className="story">
           <div>
-            <Lines
+            <WordReveal
               as="h2"
               className="story__head"
-              lines={[
-                <span key="1">ENGINEER BY TRAINING,</span>,
-                <span key="2" className="serif">
-                  founder by habit.
-                </span>,
+              words={[
+                { t: "ENGINEER" }, { t: "BY" }, { t: "TRAINING," }, { br: true },
+                { t: "founder", serif: true }, { t: "by", serif: true }, { t: "habit.", serif: true },
               ]}
             />
             <Reveal className="story__body">
@@ -145,14 +143,12 @@ export function ContactSection() {
         <ParallaxImg src="/img/contact.jpg" alt="A figure standing before a huge moon" strength={28} />
       </div>
       <div className="contact-ed__overlay">
-        <Lines
+        <WordReveal
           as="h2"
           className="contact-ed__lead"
-          lines={[
-            <span key="1">LET&apos;S BUILD</span>,
-            <span key="2">
-              SOMETHING THAT <span className="serif">works</span>.
-            </span>,
+          words={[
+            { t: "LET’S" }, { t: "BUILD" }, { br: true },
+            { t: "SOMETHING" }, { t: "THAT" }, { t: "works.", serif: true },
           ]}
         />
         <div className="contact-ed__links">

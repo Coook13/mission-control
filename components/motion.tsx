@@ -54,6 +54,67 @@ export function Lines({
   );
 }
 
+function useInViewOnce(threshold = 0.15) {
+  const ref = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+}
+
+export type Word = { t?: string; serif?: boolean; br?: boolean };
+
+/* Per-word masked rise, staggered — kinetic headings. */
+export function WordReveal({
+  words,
+  className,
+  delay = 0,
+  as = "h2",
+}: {
+  words: Word[];
+  className?: string;
+  delay?: number;
+  as?: "h1" | "h2" | "p" | "div";
+}) {
+  const Tag = as;
+  const { ref, inView } = useInViewOnce();
+  let idx = 0;
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <Tag className={`wreveal ${className ?? ""} ${inView ? "words-in" : ""}`} ref={ref as any}>
+      {words.map((w, i) => {
+        if (w.br) return <span className="wbreak" key={`b${i}`} aria-hidden="true" />;
+        const d = delay + idx * 0.06;
+        idx++;
+        return (
+          <span className="wmask" key={i}>
+            <span className="wmask__inner" style={{ transitionDelay: `${d}s` }}>
+              {w.serif ? <span className="serif">{w.t}</span> : w.t}
+            </span>
+          </span>
+        );
+      })}
+    </Tag>
+  );
+}
+
 /* Image that drifts and breathes with scroll. */
 export function ParallaxImg({
   src,

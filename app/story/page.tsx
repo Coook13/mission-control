@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { facts, profile, storyLong, timeline } from "@/lib/site-data";
 import { ContactSection, Footer, Header } from "@/components/editorial";
-import { Lines, Reveal } from "@/components/motion";
+import { Reveal, WordReveal } from "@/components/motion";
 import { Marquee } from "@/components/Marquee";
 import { PixelMicky } from "@/components/PixelMicky";
 
@@ -14,15 +14,11 @@ export default function StoryPage() {
       <main>
         <section className="page-head">
           <div className="shell">
-            <Lines
+            <WordReveal
               as="h1"
               className="page-head__title"
               delay={0.15}
-              lines={[
-                <span key="1">
-                  THE <span className="serif">story</span>
-                </span>,
-              ]}
+              words={[{ t: "THE" }, { t: "story", serif: true }]}
             />
             <p className="page-head__sub">
               Bangkok กรุงเทพฯ raised. Manchester trained. Founder shaped.
