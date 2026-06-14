@@ -887,3 +887,11 @@ body::after {
 .hero-stage__eye img { width: 100%; height: 100%; object-fit: cover; will-change: transform; }
 .hero-stage__mark { z-index: 3; }
 .hero-stage__cue { z-index: 3; }
+
+/* curtain reveal — light page rises over the pinned, zooming hero */
+.page-body {
+  position: relative;
+  z-index: 2;
+  background: var(--bg);
+  box-shadow: 0 -32px 70px rgba(7, 9, 12, 0.22);
+}

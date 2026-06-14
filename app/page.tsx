@@ -15,10 +15,12 @@ export default function Home() {
       <Header />
       <main>
         <HeroScene />
-        <StoryTeaser />
-        <RolesMarquee />
-        <WorkIndexSection />
-        <ContactSection />
+        <div className="page-body">
+          <StoryTeaser />
+          <RolesMarquee />
+          <WorkIndexSection />
+          <ContactSection />
+        </div>
       </main>
       <Footer />
       <EasterEgg />
