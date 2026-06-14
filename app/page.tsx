@@ -2,11 +2,11 @@ import {
   ContactSection,
   Footer,
   Header,
-  HeroEditorial,
   RolesMarquee,
   StoryTeaser,
   WorkIndexSection,
 } from "@/components/editorial";
+import { HeroScene } from "@/components/HeroScene";
 import { EasterEgg } from "@/components/EasterEgg";
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
     <>
       <Header />
       <main>
-        <HeroEditorial />
+        <HeroScene />
         <StoryTeaser />
         <RolesMarquee />
         <WorkIndexSection />
