@@ -28,4 +28,5 @@
 ## Log
 - 2026-06-14: backup made (branch + folder). GSAP installed. Reference studied (GSAP/ScrollTrigger/Locomotive/Splitting/Barba). Starting item 1+2.
 - 2026-06-14: items 1+2 DONE & verified visually (pinned scroll-zoom hero: image push-in, MICKY scatter, mix-blend). Committed ee6b011.
-- 2026-06-14: item 5a (velocity skew) + fixed mix-blend header overlay DONE & verified (full-bleed hero, no strip). Committed 40e5c96. NEXT: item 3 kinetic type, then 4 work index, then story-page scenes (item 6).
+- 2026-06-14: item 5a (velocity skew) + fixed mix-blend header overlay DONE & verified (full-bleed hero, no strip). Committed 40e5c96.
+- 2026-06-14: HERO PORTAL v2 (per user) DONE & verified — zoom INTO helmet visor, clip-circle opens at the visor point, eye.jpg fills screen (match-cut), wordmark scatters first. Smoother Lenis (single lerp mode, scrub 0.8). Committed 05f17ce. User loved direction. NOTE: eye is placeholder until Micky's portrait PoC arrives (then swap eye.jpg → could become face). NEXT: item 3 kinetic type, 4 work index, 6 story scenes, transitions, polish.
