@@ -60,13 +60,20 @@ img { display: block; max-width: 100%; }
    HEADER
    ============================================================ */
 .header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 22px var(--gutter) 10px;
+  padding: 20px var(--gutter);
   max-width: var(--maxw);
   margin-inline: auto;
+  mix-blend-mode: difference;
+  color: #fff;
+  pointer-events: none;
 }
+.header > * { pointer-events: auto; }
 .logotype {
   font-family: var(--font-serif);
   font-style: italic;
@@ -92,7 +99,7 @@ img { display: block; max-width: 100%; }
   left: 0; right: 100%;
   bottom: -4px;
   height: 1px;
-  background: var(--ink);
+  background: #fff;
   transition: right 0.3s ease;
 }
 .header nav a:hover::after { right: 0; }
@@ -386,7 +393,7 @@ a.index-row:hover { opacity: 0.65; }
 .detail {
   max-width: var(--maxw);
   margin-inline: auto;
-  padding: clamp(40px, 7vw, 90px) var(--gutter);
+  padding: clamp(104px, 9vw, 132px) var(--gutter) clamp(48px, 7vw, 90px);
 }
 .detail__back {
   color: var(--dim);
@@ -675,7 +682,7 @@ body::after {
 .page-head {
   max-width: var(--maxw);
   margin-inline: auto;
-  padding: clamp(28px, 6vh, 70px) 0 0;
+  padding: clamp(110px, 15vh, 170px) 0 0;
 }
 .page-head__title {
   font-size: clamp(3rem, 10vw, 8.5rem);

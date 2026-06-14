@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform, useVelocity } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /* Headline lines that slide up out of a mask, staggered.
@@ -67,12 +67,17 @@ export function ParallaxImg({
   strength?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [-strength, strength]);
   const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1.08, 1.02, 1.08]);
+  // scroll-velocity skew — the whole-page "liquid/alive" movement
+  const velocity = useVelocity(scrollY);
+  const skewRaw = useTransform(velocity, [-2400, 0, 2400], [3.4, 0, -3.4], { clamp: true });
+  const skewY = useSpring(skewRaw, { stiffness: 250, damping: 34, mass: 0.4 });
   return (
     <div ref={ref} className={`pimg ${className ?? ""}`}>
-      <motion.img src={src} alt={alt} style={{ y, scale }} />
+      <motion.img src={src} alt={alt} style={{ y, scale, skewY }} />
     </div>
   );
 }
