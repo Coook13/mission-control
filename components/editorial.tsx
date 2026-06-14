@@ -123,9 +123,7 @@ export function WorkIndexSection() {
     <section className="section-ed section-ed--tight" id="work">
       <div className="shell">
         <div className="sec-label label">02 / Selected work</div>
-        <Reveal>
-          <HoverIndex rows={workIndex} />
-        </Reveal>
+        <HoverIndex rows={workIndex} />
         <Reveal delay={0.1}>
           <Link href="/work" className="textlink" style={{ marginTop: "28px", display: "inline-block" }}>
             All work

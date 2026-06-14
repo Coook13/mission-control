@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { workIndex } from "@/lib/site-data";
 import { Footer, Header } from "@/components/editorial";
-import { Reveal, WordReveal } from "@/components/motion";
+import { WordReveal } from "@/components/motion";
 import { HoverIndex } from "@/components/HoverIndex";
 
 export const metadata: Metadata = { title: "Work | Micky Thanawarothon" };
@@ -26,9 +26,7 @@ export default function WorkPage() {
         </section>
         <section className="section-ed--tight section-ed">
           <div className="shell">
-            <Reveal>
-              <HoverIndex rows={workIndex} split={false} />
-            </Reveal>
+            <HoverIndex rows={workIndex} split={false} />
           </div>
         </section>
       </main>
