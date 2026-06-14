@@ -879,3 +879,11 @@ body::after {
 @media (max-width: 760px) {
   .hero-stage__title { font-size: clamp(4rem, 30vw, 9rem); }
 }
+
+/* hero portal layers (v2) */
+.hero-stage__layer { position: absolute; inset: 0; }
+.hero-stage__astro img { width: 100%; height: 100%; object-fit: cover; will-change: transform, opacity; }
+.hero-stage__eye { z-index: 2; will-change: clip-path; }
+.hero-stage__eye img { width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+.hero-stage__mark { z-index: 3; }
+.hero-stage__cue { z-index: 3; }

@@ -31,7 +31,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ReactLenis
       root
-      options={{ lerp: 0.09, duration: 1.2, smoothWheel: true, autoRaf: false }}
+      options={{ lerp: 0.085, smoothWheel: true, wheelMultiplier: 1, syncTouch: true, autoRaf: false }}
     >
       <GsapLenisBridge />
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
