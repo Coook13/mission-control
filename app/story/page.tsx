@@ -4,6 +4,7 @@ import { ContactSection, Footer, Header } from "@/components/editorial";
 import { Reveal, WordReveal } from "@/components/motion";
 import { Marquee } from "@/components/Marquee";
 import { PixelMicky } from "@/components/PixelMicky";
+import { StoryFX } from "@/components/StoryFX";
 
 export const metadata: Metadata = { title: "Story | Micky Thanawarothon" };
 
@@ -11,6 +12,7 @@ export default function StoryPage() {
   return (
     <>
       <Header />
+      <StoryFX />
       <main>
         <section className="page-head">
           <div className="shell">
@@ -56,10 +58,10 @@ export default function StoryPage() {
             <div className="sec-label label">Facts</div>
             <div className="facts">
               {facts.map((f, i) => (
-                <Reveal key={i} delay={i * 0.05} className="fact">
+                <div key={i} className="fact">
                   <span className="fact__n">{f.n}</span>
                   <span className="fact__k">{f.k}</span>
-                </Reveal>
+                </div>
               ))}
             </div>
           </div>
@@ -69,11 +71,12 @@ export default function StoryPage() {
           <div className="shell">
             <div className="sec-label label">Timeline</div>
             <div className="timeline">
+              <span className="timeline__line" aria-hidden="true" />
               {timeline.map((t) => (
-                <Reveal key={t.year} className="timeline__row">
+                <div key={t.year} className="timeline__row">
                   <span className="timeline__year serif">{t.year}</span>
                   <span className="timeline__what">{t.what}</span>
-                </Reveal>
+                </div>
               ))}
             </div>
           </div>

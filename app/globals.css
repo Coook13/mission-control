@@ -909,3 +909,8 @@ body::after {
 .wmask__inner { display: inline-block; transform: translateY(118%); transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
 .words-in .wmask__inner { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { .wmask__inner { transform: none; transition: none; } }
+
+/* story timeline spine (grows on scroll via StoryFX) */
+.timeline { position: relative; padding-left: 30px; }
+.timeline__line { position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--ink); transform-origin: top; opacity: 0.8; }
+@media (max-width: 880px) { .timeline { padding-left: 20px; } }
