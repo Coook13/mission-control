@@ -9,11 +9,11 @@
 **Loop protocol (each wake-up):** read this file → pick next unchecked item → implement → `next build` clean → verify VISUALLY (freeze-frame screenshots at scroll positions, desktop + mobile) → commit → tick the box + append a log line → schedule next wake-up. Never stop. Log open questions here instead of halting.
 
 ## Backlog (priority order)
-- [ ] 1. FOUNDATION: GSAP+ScrollTrigger synced to Lenis (gsap.ticker drives lenis, ScrollTrigger.update on scroll). Register ScrollTrigger + SplitText.
-- [ ] 2. HERO SCENE: pinned scrubbed zoom — full-bleed focal image pushes in (scale), wordmark scatters/explodes + fades, unpins into story. The signature "zoom into the eye" moment.
-- [ ] 3. KINETIC TYPE: SplitText char/line reveals on every heading (scrubbed or on-enter stagger, masked). Replace discrete framer reveals on headings.
-- [ ] 4. WORK INDEX: scrubbed row entrance + bigger cursor-image that scales/sticks; consider pinned horizontal gallery strip.
-- [ ] 5. SCROLL-VELOCITY MOTION: skew/scale images by scroll velocity (the "everything is moving" feel). Velocity-reactive marquee speed.
+- [x] 1. FOUNDATION: GSAP+ScrollTrigger synced to Lenis (gsap.ticker drives lenis, ScrollTrigger.update on scroll). DONE (Providers.tsx GsapLenisBridge).
+- [x] 2. HERO SCENE: pinned scrubbed zoom — full-bleed image push-in (scale 1→1.55), wordmark scatter+fade, mix-blend, unpins into story. DONE + verified (HeroScene.tsx). Header now fixed+mix-blend overlay = true full-bleed.
+- [ ] 3. KINETIC TYPE: char/line reveals on every heading (scrubbed or on-enter stagger, masked). Upgrade Lines to per-char or per-word stagger; apply to story/work/contact heads + page-head titles.
+- [ ] 4. WORK INDEX: scrubbed row entrance (stagger up on enter) + bigger cursor-image that scales/sticks; consider pinned horizontal gallery strip.
+- [~] 5. SCROLL-VELOCITY MOTION: image skew by velocity DONE (ParallaxImg useVelocity skewY). TODO: velocity-reactive marquee speed.
 - [ ] 6. STORY PAGE: pinned scrubbed parallax layers; facts numbers scale/þcount on enter; timeline draws in.
 - [ ] 7. ROUTE TRANSITIONS: cover-panel wipe between pages (Barba equivalent via template.tsx + overlay).
 - [ ] 8. IMAGE TREATMENT: clip-path reveal on images (mask wipe), subtle hover scale, grain consistency.
@@ -27,3 +27,5 @@
 
 ## Log
 - 2026-06-14: backup made (branch + folder). GSAP installed. Reference studied (GSAP/ScrollTrigger/Locomotive/Splitting/Barba). Starting item 1+2.
+- 2026-06-14: items 1+2 DONE & verified visually (pinned scroll-zoom hero: image push-in, MICKY scatter, mix-blend). Committed ee6b011.
+- 2026-06-14: item 5a (velocity skew) + fixed mix-blend header overlay DONE & verified (full-bleed hero, no strip). Committed 40e5c96. NEXT: item 3 kinetic type, then 4 work index, then story-page scenes (item 6).
