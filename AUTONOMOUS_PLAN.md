@@ -21,6 +21,10 @@
 - [ ] 10. POLISH PASS: color/contrast, spacing rhythm, mobile reflow of every scene, prefers-reduced-motion fallbacks, perf (lazy ScrollTrigger, will-change hygiene, Lighthouse).
 - [ ] 11. CONTENT placeholders cleanup (remove the "tie", neutral copy) — LOW priority, user will rewrite.
 
+## HARD RULES (user feedback)
+- NO picture-swap transitions. The eye match-cut was rejected — it read as "the picture just changes." Transitions must be CONTINUOUS: one image transforming, or the page's own content (curtain/mask/scale) moving over it. The reference is inspiration only, never a literal element to copy.
+- Always verify smoothness/coolness visually before committing.
+
 ## Open questions (do not block on these)
 - Portrait PoC of Micky still pending (slot reserved on /story). Using placeholder frame.
 - Vercel deploy needs user login — left for user.
@@ -29,4 +33,4 @@
 - 2026-06-14: backup made (branch + folder). GSAP installed. Reference studied (GSAP/ScrollTrigger/Locomotive/Splitting/Barba). Starting item 1+2.
 - 2026-06-14: items 1+2 DONE & verified visually (pinned scroll-zoom hero: image push-in, MICKY scatter, mix-blend). Committed ee6b011.
 - 2026-06-14: item 5a (velocity skew) + fixed mix-blend header overlay DONE & verified (full-bleed hero, no strip). Committed 40e5c96.
-- 2026-06-14: HERO PORTAL v2 (per user) DONE & verified — zoom INTO helmet visor, clip-circle opens at the visor point, eye.jpg fills screen (match-cut), wordmark scatters first. Smoother Lenis (single lerp mode, scrub 0.8). Committed 05f17ce. User loved direction. NOTE: eye is placeholder until Micky's portrait PoC arrives (then swap eye.jpg → could become face). NEXT: item 3 kinetic type, 4 work index, 6 story scenes, transitions, polish.
+- 2026-06-14: HERO PORTAL v2 (eye match-cut) — REJECTED by user ("just changes the picture"). Replaced with continuous CURTAIN reveal: hero pinned, astronaut zooms (scale 1.42), wordmark scatters, light page rises over it (.page-body z-index curtain). No image swap. Verified + committed 6cb388d. eye.jpg now unused (left in /img, do not reuse for swaps). NEXT: item 3 kinetic type, 4 work index, 6 story scenes, transitions, polish — all CONTINUOUS only.
