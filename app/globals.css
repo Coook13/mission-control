@@ -6,7 +6,7 @@
 :root {
   --bg:        #F5F4F0;
   --ink:       #111110;
-  --dim:       #6E6A63;
+  --dim:       #5F5C54;
   --line:      rgba(17, 17, 16, 0.14);
 
   --font-sans: var(--font-sans-var), "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
