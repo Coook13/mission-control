@@ -17,7 +17,7 @@
 - [x] 6. STORY PAGE: facts pop-scale-in, timeline growing spine + rows slide-in, portrait parallax (StoryFX). DONE & verified.
 - [x] 7. PAGE TRANSITIONS: ink panel-wipe on client nav (covers then slides up to reveal), skip first load. DONE & verified.
 - [x] 8. IMAGE TREATMENT: clip-path mask reveal on scroll-in + hover zoom-within-frame (.pimg__zoom). DONE & verified.
-- [ ] 9. MAGNETIC + CURSOR: magnetic nav/links, cursor label states ("view"), refine.
+- [x] 9. MAGNETIC + CURSOR: magnetic nav/logotype/contact links + cursor "view" label pill over work rows. DONE & verified.
 - [ ] 10. POLISH PASS: color/contrast, spacing rhythm, mobile reflow of every scene, prefers-reduced-motion fallbacks, perf (lazy ScrollTrigger, will-change hygiene, Lighthouse).
 - [ ] 11. CONTENT placeholders cleanup (remove the "tie", neutral copy) — LOW priority, user will rewrite.
 
@@ -44,3 +44,5 @@
 - 2026-06-15: item 7 PAGE TRANSITIONS done & verified — template.tsx ink wipe panel ("Micky") covers on nav then slides up; first load skipped (Loader owns it). Verified home->story->work. Committed. NEXT: item 8 image clip-path mask reveals + hover scale (work-detail hero, story imagery), 9 magnetic links + cursor labels, 5b velocity marquee, 10 polish/mobile/perf.
 
 - 2026-06-15: item 8 IMAGE TREATMENT done & verified — ParallaxImg now clip-reveals (inset 100%->0% wipe) on scroll-in + hover zoom (.pimg__zoom scale 1.05). Verified on /work/airfoillearner (clip inset(0%), hover matrix 1.05). Committed. NEXT: item 9 magnetic links/nav + cursor label states, then 5b velocity marquee, 10 polish/mobile/perf.
+
+- 2026-06-15: item 9 MAGNETIC+CURSOR done & verified (real hover) — Magnetic.tsx (gsap.quickTo translate toward cursor, spring back) on nav+logotype+contact links; Cursor.tsx label pill ("view") + ring collapse over [data-cursor] work rows. Committed. NEXT: 5b velocity-reactive marquee, then item 10 POLISH (mobile reflow every scene @390, reduced-motion across all, perf/Lighthouse, will-change/ScrollTrigger cleanup).
