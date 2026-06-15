@@ -4,18 +4,21 @@ import { Lines, ParallaxImg, Reveal, WordReveal } from "./motion";
 import { Marquee } from "./Marquee";
 import { PixelMicky } from "./PixelMicky";
 import { HoverIndex } from "./HoverIndex";
+import { Magnetic } from "./Magnetic";
 
 export function Header() {
   return (
     <header className="header">
-      <Link href="/" className="logotype">
-        Micky<span className="logotype__reg">®</span>
-      </Link>
+      <Magnetic strength={0.5}>
+        <Link href="/" className="logotype">
+          Micky<span className="logotype__reg">®</span>
+        </Link>
+      </Magnetic>
       <nav>
         {nav.map((n) => (
-          <Link key={n.href} href={n.href}>
-            {n.label}
-          </Link>
+          <Magnetic key={n.href} strength={0.55}>
+            <Link href={n.href}>{n.label}</Link>
+          </Magnetic>
         ))}
       </nav>
     </header>
@@ -150,12 +153,16 @@ export function ContactSection() {
           ]}
         />
         <div className="contact-ed__links">
-          <a href={`mailto:${profile.email}`} data-hover>
-            {profile.email}
-          </a>
-          <a href={profile.linkedin.href} target="_blank" rel="noopener" data-hover>
-            LinkedIn / {profile.linkedin.label}
-          </a>
+          <Magnetic strength={0.4}>
+            <a href={`mailto:${profile.email}`} data-hover>
+              {profile.email}
+            </a>
+          </Magnetic>
+          <Magnetic strength={0.4}>
+            <a href={profile.linkedin.href} target="_blank" rel="noopener" data-hover>
+              LinkedIn / {profile.linkedin.label}
+            </a>
+          </Magnetic>
         </div>
       </div>
     </section>

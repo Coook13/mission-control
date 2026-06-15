@@ -75,7 +75,7 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
       ? { onMouseEnter: () => setImg(thumb), onMouseLeave: () => setImg(null) }
       : {};
     return row.slug ? (
-      <Link className="index-row" href={`/work/${row.slug}`} {...handlers}>
+      <Link className="index-row" href={`/work/${row.slug}`} data-cursor="view" {...handlers}>
         {inner}
       </Link>
     ) : (

@@ -946,3 +946,23 @@ body::after {
   .pimg__zoom { transition: none; }
   .pimg:hover .pimg__zoom { transform: none; }
 }
+
+/* cursor label pill (shown over [data-cursor] targets) */
+.cursor-label {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 1003;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+@media (pointer: coarse) { .cursor-label { display: none; } }
