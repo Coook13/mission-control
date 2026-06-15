@@ -15,7 +15,7 @@
 - [x] 4. WORK INDEX: staggered scroll-in rows + bigger lag-follow hover preview (settle-zoom). DONE & verified.
 - [~] 5. SCROLL-VELOCITY MOTION: image skew by velocity DONE (ParallaxImg useVelocity skewY). TODO: velocity-reactive marquee speed.
 - [x] 6. STORY PAGE: facts pop-scale-in, timeline growing spine + rows slide-in, portrait parallax (StoryFX). DONE & verified.
-- [ ] 7. ROUTE TRANSITIONS: cover-panel wipe between pages (Barba equivalent via template.tsx + overlay).
+- [x] 7. PAGE TRANSITIONS: ink panel-wipe on client nav (covers then slides up to reveal), skip first load. DONE & verified.
 - [ ] 8. IMAGE TREATMENT: clip-path reveal on images (mask wipe), subtle hover scale, grain consistency.
 - [ ] 9. MAGNETIC + CURSOR: magnetic nav/links, cursor label states ("view"), refine.
 - [ ] 10. POLISH PASS: color/contrast, spacing rhythm, mobile reflow of every scene, prefers-reduced-motion fallbacks, perf (lazy ScrollTrigger, will-change hygiene, Lighthouse).
@@ -40,3 +40,5 @@
 - 2026-06-14: item 4 WORK INDEX done & verified — GSAP staggered row scroll-in + bigger (400x290) lag-follow hover preview w/ settle-zoom; removed outer Reveal wrappers so rows cascade. Committed. NEXT: item 6 story-page pinned scrubbed scenes (facts scale-in, timeline draw-in), then transitions/clip-reveals/magnetic/polish.
 
 - 2026-06-14: item 6 STORY PAGE done & verified — StoryFX adds facts pop-in, timeline spine draw + rows slide-in, portrait parallax; facts/timeline moved off framer Reveal to GSAP. Committed. NEXT: item 7 page transitions (continuous own-content wipe), 8 image clip-reveals + hover scale, 9 magnetic + cursor labels, 5b velocity marquee, 10 polish/mobile/perf.
+
+- 2026-06-15: item 7 PAGE TRANSITIONS done & verified — template.tsx ink wipe panel ("Micky") covers on nav then slides up; first load skipped (Loader owns it). Verified home->story->work. Committed. NEXT: item 8 image clip-path mask reveals + hover scale (work-detail hero, story imagery), 9 magnetic links + cursor labels, 5b velocity marquee, 10 polish/mobile/perf.
