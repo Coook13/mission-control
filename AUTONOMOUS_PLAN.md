@@ -13,7 +13,7 @@
 - [x] 2. HERO SCENE: pinned scrubbed zoom — full-bleed image push-in (scale 1→1.55), wordmark scatter+fade, mix-blend, unpins into story. DONE + verified (HeroScene.tsx). Header now fixed+mix-blend overlay = true full-bleed.
 - [x] 3. KINETIC TYPE: per-word masked staggered reveals (WordReveal in motion.tsx) on story head, contact lead, story+work page-head titles. DONE & verified.
 - [x] 4. WORK INDEX: staggered scroll-in rows + bigger lag-follow hover preview (settle-zoom). DONE & verified.
-- [~] 5. SCROLL-VELOCITY MOTION: image skew by velocity DONE (ParallaxImg useVelocity skewY). TODO: velocity-reactive marquee speed.
+- [x] 5. SCROLL-VELOCITY MOTION: image velocity skew + velocity-reactive marquee drift. DONE & verified.
 - [x] 6. STORY PAGE: facts pop-scale-in, timeline growing spine + rows slide-in, portrait parallax (StoryFX). DONE & verified.
 - [x] 7. PAGE TRANSITIONS: ink panel-wipe on client nav (covers then slides up to reveal), skip first load. DONE & verified.
 - [x] 8. IMAGE TREATMENT: clip-path mask reveal on scroll-in + hover zoom-within-frame (.pimg__zoom). DONE & verified.
@@ -46,3 +46,5 @@
 - 2026-06-15: item 8 IMAGE TREATMENT done & verified — ParallaxImg now clip-reveals (inset 100%->0% wipe) on scroll-in + hover zoom (.pimg__zoom scale 1.05). Verified on /work/airfoillearner (clip inset(0%), hover matrix 1.05). Committed. NEXT: item 9 magnetic links/nav + cursor label states, then 5b velocity marquee, 10 polish/mobile/perf.
 
 - 2026-06-15: item 9 MAGNETIC+CURSOR done & verified (real hover) — Magnetic.tsx (gsap.quickTo translate toward cursor, spring back) on nav+logotype+contact links; Cursor.tsx label pill ("view") + ring collapse over [data-cursor] work rows. Committed. NEXT: 5b velocity-reactive marquee, then item 10 POLISH (mobile reflow every scene @390, reduced-motion across all, perf/Lighthouse, will-change/ScrollTrigger cleanup).
+
+- 2026-06-15: item 5b velocity marquee done — Marquee.tsx now client, JS rAF drift (base 46px/s) + Lenis velocity*6 boost, wraps by half-width, reduced-motion static. Drift confirmed (x=-1038). Committed. NEXT: item 10 POLISH PASS — mobile reflow @390 (hero wordmark, work index, story grid, contact), reduced-motion audit across all gsap/framer/Lenis, perf (ScrollTrigger cleanup, will-change), contrast/spacing. Biggest remaining needle-mover.
