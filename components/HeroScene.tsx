@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -54,13 +53,12 @@ export function HeroScene() {
     <section className="hero-scene" ref={root}>
       <div className="hero-stage">
         <div className="hero-stage__img hero-stage__layer">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src="/img/hero.jpg"
             alt="Astronaut leaping through a field"
-            fill
-            priority
-            sizes="100vw"
-            style={{ objectFit: "cover", objectPosition: "center 35%" }}
+            fetchPriority="high"
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%" }}
           />
         </div>
         <div className="hero-stage__veil" aria-hidden="true" />
