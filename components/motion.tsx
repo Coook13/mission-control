@@ -137,9 +137,18 @@ export function ParallaxImg({
   const skewRaw = useTransform(velocity, [-2400, 0, 2400], [3.4, 0, -3.4], { clamp: true });
   const skewY = useSpring(skewRaw, { stiffness: 250, damping: 34, mass: 0.4 });
   return (
-    <div ref={ref} className={`pimg ${className ?? ""}`}>
-      <motion.img src={src} alt={alt} style={{ y, scale, skewY }} />
-    </div>
+    <motion.div
+      ref={ref}
+      className={`pimg ${className ?? ""}`}
+      initial={{ clipPath: "inset(100% 0% 0% 0%)" }}
+      whileInView={{ clipPath: "inset(0% 0% 0% 0%)" }}
+      viewport={{ once: true, margin: "0px 0px -10% 0px" }}
+      transition={{ duration: 1.1, ease: [0.76, 0, 0.24, 1] }}
+    >
+      <div className="pimg__zoom">
+        <motion.img src={src} alt={alt} style={{ y, scale, skewY }} />
+      </div>
+    </motion.div>
   );
 }
 
