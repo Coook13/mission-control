@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useSpring, useTransform, useVelocity } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform, useVelocity } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /* Headline lines that slide up out of a mask, staggered.
@@ -127,6 +127,7 @@ export function ParallaxImg({
   className?: string;
   strength?: number;
 }) {
+  const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
@@ -140,13 +141,13 @@ export function ParallaxImg({
     <motion.div
       ref={ref}
       className={`pimg ${className ?? ""}`}
-      initial={{ clipPath: "inset(100% 0% 0% 0%)" }}
-      whileInView={{ clipPath: "inset(0% 0% 0% 0%)" }}
+      initial={reduce ? false : { clipPath: "inset(100% 0% 0% 0%)" }}
+      whileInView={reduce ? undefined : { clipPath: "inset(0% 0% 0% 0%)" }}
       viewport={{ once: true, margin: "0px 0px -10% 0px" }}
       transition={{ duration: 1.1, ease: [0.76, 0, 0.24, 1] }}
     >
       <div className="pimg__zoom">
-        <motion.img src={src} alt={alt} style={{ y, scale, skewY }} />
+        <motion.img src={src} alt={alt} style={reduce ? undefined : { y, scale, skewY }} />
       </div>
     </motion.div>
   );
