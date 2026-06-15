@@ -914,3 +914,22 @@ body::after {
 .timeline { position: relative; padding-left: 30px; }
 .timeline__line { position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--ink); transform-origin: top; opacity: 0.8; }
 @media (max-width: 880px) { .timeline { padding-left: 20px; } }
+
+/* route-transition wipe panel */
+.page-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+  will-change: transform;
+  pointer-events: none;
+}
+.page-wipe span {
+  color: var(--bg);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  letter-spacing: -0.02em;
+}
