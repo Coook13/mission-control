@@ -8,10 +8,10 @@ import { profile } from "@/lib/site-data";
 
 const MARK = profile.nickname.toUpperCase(); // "MICKY"
 
-/* Hero: a cinematic cut from Micky's world into deep space. At rest it's his
-   photo, graded, with a cosmic shimmer in the sky. On scroll (pinned, scrub)
-   the photo recedes and real NASA imagery — the Carina nebula and Earth —
-   takes over while the name scatters. Hyperrealistic, continuous, no swap. */
+/* Hero: Interstellar-grade. Micky stands cut out against deep space — Saturn
+   hanging, a star field, film grain, letterbox, heavy vignette. On scroll the
+   cosmos drifts slowly past (weighty parallax), the name rises away, and he is
+   left to the dark. Continuous; no jarring swaps. */
 export function HeroScene() {
   const root = useRef<HTMLDivElement>(null);
 
@@ -22,32 +22,27 @@ export function HeroScene() {
       const chars = gsap.utils.toArray<HTMLElement>(".hero-title .hchar");
       if (reduce) return;
 
-      gsap.from(chars, { yPercent: 120, opacity: 0, stagger: 0.05, duration: 0.9, ease: "power3.out", delay: 0.2 });
-      gsap.from(".hero-meta, .hero-cue", { opacity: 0, y: 16, duration: 0.8, delay: 0.7, ease: "power2.out" });
+      gsap.from(chars, { yPercent: 110, opacity: 0, stagger: 0.05, duration: 1, ease: "power3.out", delay: 0.25 });
+      gsap.from(".hero-figure", { xPercent: 9, opacity: 0, duration: 1.5, ease: "power2.out", delay: 0.1 });
+      gsap.from(".hero-meta, .hero-cue", { opacity: 0, y: 16, duration: 0.9, delay: 0.85, ease: "power2.out" });
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: root.current,
           start: "top top",
-          end: "+=160%",
-          scrub: 0.7,
+          end: "+=175%",
+          scrub: 0.8,
           pin: ".hero-stage",
           anticipatePin: 1,
         },
       });
-      tl.to(".hero-photo", { scale: 1.12, opacity: 0.12, ease: "power1.in" }, 0)
-        .to(".hero-cosmos-sky", { opacity: 0, ease: "none", duration: 0.4 }, 0)
-        .to(".hero-nebula", { opacity: 1, scale: 1.08, ease: "none" }, 0)
-        .fromTo(".hero-earth", { opacity: 0, scale: 0.62, yPercent: 16 }, { opacity: 1, scale: 1, yPercent: 0, ease: "power1.out" }, 0.22)
-        .to(chars, {
-          yPercent: () => gsap.utils.random(-260, -80),
-          xPercent: () => gsap.utils.random(-140, 140),
-          rotation: () => gsap.utils.random(-40, 40),
-          opacity: 0,
-          ease: "power1.in",
-          stagger: { each: 0.02, from: "center" },
-        }, 0)
-        .to(".hero-meta, .hero-cue", { opacity: 0, y: -20, ease: "none", duration: 0.35 }, 0);
+      tl.to(".hero-stars", { scale: 1.16, ease: "none" }, 0)
+        .to(".hero-neb", { scale: 1.24, xPercent: -4, ease: "none" }, 0)
+        .to(".hero-planet", { yPercent: -10, scale: 1.12, ease: "none" }, 0)
+        .to(".hero-figure", { yPercent: -7, scale: 1.05, ease: "none" }, 0)
+        .to(".hero-figure", { opacity: 0, ease: "power1.in", duration: 0.28 }, 0.72)
+        .to(chars, { yPercent: -70, opacity: 0, ease: "power2.in", stagger: { each: 0.03, from: "start" } }, 0)
+        .to(".hero-meta, .hero-cue", { opacity: 0, y: -20, ease: "none", duration: 0.32 }, 0);
     },
     { scope: root }
   );
@@ -57,14 +52,15 @@ export function HeroScene() {
       <div className="hero-stage">
         <div className="hero-cosmos" aria-hidden="true" />
         {/* eslint-disable @next/next/no-img-element */}
-        <img className="hero-nebula" src="/img/space/nebula.jpg" alt="" aria-hidden="true" />
-        <img className="hero-earth" src="/img/space/earth.jpg" alt="" aria-hidden="true" />
-        <div className="hero-photo">
-          <img src="/img/hero-micky.jpg" alt={profile.name} fetchPriority="high" />
-        </div>
-        <img className="hero-cosmos-sky" src="/img/space/nebula.jpg" alt="" aria-hidden="true" />
+        <img className="hero-stars" src="/img/space/deepfield.jpg" alt="" aria-hidden="true" />
+        <img className="hero-neb" src="/img/space/nebula.jpg" alt="" aria-hidden="true" />
+        <img className="hero-planet" src="/img/space/saturn.jpg" alt="" aria-hidden="true" />
+        <div className="hero-glow" aria-hidden="true" />
+        <img className="hero-figure" src="/img/hero-cutout.png" alt={profile.name} fetchPriority="high" />
         {/* eslint-enable @next/next/no-img-element */}
+        <div className="hero-grain" aria-hidden="true" />
         <div className="hero-vignette" aria-hidden="true" />
+        <div className="hero-letterbox" aria-hidden="true" />
 
         <div className="hero-mark">
           <h1 className="hero-title" aria-label={profile.name}>
