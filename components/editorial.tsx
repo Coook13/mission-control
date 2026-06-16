@@ -69,6 +69,7 @@ export function StoryTeaser() {
             <WordReveal
               as="h2"
               className="story__head"
+              speed={1.08}
               words={[
                 { t: "ENGINEER" }, { t: "BY" }, { t: "TRAINING," }, { br: true },
                 { t: "founder", serif: true }, { t: "by", serif: true }, { t: "habit.", serif: true },
@@ -130,6 +131,7 @@ export function ContactSection() {
         <WordReveal
           as="h2"
           className="contact-ed__lead"
+          speed={1.08}
           words={[
             { t: "LET’S" }, { t: "BUILD" }, { br: true },
             { t: "SOMETHING" }, { t: "THAT" }, { t: "works.", serif: true },

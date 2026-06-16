@@ -90,11 +90,13 @@ export function WordReveal({
   className,
   delay = 0,
   as = "h2",
+  speed,
 }: {
   words: Word[];
   className?: string;
   delay?: number;
   as?: "h1" | "h2" | "p" | "div";
+  speed?: number;
 }) {
   const Tag = as;
   const { ref, inView } = useInViewOnce();
@@ -109,6 +111,7 @@ export function WordReveal({
       ref={ref as any}
       className={`wreveal ${className ?? ""} ${inView ? "words-in" : ""}`}
       aria-label={label}
+      data-speed={speed}
     >
       {words.map((w, i) => {
         if (w.br) return <span className="wbreak" key={`b${i}`} aria-hidden="true" />;
