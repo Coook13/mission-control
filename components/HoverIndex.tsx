@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import { useLenis } from "lenis/react";
 import type { IndexRow } from "@/lib/site-data";
 
 /* Work index: rows cascade in on scroll; a big image preview lag-follows the
@@ -13,7 +14,18 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
   const [img, setImg] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const touch = useRef(false);
   const pos = useRef({ mx: 0, my: 0, x: 0, y: 0, raf: 0 });
+
+  // coarse pointers (touch) get no cursor-chasing preview at all
+  useEffect(() => {
+    touch.current = window.matchMedia("(pointer: coarse)").matches;
+  }, []);
+
+  // any scroll dismisses a stuck preview (was only clearing on row mouseleave)
+  useLenis(() => {
+    setImg((prev) => (prev ? null : prev));
+  });
 
   // cursor-chasing preview
   useEffect(() => {
@@ -72,7 +84,12 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
       </>
     );
     const handlers = thumb
-      ? { onMouseEnter: () => setImg(thumb), onMouseLeave: () => setImg(null) }
+      ? {
+          onMouseEnter: () => {
+            if (!touch.current) setImg(thumb);
+          },
+          onMouseLeave: () => setImg(null),
+        }
       : {};
     return row.slug ? (
       <Link className="index-row" href={`/work/${row.slug}`} data-cursor="view" {...handlers}>
@@ -88,7 +105,7 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
   const half = Math.ceil(rows.length / 2);
   return (
     <>
-      <div ref={listRef}>
+      <div ref={listRef} onMouseLeave={() => setImg(null)}>
         {split ? (
           <div className="index-grid">
             <div>{rows.slice(0, half).map((r) => <Row key={r.num} row={r} />)}</div>

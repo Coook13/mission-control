@@ -34,8 +34,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
-      <body>
+    <html lang="en" className={`${sans.variable} ${serif.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>
           <Loader />
           <Cursor />

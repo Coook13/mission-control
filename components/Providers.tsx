@@ -13,6 +13,9 @@ function GsapLenisBridge() {
   useEffect(() => {
     if (!lenis) return;
     gsap.registerPlugin(ScrollTrigger);
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as { lenis?: unknown }).lenis = lenis;
+    }
     const onScroll = () => ScrollTrigger.update();
     lenis.on("scroll", onScroll);
     const tick = (time: number) => lenis.raf(time * 1000);

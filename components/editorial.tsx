@@ -1,29 +1,12 @@
 import Link from "next/link";
-import { nav, profile, workIndex } from "@/lib/site-data";
+import { profile, workIndex } from "@/lib/site-data";
 import { Lines, ParallaxImg, Reveal, WordReveal } from "./motion";
 import { Marquee } from "./Marquee";
 import { PixelMicky } from "./PixelMicky";
 import { HoverIndex } from "./HoverIndex";
 import { Magnetic } from "./Magnetic";
 
-export function Header() {
-  return (
-    <header className="header">
-      <Magnetic strength={0.5}>
-        <Link href="/" className="logotype">
-          Micky<span className="logotype__reg">®</span>
-        </Link>
-      </Magnetic>
-      <nav>
-        {nav.map((n) => (
-          <Magnetic key={n.href} strength={0.55}>
-            <Link href={n.href}>{n.label}</Link>
-          </Magnetic>
-        ))}
-      </nav>
-    </header>
-  );
-}
+export { Header } from "./Header";
 
 export function HeroEditorial() {
   return (
