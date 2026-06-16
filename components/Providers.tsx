@@ -35,7 +35,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ReactLenis
       root
-      options={{ lerp: 0.085, smoothWheel: true, wheelMultiplier: 1, syncTouch: true, autoRaf: false }}
+      options={{ lerp: 0.08, smoothWheel: true, wheelMultiplier: 1, syncTouch: true, autoRaf: false }}
     >
       <GsapLenisBridge />
       <ParallaxController />

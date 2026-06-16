@@ -29,7 +29,7 @@ export function HeroScene() {
           trigger: root.current,
           start: "top top",
           end: "+=110%",
-          scrub: 0.85,
+          scrub: 0.6,
           pin: ".hero-stage",
           anticipatePin: 1,
         },
