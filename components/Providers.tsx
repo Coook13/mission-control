@@ -5,6 +5,7 @@ import { ReactLenis, useLenis } from "lenis/react";
 import { useEffect, type ReactNode } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ParallaxController } from "./Parallax";
 
 /* Drive Lenis from gsap.ticker and keep ScrollTrigger in sync with the
    smoothed scroll position. One RAF loop, no fighting between libraries. */
@@ -37,6 +38,7 @@ export function Providers({ children }: { children: ReactNode }) {
       options={{ lerp: 0.085, smoothWheel: true, wheelMultiplier: 1, syncTouch: true, autoRaf: false }}
     >
       <GsapLenisBridge />
+      <ParallaxController />
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </ReactLenis>
   );

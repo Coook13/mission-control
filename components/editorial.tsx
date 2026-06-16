@@ -63,7 +63,7 @@ export function StoryTeaser() {
   return (
     <section className="section-ed" id="story">
       <div className="shell">
-        <div className="sec-label label">01 / My story</div>
+        <div className="sec-label label" data-speed={1.16}>01 / My story</div>
         <div className="story">
           <div>
             <WordReveal
@@ -86,7 +86,7 @@ export function StoryTeaser() {
           <Reveal delay={0.12}>
             <figure className="story__media">
               <ParallaxImg src="/img/story.jpg" alt="Astronaut leaping through the air" strength={36} />
-              <figcaption>Learn by shipping</figcaption>
+              <figcaption data-speed={1.12}>Learn by shipping</figcaption>
             </figure>
           </Reveal>
         </div>
@@ -108,7 +108,7 @@ export function WorkIndexSection() {
   return (
     <section className="section-ed section-ed--tight" id="work">
       <div className="shell">
-        <div className="sec-label label">02 / Selected work</div>
+        <div className="sec-label label" data-speed={1.14}>02 / Selected work</div>
         <HoverIndex rows={workIndex} />
         <Reveal delay={0.1}>
           <Link href="/work" className="textlink" style={{ marginTop: "28px", display: "inline-block" }}>
@@ -135,7 +135,7 @@ export function ContactSection() {
             { t: "SOMETHING" }, { t: "THAT" }, { t: "works.", serif: true },
           ]}
         />
-        <div className="contact-ed__links">
+        <div className="contact-ed__links" data-speed={1.1}>
           <Magnetic strength={0.4}>
             <a href={`mailto:${profile.email}`} data-hover>
               {profile.email}
