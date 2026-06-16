@@ -832,89 +832,97 @@ body::after {
 /* ============================================================
    HERO SCENE — pinned scrubbed zoom (GSAP ScrollTrigger)
    ============================================================ */
-.hero-scene { position: relative; background: #07090c; }
+.hero-scene { position: relative; background: var(--bg); }
 .hero-stage {
   height: 100svh;
   position: relative;
   overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: #07090c;
+  background: var(--bg);
 }
-.hero-stage__img { position: absolute; inset: 0; }
-.hero-stage__img img {
-  width: 100%; height: 100%;
-  object-fit: cover;
+.hero-planet {
+  position: absolute;
+  top: -16vmin; right: -12vmin;
+  width: 56vmin; height: 56vmin;
+  border-radius: 50%;
+  background: #0b0e15;
+  transform-origin: center;
   will-change: transform;
-  transform: scale(1.02);
+  z-index: 1;
 }
-.hero-stage__veil {
-  position: absolute; inset: 0; z-index: 1;
-  background:
-    radial-gradient(120% 90% at 50% 40%, transparent 30%, rgba(7,9,12,0.55) 100%),
-    linear-gradient(180deg, rgba(7,9,12,0.30), rgba(7,9,12,0.20) 40%, rgba(7,9,12,0.55));
-  opacity: 0.35;
+.hero-stars {
+  position: absolute; inset: 0; z-index: 2;
+  opacity: 0; pointer-events: none;
 }
-.hero-stage__mark {
-  position: relative; z-index: 2;
-  text-align: center;
-  color: #fff;
-  mix-blend-mode: difference;
-  padding-inline: var(--gutter);
+.hero-stars svg { width: 100%; height: 100%; display: block; }
+.hero-figure {
+  position: absolute;
+  left: clamp(18px, 6vw, 96px);
+  bottom: clamp(26px, 7vh, 72px);
+  width: clamp(150px, 24vw, 290px);
+  z-index: 3;
 }
-.hero-stage__title {
+.hero-rocket {
+  position: absolute;
+  left: calc(clamp(18px, 6vw, 96px) + 26px);
+  bottom: clamp(38px, 9vh, 96px);
+  z-index: 4;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.hero-rocket svg { display: block; }
+.hero-mark {
+  position: absolute;
+  left: clamp(18px, 6vw, 96px);
+  bottom: clamp(118px, 25vh, 300px);
+  z-index: 5;
+  color: var(--ink);
+}
+.hero-title {
   font-weight: 700;
-  font-size: clamp(5rem, 26vw, 26rem);
-  line-height: 0.78;
+  font-size: clamp(4rem, 17vw, 15rem);
+  line-height: 0.8;
   letter-spacing: -0.05em;
   margin: 0;
 }
-.hero-stage__title .hchar {
-  display: inline-block;
-  will-change: transform, opacity;
+.hero-title .hchar { display: inline-block; will-change: transform, opacity; }
+.hero-title__sub {
+  display: block;
+  font-weight: 600;
+  font-size: clamp(1rem, 4.2vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-top: 0.1em;
 }
-.hero-stage__meta {
-  margin-top: clamp(14px, 2vw, 26px);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  justify-content: center;
+.hero-meta {
+  margin-top: 16px;
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
   font-family: var(--font-sans);
   font-size: clamp(0.72rem, 1vw, 0.9rem);
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  color: var(--dim);
 }
-.hero-stage__sep { opacity: 0.75; }
-.hero-stage__cue {
+.hero-cue {
   position: absolute;
-  left: 50%; bottom: clamp(20px, 4vh, 44px);
+  left: 50%; bottom: clamp(20px, 4vh, 40px);
   transform: translateX(-50%);
-  z-index: 2;
-  color: #fff;
-  mix-blend-mode: difference;
-  font-size: 0.7rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  z-index: 5;
+  color: var(--dim);
+  font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
 }
-.hero-stage__cue span { display: inline-block; animation: cueBob 1.8s ease-in-out infinite; }
+.hero-cue span { display: inline-block; animation: cueBob 1.8s ease-in-out infinite; }
 @keyframes cueBob { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(6px); opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-stage__img img { transform: none; }
-  .hero-stage__cue span { animation: none; }
+  .hero-cue span { animation: none; }
 }
 @media (max-width: 760px) {
-  .hero-stage__title { font-size: clamp(3rem, 21vw, 6.5rem); white-space: nowrap; }
-  .hero-stage__meta { font-size: 0.66rem; }
+  .hero-title { font-size: clamp(3.4rem, 22vw, 7rem); }
+  .hero-mark { bottom: clamp(120px, 30vh, 320px); }
+  .hero-meta { font-size: 0.66rem; }
 }
 
-/* hero portal layers (v2) */
-.hero-stage__layer { position: absolute; inset: 0; }
-.hero-stage__astro img { width: 100%; height: 100%; object-fit: cover; will-change: transform, opacity; }
-.hero-stage__eye { z-index: 2; will-change: clip-path; }
-.hero-stage__eye img { width: 100%; height: 100%; object-fit: cover; will-change: transform; }
-.hero-stage__mark { z-index: 3; }
-.hero-stage__cue { z-index: 3; }
+/* (legacy astronaut/eye hero layers removed — replaced by the celestial hero above) */
 
 /* curtain reveal — light page rises over the pinned, zooming hero */
 .page-body {
