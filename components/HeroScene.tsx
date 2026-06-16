@@ -39,8 +39,18 @@ export function HeroScene() {
       tl.to(".hero-field", { scale: 1.16, ease: "none" }, 0)
         .to(".hero-dust", { scale: 1.42, xPercent: -5, ease: "none" }, 0)
         .to(".hero-deepen", { opacity: 0.78, ease: "none" }, 0)
-        .to(chars, { yPercent: -70, opacity: 0, ease: "power2.in", stagger: { each: 0.03, from: "start" } }, 0)
-        .to(".hero-meta, .hero-cue", { opacity: 0, y: -20, ease: "none", duration: 0.32 }, 0);
+        .fromTo(
+          chars,
+          { opacity: 1, yPercent: 0 },
+          { yPercent: -70, opacity: 0, ease: "power2.in", stagger: { each: 0.03, from: "start" }, immediateRender: false },
+          0
+        )
+        .fromTo(
+          ".hero-meta, .hero-cue",
+          { opacity: 1, y: 0 },
+          { opacity: 0, y: -20, ease: "none", duration: 0.32, immediateRender: false },
+          0
+        );
     },
     { scope: root }
   );
@@ -57,7 +67,6 @@ export function HeroScene() {
         <div className="hero-deepen" aria-hidden="true" />
         <div className="hero-grain" aria-hidden="true" />
         <div className="hero-vignette" aria-hidden="true" />
-        <div className="hero-letterbox" aria-hidden="true" />
 
         <div className="hero-mark">
           <h1 className="hero-title" aria-label={profile.name}>

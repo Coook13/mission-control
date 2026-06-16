@@ -878,10 +878,6 @@ body::after {
     radial-gradient(118% 100% at 50% 44%, transparent 36%, rgba(1, 2, 6, 0.82) 100%),
     linear-gradient(180deg, rgba(1, 2, 6, 0.45), transparent 20%, transparent 74%, rgba(1, 2, 6, 0.6));
 }
-.hero-letterbox {
-  z-index: 7; pointer-events: none;
-  background: linear-gradient(180deg, #010206 0, #010206 4.5vh, transparent 4.5vh, transparent calc(100% - 4.5vh), #010206 calc(100% - 4.5vh));
-}
 .hero-mark {
   inset: auto auto clamp(120px, 28vh, 340px) clamp(20px, 6vw, 100px);
   z-index: 8; color: #fff; max-width: min(94vw, 1150px);
