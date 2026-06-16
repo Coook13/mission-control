@@ -24,7 +24,7 @@ export function Lines({
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setInView(true);
+      queueMicrotask(() => setInView(true));
       return;
     }
     const io = new IntersectionObserver(
@@ -61,7 +61,7 @@ function useInViewOnce(threshold = 0.15) {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setInView(true);
+      queueMicrotask(() => setInView(true));
       return;
     }
     const io = new IntersectionObserver(
@@ -81,7 +81,10 @@ function useInViewOnce(threshold = 0.15) {
 
 export type Word = { t?: string; serif?: boolean; br?: boolean };
 
-/* Per-word masked rise, staggered — kinetic headings. */
+/* Per-CHARACTER masked rise, staggered — kinetic headings (danilo-style).
+   Words stay unbreakable flex items (wrapping + kerning preserved); each word
+   clips its own chars so the letters rise out of the baseline one by one.
+   aria-label carries the real phrase so SR users don't hear it spelled out. */
 export function WordReveal({
   words,
   className,
@@ -95,19 +98,31 @@ export function WordReveal({
 }) {
   const Tag = as;
   const { ref, inView } = useInViewOnce();
-  let idx = 0;
+  const label = words
+    .filter((w) => !w.br && w.t)
+    .map((w) => w.t)
+    .join(" ");
+  let ci = 0;
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Tag className={`wreveal ${className ?? ""} ${inView ? "words-in" : ""}`} ref={ref as any}>
+    <Tag
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ref={ref as any}
+      className={`wreveal ${className ?? ""} ${inView ? "words-in" : ""}`}
+      aria-label={label}
+    >
       {words.map((w, i) => {
         if (w.br) return <span className="wbreak" key={`b${i}`} aria-hidden="true" />;
-        const d = delay + idx * 0.06;
-        idx++;
         return (
-          <span className="wmask" key={i}>
-            <span className="wmask__inner" style={{ transitionDelay: `${d}s` }}>
-              {w.serif ? <span className="serif">{w.t}</span> : w.t}
-            </span>
+          <span className={`wword${w.serif ? " serif" : ""}`} key={i} aria-hidden="true">
+            {[...(w.t ?? "")].map((c, j) => {
+              const d = delay + ci * 0.026;
+              ci++;
+              return (
+                <span className="wchar" key={j} style={{ transitionDelay: `${d}s` }}>
+                  {c}
+                </span>
+              );
+            })}
           </span>
         );
       })}

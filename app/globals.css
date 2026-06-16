@@ -909,13 +909,13 @@ body::after {
   box-shadow: 0 -32px 70px rgba(7, 9, 12, 0.22);
 }
 
-/* kinetic per-word heading reveals */
+/* kinetic per-character heading reveals (words stay whole; chars rise) */
 .wreveal { display: flex; flex-wrap: wrap; align-items: flex-end; }
 .wbreak { flex-basis: 100%; width: 100%; height: 0; }
-.wmask { display: inline-flex; overflow: hidden; padding-bottom: 0.14em; margin: 0 0.26em -0.14em 0; }
-.wmask__inner { display: inline-block; transform: translateY(118%); transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
-.words-in .wmask__inner { transform: translateY(0); }
-@media (prefers-reduced-motion: reduce) { .wmask__inner { transform: none; transition: none; } }
+.wword { display: inline-flex; overflow: hidden; padding-bottom: 0.14em; margin: 0 0.26em -0.14em 0; }
+.wchar { display: inline-block; transform: translateY(118%); transition: transform 0.82s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
+.words-in .wchar { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) { .wchar { transform: none; transition: none; } }
 
 /* story timeline spine (grows on scroll via StoryFX) */
 .timeline { position: relative; padding-left: 30px; }
