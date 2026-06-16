@@ -832,50 +832,60 @@ body::after {
 /* ============================================================
    HERO SCENE — pinned scrubbed zoom (GSAP ScrollTrigger)
    ============================================================ */
-.hero-scene { position: relative; background: var(--bg); }
+.hero-scene { position: relative; background: #05060a; }
 .hero-stage {
   height: 100svh;
   position: relative;
   overflow: hidden;
-  background: var(--bg);
+  background: #05060a;
 }
-.hero-planet {
-  position: absolute;
-  top: -16vmin; right: -12vmin;
-  width: 56vmin; height: 56vmin;
-  border-radius: 50%;
-  background: #0b0e15;
-  transform-origin: center;
-  will-change: transform;
-  z-index: 1;
+.hero-stage > * { position: absolute; inset: 0; }
+.hero-cosmos {
+  background: radial-gradient(125% 120% at 50% 28%, #0c1120 0%, #05060a 68%);
+  z-index: 0;
 }
-.hero-stars {
-  position: absolute; inset: 0; z-index: 2;
-  opacity: 0; pointer-events: none;
-}
-.hero-stars svg { width: 100%; height: 100%; display: block; }
-.hero-figure {
-  position: absolute;
-  left: clamp(18px, 6vw, 96px);
-  bottom: clamp(26px, 7vh, 72px);
-  width: clamp(150px, 24vw, 290px);
-  z-index: 3;
-}
-.hero-rocket {
-  position: absolute;
-  left: calc(clamp(18px, 6vw, 96px) + 26px);
-  bottom: clamp(38px, 9vh, 96px);
-  z-index: 4;
-  opacity: 0;
+.hero-nebula {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  z-index: 1; opacity: 0;
+  mix-blend-mode: screen;
   will-change: transform, opacity;
 }
-.hero-rocket svg { display: block; }
+.hero-earth {
+  inset: auto auto -28vmin 50%;
+  margin-left: -43vmin;
+  width: auto; height: 86vmin;
+  object-fit: contain;
+  z-index: 2; opacity: 0;
+  mix-blend-mode: screen;
+  transform-origin: center bottom;
+  filter: brightness(1.05) contrast(1.05);
+  will-change: transform, opacity;
+}
+.hero-photo { z-index: 3; will-change: transform, opacity; }
+.hero-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 28%;
+  filter: contrast(1.08) saturate(0.9) brightness(0.9);
+}
+.hero-cosmos-sky {
+  inset: 0 0 auto 0;
+  width: 100%; height: 62%;
+  object-fit: cover; object-position: center top;
+  z-index: 4; opacity: 0.5;
+  mix-blend-mode: screen; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 36%, transparent 80%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 36%, transparent 80%);
+}
+.hero-vignette {
+  z-index: 5; pointer-events: none;
+  background:
+    radial-gradient(120% 92% at 50% 34%, transparent 40%, rgba(5,6,10,0.5) 100%),
+    linear-gradient(180deg, rgba(5,6,10,0.28), transparent 26%, rgba(5,6,10,0.6));
+}
 .hero-mark {
-  position: absolute;
-  left: clamp(18px, 6vw, 96px);
-  bottom: clamp(118px, 25vh, 300px);
-  z-index: 5;
-  color: var(--ink);
+  inset: auto auto clamp(118px, 24vh, 300px) clamp(18px, 6vw, 96px);
+  z-index: 6; color: #fff;
 }
 .hero-title {
   font-weight: 700;
@@ -883,6 +893,7 @@ body::after {
   line-height: 0.8;
   letter-spacing: -0.05em;
   margin: 0;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.35);
 }
 .hero-title .hchar { display: inline-block; will-change: transform, opacity; }
 .hero-title__sub {
@@ -900,14 +911,13 @@ body::after {
   font-size: clamp(0.72rem, 1vw, 0.9rem);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: rgba(255, 255, 255, 0.72);
 }
 .hero-cue {
-  position: absolute;
-  left: 50%; bottom: clamp(20px, 4vh, 40px);
+  inset: auto auto clamp(20px, 4vh, 40px) 50%;
   transform: translateX(-50%);
-  z-index: 5;
-  color: var(--dim);
+  z-index: 6;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
 }
 .hero-cue span { display: inline-block; animation: cueBob 1.8s ease-in-out infinite; }
