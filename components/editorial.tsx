@@ -64,13 +64,13 @@ export function StoryTeaser() {
   return (
     <section className="section-ed" id="story">
       <div className="shell">
-        <SecLabel speed={1.16}>01 / My story</SecLabel>
+        <SecLabel speed={1.2}>01 / My story</SecLabel>
         <div className="story">
           <div>
             <WordReveal
               as="h2"
               className="story__head"
-              speed={1.08}
+              speed={1.12}
               words={[
                 { t: "ENGINEER" }, { t: "BY" }, { t: "TRAINING," }, { br: true },
                 { t: "founder", serif: true }, { t: "by", serif: true }, { t: "habit.", serif: true },
@@ -88,7 +88,7 @@ export function StoryTeaser() {
           <Reveal delay={0.12}>
             <figure className="story__media">
               <ParallaxImg src="/img/story.jpg" alt="Astronaut leaping through the air" strength={36} />
-              <figcaption data-speed={1.12}>Learn by shipping</figcaption>
+              <figcaption data-speed={0.9}>Learn by shipping</figcaption>
             </figure>
           </Reveal>
         </div>
@@ -110,7 +110,7 @@ export function WorkIndexSection() {
   return (
     <section className="section-ed section-ed--tight" id="work">
       <div className="shell">
-        <SecLabel speed={1.14}>02 / Selected work</SecLabel>
+        <SecLabel speed={1.2}>02 / Selected work</SecLabel>
         <HoverIndex rows={workIndex} />
         <Reveal delay={0.1}>
           <Link href="/work" className="textlink" style={{ marginTop: "28px", display: "inline-block" }}>
@@ -132,13 +132,13 @@ export function ContactSection() {
         <WordReveal
           as="h2"
           className="contact-ed__lead"
-          speed={1.08}
+          speed={1.12}
           words={[
             { t: "LET’S" }, { t: "BUILD" }, { br: true },
             { t: "SOMETHING" }, { t: "THAT" }, { t: "works.", serif: true },
           ]}
         />
-        <div className="contact-ed__links" data-speed={1.1}>
+        <div className="contact-ed__links" data-speed={0.92}>
           <Magnetic strength={0.4}>
             <a href={`mailto:${profile.email}`} data-hover>
               {profile.email}

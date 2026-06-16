@@ -21,10 +21,10 @@ export default function StoryPage() {
               as="h1"
               className="page-head__title"
               delay={0.15}
-              speed={1.1}
+              speed={1.22}
               words={[{ t: "THE" }, { t: "story", serif: true }]}
             />
-            <p className="page-head__sub" data-speed={1.06}>
+            <p className="page-head__sub" data-speed={0.9}>
               Bangkok กรุงเทพฯ raised. Manchester trained. Founder shaped.
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function StoryPage() {
                     </div>
                     <span className="portrait__note">portrait incoming</span>
                   </div>
-                  <figcaption data-speed={1.08}>{profile.name} · บารมี ธนวโรธร</figcaption>
+                  <figcaption data-speed={0.9}>{profile.name} · บารมี ธนวโรธร</figcaption>
                 </figure>
               </Reveal>
             </div>
@@ -57,7 +57,7 @@ export default function StoryPage() {
 
         <section className="section-ed--tight section-ed">
           <div className="shell">
-            <SecLabel speed={1.14}>Facts</SecLabel>
+            <SecLabel speed={1.2}>Facts</SecLabel>
             <div className="facts">
               {facts.map((f, i) => (
                 <div key={i} className="fact">
@@ -71,7 +71,7 @@ export default function StoryPage() {
 
         <section className="section-ed--tight section-ed">
           <div className="shell">
-            <SecLabel speed={1.14}>Timeline</SecLabel>
+            <SecLabel speed={1.2}>Timeline</SecLabel>
             <div className="timeline">
               <span className="timeline__line" aria-hidden="true" />
               {timeline.map((t) => (

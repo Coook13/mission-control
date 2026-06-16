@@ -17,10 +17,10 @@ export default function WorkPage() {
               as="h1"
               className="page-head__title"
               delay={0.15}
-              speed={1.1}
+              speed={1.22}
               words={[{ t: "ALL" }, { t: "work", serif: true }]}
             />
-            <p className="page-head__sub" data-speed={1.06}>
+            <p className="page-head__sub" data-speed={0.9}>
               Ventures, research, hackathons, and strategy. Ten entries, six open.
             </p>
           </div>
