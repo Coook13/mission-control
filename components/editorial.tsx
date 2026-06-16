@@ -5,6 +5,7 @@ import { Marquee } from "./Marquee";
 import { PixelMicky } from "./PixelMicky";
 import { HoverIndex } from "./HoverIndex";
 import { Magnetic } from "./Magnetic";
+import { SecLabel } from "./SecLabel";
 
 export { Header } from "./Header";
 
@@ -63,7 +64,7 @@ export function StoryTeaser() {
   return (
     <section className="section-ed" id="story">
       <div className="shell">
-        <div className="sec-label label" data-speed={1.16}>01 / My story</div>
+        <SecLabel speed={1.16}>01 / My story</SecLabel>
         <div className="story">
           <div>
             <WordReveal
@@ -75,7 +76,7 @@ export function StoryTeaser() {
                 { t: "founder", serif: true }, { t: "by", serif: true }, { t: "habit.", serif: true },
               ]}
             />
-            <Reveal className="story__body">
+            <Reveal className="story__body" delay={0.1}>
               {profile.story.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
@@ -109,7 +110,7 @@ export function WorkIndexSection() {
   return (
     <section className="section-ed section-ed--tight" id="work">
       <div className="shell">
-        <div className="sec-label label" data-speed={1.14}>02 / Selected work</div>
+        <SecLabel speed={1.14}>02 / Selected work</SecLabel>
         <HoverIndex rows={workIndex} />
         <Reveal delay={0.1}>
           <Link href="/work" className="textlink" style={{ marginTop: "28px", display: "inline-block" }}>

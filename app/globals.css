@@ -226,6 +226,21 @@ img { display: block; max-width: 100%; }
   flex: 1;
   height: 1px;
   background: var(--line);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s;
+}
+.sec-label__txt {
+  display: inline-block;
+  opacity: 0;
+  transform: translateX(-14px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sec-label.is-in::after { transform: scaleX(1); }
+.sec-label.is-in .sec-label__txt { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sec-label::after { transform: scaleX(1); transition: none; }
+  .sec-label__txt { opacity: 1; transform: none; transition: none; }
 }
 
 /* STORY */

@@ -5,6 +5,7 @@ import { Reveal, WordReveal } from "@/components/motion";
 import { Marquee } from "@/components/Marquee";
 import { PixelMicky } from "@/components/PixelMicky";
 import { StoryFX } from "@/components/StoryFX";
+import { SecLabel } from "@/components/SecLabel";
 
 export const metadata: Metadata = { title: "Story | Micky Thanawarothon" };
 
@@ -56,7 +57,7 @@ export default function StoryPage() {
 
         <section className="section-ed--tight section-ed">
           <div className="shell">
-            <div className="sec-label label" data-speed={1.14}>Facts</div>
+            <SecLabel speed={1.14}>Facts</SecLabel>
             <div className="facts">
               {facts.map((f, i) => (
                 <div key={i} className="fact">
@@ -70,7 +71,7 @@ export default function StoryPage() {
 
         <section className="section-ed--tight section-ed">
           <div className="shell">
-            <div className="sec-label label" data-speed={1.14}>Timeline</div>
+            <SecLabel speed={1.14}>Timeline</SecLabel>
             <div className="timeline">
               <span className="timeline__line" aria-hidden="true" />
               {timeline.map((t) => (

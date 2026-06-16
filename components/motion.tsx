@@ -54,7 +54,7 @@ export function Lines({
   );
 }
 
-function useInViewOnce(threshold = 0.15) {
+export function useInViewOnce(threshold = 0.15) {
   const ref = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
