@@ -7,6 +7,7 @@ import {
   WorkIndexSection,
 } from "@/components/editorial";
 import { HeroScene } from "@/components/HeroScene";
+import { SpaceJourney } from "@/components/SpaceJourney";
 import { EasterEgg } from "@/components/EasterEgg";
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
       <Header />
       <main>
         <HeroScene />
+        <SpaceJourney />
         <div className="page-body">
           <StoryTeaser />
           <RolesMarquee />
