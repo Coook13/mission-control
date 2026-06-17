@@ -1,8 +1,11 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense } from "react";
 import { flightState } from "./flightState";
 import { Starfield } from "./Starfield";
+import { Nebula } from "./Nebula";
+import { Effects } from "./Effects";
 
 const FLIGHT_Z = 320; // total forward travel over the scroll
 
@@ -24,6 +27,7 @@ function Rig() {
 export default function Scene() {
   return (
     <Canvas
+      flat
       camera={{ position: [0, 0, 12], fov: 62, near: 0.1, far: 700 }}
       dpr={[1, 1.75]}
       resize={{ debounce: { scroll: 0, resize: 120 } }}
@@ -31,8 +35,12 @@ export default function Scene() {
       style={{ position: "absolute", inset: 0 }}
     >
       <color attach="background" args={["#02030a"]} />
+      <Suspense fallback={null}>
+        <Nebula />
+      </Suspense>
       <Starfield />
       <Rig />
+      <Effects />
     </Canvas>
   );
 }
