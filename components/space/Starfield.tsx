@@ -1,0 +1,75 @@
+"use client";
+
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import * as THREE from "three";
+import { mulberry32 } from "./rng";
+import { makeStarUniforms, starFragment, starVertex } from "./starMaterial";
+
+/* The flythrough star field: soft round twinkling points filling a long box
+   ahead of the camera. Stars that fall behind recycle to the far end → endless
+   field. Varied size/brightness/tint give real depth. Uses the built-in
+   <shaderMaterial> (no extend needed). */
+export function Starfield({ count = 6500, spread = 180, depth = 360 }: { count?: number; spread?: number; depth?: number }) {
+  const points = useRef<THREE.Points>(null);
+  const mat = useRef<THREE.ShaderMaterial>(null);
+  const uniforms = useMemo(() => makeStarUniforms(), []);
+
+  const { positions, sizes, brights, seeds, tints } = useMemo(() => {
+    const rand = mulberry32(count * 2654435761);
+    const positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const brights = new Float32Array(count);
+    const seeds = new Float32Array(count);
+    const tints = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (rand() - 0.5) * spread;
+      positions[i * 3 + 1] = (rand() - 0.5) * spread * 0.62;
+      positions[i * 3 + 2] = 2 - rand() * depth; // ahead of the camera (z=12)
+      const r = rand();
+      sizes[i] = 0.45 + r * r * 1.7;
+      brights[i] = 0.28 + rand() * 0.72;
+      seeds[i] = rand() * 6.283;
+      tints[i] = rand() * rand();
+    }
+    return { positions, sizes, brights, seeds, tints };
+  }, [count, spread, depth]);
+
+  useFrame((state) => {
+    const m = mat.current as THREE.ShaderMaterial | null;
+    if (m && m.uniforms && m.uniforms.uTime) {
+      m.uniforms.uTime.value = state.clock.elapsedTime;
+      m.uniforms.uFar.value = depth;
+    }
+    const pts = points.current;
+    if (!pts) return;
+    const camZ = state.camera.position.z;
+    const arr = pts.geometry.attributes.position.array as Float32Array;
+    for (let i = 2; i < arr.length; i += 3) {
+      if (arr[i] > camZ + 8) arr[i] -= depth;
+    }
+    pts.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={points} frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-aSize" args={[sizes, 1]} />
+        <bufferAttribute attach="attributes-aBright" args={[brights, 1]} />
+        <bufferAttribute attach="attributes-aSeed" args={[seeds, 1]} />
+        <bufferAttribute attach="attributes-aTint" args={[tints, 1]} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={mat}
+        vertexShader={starVertex}
+        fragmentShader={starFragment}
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </points>
+  );
+}
