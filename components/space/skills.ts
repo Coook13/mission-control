@@ -25,8 +25,8 @@ export type Skill = {
 };
 
 export const SKILLS: Skill[] = [
-  { key: "engineering", label: "Engineering", desc: "AI · CFD · computer vision · robotics", tex: "/img/space/mars.jpg", z: -150, radius: 7, x: 9, y: 3.5, peak: 0.2, glow: 0.26 },
-  { key: "trading", label: "Trading", desc: "Systematic FX & quant strategies", tex: "/img/space/jupiter.jpg", z: -252, radius: 9.5, x: -12, y: -3, peak: 0.37, glow: 0.28 },
+  { key: "engineering", label: "Engineering", desc: "AI · CFD · computer vision · robotics", tex: "/img/space/mars.jpg", z: -150, radius: 7, x: 9, y: 3.5, peak: 0.2, glow: 0.36 },
+  { key: "trading", label: "Trading", desc: "Systematic FX & quant strategies", tex: "/img/space/jupiter.jpg", z: -252, radius: 9.5, x: -12, y: -3, peak: 0.37, glow: 0.32 },
   { key: "venture", label: "Venture", desc: "Founder — ventures built & shipped", tex: "/img/space/saturn.jpg", z: -354, radius: 8, x: 11, y: 4.5, peak: 0.54, glow: 0.5 },
   { key: "strategy", label: "Strategy", desc: "Growth, go-to-market, positioning", tex: "/img/space/neptune.jpg", z: -450, radius: 7.5, x: -10, y: 3, peak: 0.7, glow: 0.4 },
   { key: "research", label: "Research", desc: "NECTEC graphene · ISSDC NASA finalist", tex: "/img/space/earth.jpg", z: -546, radius: 8, x: 9, y: -4, peak: 0.86, glow: 0.3 },
