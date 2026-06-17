@@ -23,6 +23,7 @@ export function Flythrough() {
   const ref = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   const lenis = useLenis(() => {
@@ -35,6 +36,10 @@ export function Flythrough() {
     const fade = Math.max(0, 1 - p / 0.1);
     if (heroRef.current) heroRef.current.style.opacity = String(fade);
     if (cueRef.current) cueRef.current.style.opacity = String(fade);
+    // end curtain: fade the deep-space frame to solid black over the last ~10%
+    // so the cream content below emerges from darkness (clean cinematic cut),
+    // not an abrupt space->cream seam.
+    if (endRef.current) endRef.current.style.opacity = String(Math.max(0, Math.min(1, (p - 0.9) / 0.1)));
     // skill-planet labels: reveal each near its planet's flight peak (pure
     // function of p → reverses cleanly on scroll-up).
     el.querySelectorAll<HTMLElement>(".fly__plabel").forEach((lbl) => {
@@ -91,6 +96,7 @@ export function Flythrough() {
           ))}
           <div className="fly__cue" ref={cueRef}><span>scroll</span></div>
         </div>
+        <div className="fly__end" ref={endRef} aria-hidden="true" />
       </div>
     </section>
   );
