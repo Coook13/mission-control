@@ -7,6 +7,7 @@ import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
 import { Planets } from "./Planets";
+import { RocketModel } from "./RocketModel";
 import { Effects } from "./Effects";
 
 const FLIGHT_Z = 600; // total forward travel over the scroll (past 5 planets)
@@ -49,6 +50,7 @@ export default function Scene() {
         <Planets />
       </Suspense>
       <Starfield />
+      <RocketModel />
       <Rig />
       <Effects />
     </Canvas>
