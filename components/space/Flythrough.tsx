@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useLenis } from "lenis/react";
 import { flightState, resetFlight } from "./flightState";
+import { SKILLS } from "./skills";
 import { profile } from "@/lib/site-data";
 
 const Scene = dynamic(() => import("./Scene"), {
@@ -34,6 +35,14 @@ export function Flythrough() {
     const fade = Math.max(0, 1 - p / 0.1);
     if (heroRef.current) heroRef.current.style.opacity = String(fade);
     if (cueRef.current) cueRef.current.style.opacity = String(fade);
+    // skill-planet labels: reveal each near its planet's flight peak (pure
+    // function of p → reverses cleanly on scroll-up).
+    el.querySelectorAll<HTMLElement>(".fly__plabel").forEach((lbl) => {
+      const peak = parseFloat(lbl.dataset.peak || "0");
+      const op = Math.max(0, 1 - Math.abs(p - peak) / 0.08);
+      lbl.style.opacity = String(op);
+      lbl.style.transform = `translateY(${(1 - op) * 26}px)`;
+    });
   });
 
   // On home mount / route-return: don't let a reload or nav-back leave the
@@ -73,6 +82,13 @@ export function Flythrough() {
               <span>— founder · engineer · strategist</span>
             </div>
           </div>
+          {SKILLS.map((s, i) => (
+            <div className="fly__plabel" data-peak={s.peak} key={s.key}>
+              <span className="fly__plabel__idx">{String(i + 1).padStart(2, "0")} / 05</span>
+              <h2 className="fly__plabel__label">{s.label}</h2>
+              <p className="fly__plabel__desc">{s.desc}</p>
+            </div>
+          ))}
           <div className="fly__cue" ref={cueRef}><span>scroll</span></div>
         </div>
       </div>

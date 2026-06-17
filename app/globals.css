@@ -1008,7 +1008,7 @@ body::after {
 /* ============================================================
    WEBGL FLYTHROUGH (hero + journey unified in one canvas)
    ============================================================ */
-.fly { position: relative; height: 600vh; background: #02030a; }
+.fly { position: relative; height: 800vh; background: #02030a; }
 .fly__sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; background: #02030a; }
 .fly__fallback { position: absolute; inset: 0; background: radial-gradient(140% 120% at 50% 40%, #0a1326, #02030a 72%); }
 .fly canvas { position: absolute; inset: 0; display: block; width: 100% !important; height: 100% !important; }
@@ -1030,6 +1030,25 @@ html, body { overflow-x: hidden; }
   margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px 14px;
   font-family: var(--font-sans); font-size: clamp(0.72rem, 1vw, 0.9rem);
   letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
+}
+.fly__plabel {
+  position: absolute; left: clamp(20px, 6vw, 100px); bottom: clamp(120px, 26vh, 320px);
+  color: #fff; opacity: 0; pointer-events: none; will-change: opacity, transform;
+  max-width: min(86vw, 640px);
+}
+.fly__plabel__idx {
+  display: block; font-family: var(--font-sans);
+  font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55); margin-bottom: 14px;
+}
+.fly__plabel__label {
+  margin: 0; font-weight: 700;
+  font-size: clamp(3rem, 9vw, 7.5rem); line-height: 0.9; letter-spacing: -0.04em;
+  text-shadow: 0 4px 50px rgba(0, 0, 0, 0.6);
+}
+.fly__plabel__desc {
+  margin: 14px 0 0; font-size: clamp(1rem, 1.6vw, 1.4rem);
+  color: rgba(255, 255, 255, 0.78); max-width: 40ch;
 }
 .fly__cue {
   position: absolute; left: 50%; bottom: clamp(20px, 4vh, 40px); transform: translateX(-50%);

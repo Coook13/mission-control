@@ -6,9 +6,10 @@ import { flightState } from "./flightState";
 import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
+import { Planets } from "./Planets";
 import { Effects } from "./Effects";
 
-const FLIGHT_Z = 320; // total forward travel over the scroll
+const FLIGHT_Z = 600; // total forward travel over the scroll (past 5 planets)
 
 function Rig() {
   useEffect(() => { initMouseParallax(); }, []);
@@ -33,15 +34,19 @@ export default function Scene() {
   return (
     <Canvas
       flat
-      camera={{ position: [0, 0, 12], fov: 62, near: 0.1, far: 700 }}
+      camera={{ position: [0, 0, 12], fov: 62, near: 0.1, far: 900 }}
       dpr={[1, 1.75]}
       resize={{ debounce: { scroll: 0, resize: 120 } }}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance", preserveDrawingBuffer: true }}
       style={{ position: "absolute", inset: 0 }}
     >
       <color attach="background" args={["#02030a"]} />
+      <ambientLight intensity={0.22} />
+      <directionalLight position={[8, 5, 10]} intensity={1.5} color="#d2e2ff" />
+      <directionalLight position={[-8, -3, -4]} intensity={0.62} color="#3c4d86" />
       <Suspense fallback={null}>
         <Nebula />
+        <Planets />
       </Suspense>
       <Starfield />
       <Rig />
