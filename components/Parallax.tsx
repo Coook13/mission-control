@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ElementType, type ReactNode } from "react";
+import { createElement, useEffect, useRef, type ElementType, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useLenis } from "lenis/react";
 import gsap from "gsap";
@@ -102,9 +102,7 @@ export function Parallax({
   className?: string;
   children?: ReactNode;
 }) {
-  return (
-    <Tag data-speed={speed} className={className}>
-      {children}
-    </Tag>
-  );
+  // createElement sidesteps the JSX children-type inference that R3F's global
+  // JSX augmentation breaks for a dynamic ElementType tag.
+  return createElement(Tag, { "data-speed": speed, className }, children);
 }

@@ -1005,6 +1005,42 @@ body::after {
   .journey-info { bottom: clamp(70px, 14vh, 160px); }
 }
 
+/* ============================================================
+   WEBGL FLYTHROUGH (hero + journey unified in one canvas)
+   ============================================================ */
+.fly { position: relative; height: 600vh; background: #02030a; }
+.fly__sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; background: #02030a; }
+.fly__fallback { position: absolute; inset: 0; background: radial-gradient(140% 120% at 50% 40%, #0a1326, #02030a 72%); }
+.fly canvas { position: absolute; inset: 0; display: block; }
+.fly__overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.fly__hero {
+  position: absolute; left: clamp(20px, 6vw, 100px); bottom: clamp(120px, 26vh, 320px);
+  color: #fff; will-change: opacity;
+}
+.fly__title {
+  font-weight: 700; font-size: clamp(3.6rem, 15vw, 13rem); line-height: 0.82;
+  letter-spacing: -0.05em; margin: 0; text-shadow: 0 4px 70px rgba(0, 0, 0, 0.6);
+}
+.fly__sub {
+  display: block; font-weight: 600; font-size: clamp(0.95rem, 3.6vw, 2.7rem);
+  line-height: 1; letter-spacing: -0.01em; margin-top: 0.12em; color: rgba(255, 255, 255, 0.92);
+}
+.fly__meta {
+  margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px 14px;
+  font-family: var(--font-sans); font-size: clamp(0.72rem, 1vw, 0.9rem);
+  letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
+}
+.fly__cue {
+  position: absolute; left: 50%; bottom: clamp(20px, 4vh, 40px); transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.6); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+}
+.fly__cue span { display: inline-block; animation: cueBob 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .fly { height: auto; }
+  .fly__sticky { position: relative; }
+  .fly__cue span { animation: none; }
+}
+
 /* curtain reveal — light page rises over the pinned, zooming hero */
 .page-body {
   position: relative;
