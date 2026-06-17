@@ -1011,7 +1011,8 @@ body::after {
 .fly { position: relative; height: 600vh; background: #02030a; }
 .fly__sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; background: #02030a; }
 .fly__fallback { position: absolute; inset: 0; background: radial-gradient(140% 120% at 50% 40%, #0a1326, #02030a 72%); }
-.fly canvas { position: absolute; inset: 0; display: block; }
+.fly canvas { position: absolute; inset: 0; display: block; width: 100% !important; height: 100% !important; }
+html, body { overflow-x: hidden; }
 .fly__overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .fly__hero {
   position: absolute; left: clamp(20px, 6vw, 100px); bottom: clamp(120px, 26vh, 320px);

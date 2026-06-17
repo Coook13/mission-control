@@ -26,6 +26,7 @@ export default function Scene() {
     <Canvas
       camera={{ position: [0, 0, 12], fov: 62, near: 0.1, far: 700 }}
       dpr={[1, 1.75]}
+      resize={{ debounce: { scroll: 0, resize: 120 } }}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance", preserveDrawingBuffer: true }}
       style={{ position: "absolute", inset: 0 }}
     >

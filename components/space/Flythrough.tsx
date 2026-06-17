@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useLenis } from "lenis/react";
-import { flightState } from "./flightState";
+import { flightState, resetFlight } from "./flightState";
 import { profile } from "@/lib/site-data";
 
 const Scene = dynamic(() => import("./Scene"), {
@@ -21,8 +22,9 @@ export function Flythrough() {
   const ref = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
-  useLenis(() => {
+  const lenis = useLenis(() => {
     const el = ref.current;
     if (!el) return;
     const total = el.offsetHeight - window.innerHeight;
@@ -33,6 +35,28 @@ export function Flythrough() {
     if (heroRef.current) heroRef.current.style.opacity = String(fade);
     if (cueRef.current) cueRef.current.style.opacity = String(fade);
   });
+
+  // On home mount / route-return: don't let a reload or nav-back leave the
+  // flight + name mid-scroll. Reset state and snap to the top. Scoped to "/"
+  // so /story and /work are untouched.
+  useEffect(() => {
+    // dev-only: drive the flight from the console without scrolling the DOM
+    // (window.flightState.target = 0.5) so mid-flight states are screenshot-able
+    // — the sticky canvas stays pinned at scroll 0, which CDP captures cleanly.
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as { flightState?: typeof flightState }).flightState = flightState;
+    }
+    if (pathname !== "/") return;
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    resetFlight();
+    flightState.target = 0;
+    if (lenis) lenis.scrollTo(0, { immediate: true });
+    else window.scrollTo(0, 0);
+    if (heroRef.current) heroRef.current.style.opacity = "1";
+    if (cueRef.current) cueRef.current.style.opacity = "1";
+  }, [pathname, lenis]);
 
   return (
     <section className="fly" ref={ref} aria-label="Intro">
