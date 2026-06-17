@@ -24,9 +24,11 @@ function Rig() {
     m.x += (m.tx - m.x) * Math.min(1, dt * 3);
     m.y += (m.ty - m.y) * Math.min(1, dt * 3);
     cam.position.z = 12 - p * FLIGHT_Z;
-    cam.position.x = Math.sin(t * 0.09) * 1.6 + m.x * 0.9;
-    cam.position.y = Math.cos(t * 0.07) * 1.1 - m.y * 0.6;
-    cam.lookAt(Math.sin(t * 0.05) * 2 + m.x * 0.5, Math.cos(t * 0.04) * 1.2 - m.y * 0.4, cam.position.z - 60);
+    // gentle drift + mouse parallax. Amplitudes kept modest so each planet's
+    // framing at its peak stays consistent regardless of scroll timing/phase.
+    cam.position.x = Math.sin(t * 0.09) * 1.0 + m.x * 0.9;
+    cam.position.y = Math.cos(t * 0.07) * 0.7 - m.y * 0.6;
+    cam.lookAt(Math.sin(t * 0.05) * 1.1 + m.x * 0.5, Math.cos(t * 0.04) * 0.7 - m.y * 0.4, cam.position.z - 60);
   });
   return null;
 }

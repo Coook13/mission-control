@@ -35,7 +35,7 @@ function Planet({ s }: { s: Skill }) {
         map={tex}
         emissiveMap={tex}
         emissive="#ffffff"
-        emissiveIntensity={0.26}
+        emissiveIntensity={s.glow}
         roughness={1}
         metalness={0}
         toneMapped={false}
