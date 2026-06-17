@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLenis } from "lenis/react";
 import { flightState, resetFlight } from "./flightState";
 import { SKILLS } from "./skills";
@@ -19,7 +19,7 @@ const MARK = profile.nickname.toUpperCase();
    sticks to the viewport while you scroll it (no GSAP pin — avoids the old
    pin-measurement bug). Scroll progress drives the 3D flight; DOM overlays
    (name now, skill labels next) sit crisply over the WebGL. */
-export function Flythrough() {
+function FlythroughFull() {
   const ref = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
@@ -100,4 +100,61 @@ export function Flythrough() {
       </div>
     </section>
   );
+}
+
+/* Static fallback — no WebGL. Shown for reduced-motion or small touch devices:
+   a graded deep-field hero + the name + the 5 skills as a clean stacked list.
+   The heavy <Scene> is never mounted in this mode. */
+function FlyStatic() {
+  return (
+    <section className="fly-static" aria-label="Intro">
+      <div className="fly-static__inner">
+        <div className="fly-static__hero">
+          <h1 className="fly__title" aria-label={profile.name}>
+            {MARK}
+            <span className="fly__sub">THANAWAROTHON</span>
+          </h1>
+          <div className="fly__meta">
+            <span>{profile.name}</span>
+            <span>— founder · engineer · strategist</span>
+          </div>
+        </div>
+        <ol className="fly-static__skills">
+          {SKILLS.map((s, i) => (
+            <li className="fly-static__skill" key={s.key}>
+              <span className="fly__plabel__idx">{String(i + 1).padStart(2, "0")} / 05</span>
+              <h2 className="fly-static__skill-label">{s.label}</h2>
+              <p className="fly__plabel__desc">{s.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+/* Picks the experience. Defaults to the full WebGL flythrough (the showcase,
+   and what SSR renders → no hydration mismatch). After mount, switches to the
+   static fallback for reduced-motion or small touch screens, so the WebGL
+   Scene is never run there. A `?static` query param forces it in dev for
+   verification. */
+export function Flythrough() {
+  const [mode, setMode] = useState<"full" | "static" | null>(null);
+
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const touchSmall = window.matchMedia("(pointer: coarse) and (max-width: 768px)");
+    const devForce =
+      process.env.NODE_ENV !== "production" && new URLSearchParams(window.location.search).has("static");
+    const decide = () => setMode(reduce.matches || touchSmall.matches || devForce ? "static" : "full");
+    decide();
+    reduce.addEventListener("change", decide);
+    touchSmall.addEventListener("change", decide);
+    return () => {
+      reduce.removeEventListener("change", decide);
+      touchSmall.removeEventListener("change", decide);
+    };
+  }, []);
+
+  return mode === "static" ? <FlyStatic /> : <FlythroughFull />;
 }
