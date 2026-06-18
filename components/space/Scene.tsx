@@ -3,14 +3,13 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect } from "react";
 import { flightState } from "./flightState";
+import { zOfP } from "./phase";
 import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
 import { Planets } from "./Planets";
 import { RocketModel } from "./RocketModel";
 import { Effects } from "./Effects";
-
-const FLIGHT_Z = 600; // total forward travel over the scroll (past 5 planets)
 
 function Rig() {
   useEffect(() => { initMouseParallax(); }, []);
@@ -26,7 +25,7 @@ function Rig() {
     const m = mouseState;
     m.x += (m.tx - m.x) * Math.min(1, dt * 3);
     m.y += (m.ty - m.y) * Math.min(1, dt * 3);
-    cam.position.z = 12 - p * FLIGHT_Z;
+    cam.position.z = zOfP(p);
     // gentle drift + mouse parallax. Amplitudes kept modest so each planet's
     // framing at its peak stays consistent regardless of scroll timing/phase.
     cam.position.x = Math.sin(t * 0.09) * 1.0 + m.x * 0.9;
