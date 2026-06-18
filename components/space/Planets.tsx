@@ -9,8 +9,9 @@ import { SKILLS, type Skill } from "./skills";
 /* A planet is invisible until the camera approaches it, fully opaque at its
    hero distance, then sweeps past. This keeps each beat focused on ONE planet
    instead of the whole line bunching at the vanishing point (the clump). */
-const FADE_FAR = 140; // units ahead: beyond this → invisible
-const FADE_NEAR = 95; // units ahead: within this → fully opaque
+const FADE_FAR = 150; // units ahead: beyond this → invisible
+const FADE_NEAR = 100; // units ahead: within this → fully opaque
+const GROW_NEAR = 18; // units ahead at which the approach-growth tops out
 
 function Planet({ s }: { s: Skill }) {
   const ref = useRef<THREE.Mesh>(null);
@@ -26,6 +27,10 @@ function Planet({ s }: { s: Skill }) {
     const mat = m.material as THREE.MeshStandardMaterial;
     mat.opacity = op;
     m.visible = op > 0.002;
+    // grow as we fly toward it (on top of natural perspective growth) so each
+    // planet "rushes up" at its beat rather than just fading in
+    const g = THREE.MathUtils.clamp((FADE_FAR - ahead) / (FADE_FAR - GROW_NEAR), 0, 1);
+    m.scale.setScalar(0.92 + g * 0.18);
   });
 
   return (

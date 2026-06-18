@@ -23,9 +23,9 @@ export type Skill = {
 };
 
 export const SKILLS: Skill[] = [
-  { key: "engineering", label: "Engineering", desc: "AI · CFD · computer vision · robotics", tex: "/img/space/mars.jpg", peak: 0.3, z: planetZ(0.3), radius: 7, x: 9, y: 3.5, glow: 0.36, side: "left" },
-  { key: "trading", label: "Trading", desc: "Systematic FX & quant strategies", tex: "/img/space/jupiter.jpg", peak: 0.43, z: planetZ(0.43), radius: 9.5, x: -12, y: -3, glow: 0.32, side: "right" },
-  { key: "venture", label: "Venture", desc: "Founder — ventures built & shipped", tex: "/img/space/saturn.jpg", peak: 0.56, z: planetZ(0.56), radius: 8, x: 11, y: 4.5, glow: 0.5, side: "left" },
-  { key: "strategy", label: "Strategy", desc: "Growth, go-to-market, positioning", tex: "/img/space/neptune.jpg", peak: 0.69, z: planetZ(0.69), radius: 7.5, x: -10, y: 3, glow: 0.4, side: "right" },
-  { key: "research", label: "Research", desc: "NECTEC graphene · ISSDC NASA finalist", tex: "/img/space/earth.jpg", peak: 0.82, z: planetZ(0.82), radius: 8, x: 9, y: -4, glow: 0.3, side: "left" },
+  { key: "engineering", label: "Engineering", desc: "AI · CFD · computer vision · robotics", tex: "/img/space/mars.jpg", peak: 0.3, z: planetZ(0.3), radius: 11, x: 7, y: 3, glow: 0.5, side: "left" },
+  { key: "trading", label: "Trading", desc: "Systematic FX & quant strategies", tex: "/img/space/jupiter.jpg", peak: 0.43, z: planetZ(0.43), radius: 14, x: -8, y: -3.5, glow: 0.45, side: "right" },
+  { key: "venture", label: "Venture", desc: "Founder — ventures built & shipped", tex: "/img/space/saturn.jpg", peak: 0.56, z: planetZ(0.56), radius: 12, x: 8, y: 4, glow: 0.6, side: "left" },
+  { key: "strategy", label: "Strategy", desc: "Growth, go-to-market, positioning", tex: "/img/space/neptune.jpg", peak: 0.69, z: planetZ(0.69), radius: 11, x: -7, y: 3, glow: 0.5, side: "right" },
+  { key: "research", label: "Research", desc: "NECTEC graphene · ISSDC NASA finalist", tex: "/img/space/earth.jpg", peak: 0.82, z: planetZ(0.82), radius: 12, x: 7, y: -3.5, glow: 0.45, side: "left" },
 ];
