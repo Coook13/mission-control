@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect } from "react";
 import { flightState } from "./flightState";
-import { zOfP } from "./phase";
+import { zOfP, warp } from "./phase";
 import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
@@ -19,6 +19,7 @@ function Rig() {
     // flight feels tightly scroll-driven, not a ~1s laggy follow. Pure in p →
     // still scrubs/reverses cleanly.
     f.progress = f.target;
+    f.warp = warp(f.progress);
     const p = f.progress;
     const t = state.clock.elapsedTime;
     const cam = state.camera;
