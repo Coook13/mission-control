@@ -1032,10 +1032,15 @@ html, body { overflow-x: hidden; }
   letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
 }
 .fly__plabel {
-  position: absolute; left: clamp(20px, 6vw, 100px); bottom: clamp(120px, 26vh, 320px);
+  position: absolute; bottom: clamp(120px, 26vh, 320px);
   color: #fff; opacity: 0; pointer-events: none; will-change: opacity, transform;
-  max-width: min(86vw, 640px);
+  max-width: min(86vw, 560px);
 }
+/* label sits OPPOSITE the planet, alternating each beat (planet right → label
+   left, planet left → label right) for a balanced, varied composition */
+.fly__plabel--left { left: clamp(20px, 6vw, 100px); }
+.fly__plabel--right { right: clamp(20px, 6vw, 100px); text-align: right; }
+.fly__plabel--right .fly__plabel__desc { margin-left: auto; }
 .fly__plabel__idx {
   display: block; font-family: var(--font-sans);
   font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase;
@@ -1049,6 +1054,12 @@ html, body { overflow-x: hidden; }
 .fly__plabel__desc {
   margin: 14px 0 0; font-size: clamp(1rem, 1.6vw, 1.4rem);
   color: rgba(255, 255, 255, 0.78); max-width: 40ch;
+}
+/* narrow non-touch windows: force both labels left so right-aligned text
+   doesn't cramp against the edge (touch ≤768px uses the static fallback) */
+@media (max-width: 720px) {
+  .fly__plabel--right { right: auto; left: clamp(20px, 6vw, 100px); text-align: left; }
+  .fly__plabel--right .fly__plabel__desc { margin-left: 0; }
 }
 .fly__cue {
   position: absolute; left: 50%; bottom: clamp(20px, 4vh, 40px); transform: translateX(-50%);

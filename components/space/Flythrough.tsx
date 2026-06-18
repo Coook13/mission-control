@@ -88,7 +88,7 @@ function FlythroughFull() {
             </div>
           </div>
           {SKILLS.map((s, i) => (
-            <div className="fly__plabel" data-peak={s.peak} key={s.key}>
+            <div className={`fly__plabel fly__plabel--${s.side}`} data-peak={s.peak} key={s.key}>
               <span className="fly__plabel__idx">{String(i + 1).padStart(2, "0")} / 05</span>
               <h2 className="fly__plabel__label">{s.label}</h2>
               <p className="fly__plabel__desc">{s.desc}</p>
