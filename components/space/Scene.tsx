@@ -16,7 +16,10 @@ function Rig() {
   useEffect(() => { initMouseParallax(); }, []);
   useFrame((state, dt) => {
     const f = flightState;
-    f.progress += (f.target - f.progress) * Math.min(1, dt * 3.2);
+    // Lenis already smooths the scroll; track it 1:1 (no second lerp) so the
+    // flight feels tightly scroll-driven, not a ~1s laggy follow. Pure in p →
+    // still scrubs/reverses cleanly.
+    f.progress = f.target;
     const p = f.progress;
     const t = state.clock.elapsedTime;
     const cam = state.camera;
