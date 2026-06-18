@@ -129,6 +129,7 @@ export function ContactSection() {
         <ParallaxImg src="/img/contact.jpg" alt="A figure standing before a huge moon" strength={28} />
       </div>
       <div className="contact-ed__overlay">
+        <div className="contact-ed__warp" aria-hidden="true" />
         <WordReveal
           as="h2"
           className="contact-ed__lead"
