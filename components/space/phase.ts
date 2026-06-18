@@ -58,6 +58,33 @@ export function planetZ(peak: number, approach = 42): number {
   return zOfP(peak) - approach;
 }
 
+/* Rocket z-offset relative to the camera (negative = AHEAD of the camera).
+   Starts behind the camera (hidden), accelerates past during warp-in (crosses
+   0 ≈ p0.11 = the swoosh), settles to a steady lead through cruise, then races
+   far ahead into the warp-out. Pure function of p → the swoosh reverses on
+   scroll-up. */
+export function rocketLead(p: number): number {
+  if (p < 0.05) return 30; // behind the camera, off-screen
+  if (p < 0.15) return 30 + easeInQuad((p - 0.05) / 0.1) * -75; // 30 -> -45 (swoosh past)
+  if (p < 0.24) return -45 + easeOutQuad((p - 0.15) / 0.09) * 25; // -45 -> -20 (settle)
+  if (p < SEG.beatsEnd) return -20; // lead the cruise
+  return -20 + easeInQuad(clamp01((p - SEG.beatsEnd) / (1 - SEG.beatsEnd))) * -110; // -20 -> -130 (race out)
+}
+
+/* Rocket lateral offset (x,y) relative to the camera. Enters low-left, sweeps
+   in beside the camera during the swoosh, then leads low-centre through cruise
+   and rises toward the centre as it races into the warp-out hole. */
+export function rocketPath(p: number): [number, number] {
+  if (p < 0.05) return [-7, -7.5];
+  if (p < 0.24) {
+    const s = easeOutQuad((p - 0.05) / 0.19);
+    return [-7 + s * 7, -7.5 + s * 1.5]; // -> (0, -6) low-centre, leading
+  }
+  if (p < SEG.beatsEnd) return [0, -6];
+  const s = easeInQuad(clamp01((p - SEG.beatsEnd) / (1 - SEG.beatsEnd)));
+  return [0, -6 + s * 4.5]; // rise toward centre into the warp hole
+}
+
 /* Warp intensity 0..1: ramps up across warp-in, back down across decel, zero
    through cruise, then up again across warp-out. Pure function of p. */
 export function warp(p: number): number {
