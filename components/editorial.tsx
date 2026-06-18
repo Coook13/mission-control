@@ -162,6 +162,11 @@ export function Footer() {
       <footer className="footer-ed">
         <span>{profile.name} © 2026</span>
         <span>Manchester / Bangkok</span>
+        <span className="footer-ed__credit">
+          Rocket: “Rocket ship” by{" "}
+          <a href="https://poly.pizza/m/4mPkOKdzAk-" target="_blank" rel="noopener noreferrer">Poly by Google</a>,{" "}
+          <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener noreferrer">CC BY 3.0</a>
+        </span>
         <span className="egg" title="type it anywhere">
           psst: type &quot;war&quot;
         </span>

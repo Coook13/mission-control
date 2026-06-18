@@ -5,7 +5,7 @@ import { useRef } from "react";
 import * as THREE from "three";
 import { flightState } from "./flightState";
 import { rocketLead, rocketPath } from "./phase";
-import { PrimitiveRocket } from "./PrimitiveRocket";
+import { RocketVisual } from "./RocketVisual";
 
 /* Places + animates the rocket in WORLD space (decoupled from the camera in z),
    driven purely by flightState.progress. It starts behind the camera, swooshes
@@ -62,7 +62,7 @@ export function RocketModel() {
 
   return (
     <group ref={outer} scale={0.66} visible={false}>
-      <PrimitiveRocket />
+      <RocketVisual />
     </group>
   );
 }
