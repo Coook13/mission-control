@@ -6,6 +6,7 @@ import { flightState } from "./flightState";
 import { zOfP, warp } from "./phase";
 import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
+import { WarpStreaks } from "./WarpStreaks";
 import { Nebula } from "./Nebula";
 import { Planets } from "./Planets";
 import { RocketModel } from "./RocketModel";
@@ -55,6 +56,7 @@ export default function Scene() {
         <Planets />
       </Suspense>
       <Starfield />
+      <WarpStreaks />
       <RocketModel />
       <Rig />
       <Effects />
