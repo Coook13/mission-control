@@ -7,9 +7,6 @@ import { zOfP, warp } from "./phase";
 import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { WarpStreaks } from "./WarpStreaks";
-import { Nebula } from "./Nebula";
-import { Planets } from "./Planets";
-import { RocketModel } from "./RocketModel";
 import { Effects } from "./Effects";
 
 function Rig() {
@@ -48,16 +45,10 @@ export default function Scene() {
       style={{ position: "absolute", inset: 0 }}
     >
       <color attach="background" args={["#02030a"]} />
-      <ambientLight intensity={0.22} />
-      <directionalLight position={[8, 5, 10]} intensity={1.5} color="#d2e2ff" />
-      <directionalLight position={[-8, -3, -4]} intensity={0.62} color="#3c4d86" />
       <Suspense fallback={null}>
-        <Nebula />
-        <Planets />
+        <Starfield />
+        <WarpStreaks />
       </Suspense>
-      <Starfield />
-      <WarpStreaks />
-      <RocketModel />
       <Rig />
       <Effects />
     </Canvas>
