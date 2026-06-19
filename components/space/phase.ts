@@ -10,7 +10,6 @@ export const SEG = { heroEnd: 0.06, warpInEnd: 0.2, decelEnd: 0.26, beatsEnd: 0.
 
 const easeInQuad = (u: number) => u * u;
 const easeOutQuad = (u: number) => 1 - (1 - u) * (1 - u);
-const easeInOut = (u: number) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
 const clamp01 = (u: number) => (u < 0 ? 0 : u > 1 ? 1 : u);
 
 // distance budget per segment (fractions of FLIGHT_Z): hero is slow, warp-in
@@ -85,12 +84,12 @@ export function rocketPath(p: number): [number, number] {
   return [0, -6 + s * 4.5]; // rise toward centre into the warp hole
 }
 
-/* Warp intensity 0..1: ramps up across warp-in, back down across decel, zero
-   through cruise, then up again across warp-out. Pure function of p. */
+/* Warp intensity 0..1, pulsed BETWEEN dwell points (hero + 5 beats + exit):
+   ~0 when settled on a planet, ramping to 1 in the gaps so we "warp between
+   galaxies" — the light-speed streaks mask each crossfade. Pure function of p. */
+const DWELL = [0.0, 0.22, 0.38, 0.54, 0.7, 0.85, 1.0];
 export function warp(p: number): number {
-  if (p < SEG.heroEnd) return 0;
-  if (p < SEG.warpInEnd) return easeInOut((p - SEG.heroEnd) / (SEG.warpInEnd - SEG.heroEnd));
-  if (p < SEG.decelEnd) return 1 - easeInOut((p - SEG.warpInEnd) / (SEG.decelEnd - SEG.warpInEnd));
-  if (p < SEG.beatsEnd) return 0;
-  return easeInOut(clamp01((p - SEG.beatsEnd) / (1 - SEG.beatsEnd)));
+  let dd = 1;
+  for (const d of DWELL) dd = Math.min(dd, Math.abs(p - d));
+  return clamp01((dd - 0.02) / 0.05); // 0 within 0.02 of a dwell → 1 by 0.07 away
 }

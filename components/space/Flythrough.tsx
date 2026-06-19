@@ -46,7 +46,7 @@ function FlythroughFull() {
     // reveal its label on a tighter window. Pure functions of p → reverse cleanly.
     el.querySelectorAll<HTMLElement>(".cine-scene").forEach((scene) => {
       const peak = parseFloat(scene.dataset.peak || "0");
-      const op = Math.max(0, 1 - Math.abs(p - peak) / 0.14);
+      const op = Math.max(0, 1 - Math.abs(p - peak) / 0.075);
       scene.style.opacity = String(op);
       scene.style.pointerEvents = op > 0.85 ? "auto" : "none";
       const planet = scene.querySelector<HTMLElement>(".cine-planet");
