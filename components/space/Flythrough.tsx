@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLenis } from "lenis/react";
@@ -27,6 +28,7 @@ function FlythroughFull() {
   const cueRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const [open, setOpen] = useState<{ s: number; h: number } | null>(null);
 
   const lenis = useLenis(() => {
     const el = ref.current;
@@ -87,6 +89,19 @@ function FlythroughFull() {
     if (cueRef.current) cueRef.current.style.opacity = "1";
   }, [pathname, lenis]);
 
+  // close the work panel on Escape; resume scroll
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(null);
+        lenis?.start();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, lenis]);
+
   return (
     <section className="fly" ref={ref} aria-label="Intro">
       <div className="fly__sticky">
@@ -95,16 +110,23 @@ function FlythroughFull() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="cine-hero" ref={heroImgRef} src={HERO_IMG} alt="" aria-hidden="true" />
         {/* the five real-planet beats */}
-        <div className="cine-scenes" aria-hidden="true">
-          {SCENES.map((s) => (
+        <div className="cine-scenes">
+          {SCENES.map((s, si) => (
             <div className="cine-scene" data-peak={s.peak} key={s.key}>
-              <div className="cine-tint" style={{ background: `radial-gradient(60% 60% at 50% 45%, ${s.tint}55, transparent 70%)` }} />
+              <div className="cine-tint" style={{ background: `radial-gradient(60% 60% at 50% 45%, ${s.tint}55, transparent 70%)` }} aria-hidden="true" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="cine-planet" src={s.img} alt="" style={{ height: `${s.scale}vh` }} />
+              <img className="cine-planet" src={s.img} alt="" aria-hidden="true" style={{ height: `${s.scale}vh` }} />
               {s.hotspots.map((h, j) => (
-                <span className="cine-hot" key={j} style={{ left: `${h.x}%`, top: `${h.y}%` }}>
+                <button
+                  type="button"
+                  className={`cine-hot ${open && open.s === si && open.h === j ? "is-open" : ""}`}
+                  key={j}
+                  style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                  aria-label={`${h.title} — ${h.oneLine}`}
+                  onClick={() => { setOpen({ s: si, h: j }); lenis?.stop(); }}
+                >
                   <span className="cine-hot__dot" />
-                </span>
+                </button>
               ))}
             </div>
           ))}
@@ -131,6 +153,27 @@ function FlythroughFull() {
           <div className="fly__cue" ref={cueRef}><span>scroll</span></div>
         </div>
         <div className="cine-bars" aria-hidden="true" />
+        {open && (() => {
+          const sc = SCENES[open.s];
+          const h = sc.hotspots[open.h];
+          const close = () => { setOpen(null); lenis?.start(); };
+          const lx = Math.min(80, Math.max(20, h.x));
+          const isWork = h.href.startsWith("/work");
+          return (
+            <>
+              <button className="cine-backdrop" onClick={close} aria-label="Close" tabIndex={-1} />
+              <div className="cine-panel" style={{ left: `${lx}%`, top: `${Math.min(70, h.y)}%` }}>
+                <button className="cine-panel__x" onClick={close} aria-label="Close panel">×</button>
+                <span className="cine-panel__kicker">{sc.label} · {sc.idx}</span>
+                <h3 className="cine-panel__title">{h.title}</h3>
+                <p className="cine-panel__line">{h.oneLine}</p>
+                <Link className="cine-panel__link" href={h.href} onClick={close}>
+                  {isWork ? "View project →" : "Get in touch →"}
+                </Link>
+              </div>
+            </>
+          );
+        })()}
         <div className="fly__exit" ref={endRef} aria-hidden="true" />
       </div>
     </section>
