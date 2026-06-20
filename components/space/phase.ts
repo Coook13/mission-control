@@ -1,95 +1,130 @@
-/* Single source of truth for the flight, as PURE FUNCTIONS of scroll progress
-   p ∈ [0,1]. Every component (camera, planets, warp streaks, rocket) reads from
-   here. No integrated/hidden state → the whole sequence scrubs and reverses
-   exactly on scroll-up. */
+/* FLOW ENGINE — the camera path, expressed entirely as PURE FUNCTIONS of the
+   scroll progress p ∈ [0,1]. Nothing here integrates hidden state, so the whole
+   fly-through scrubs forward AND reverses exactly on scroll-up (anti-pattern
+   #10). The camera flies FORWARD along -z; lateral drift is a gentle S-curve;
+   `enter` grows the black-hole O as we punch through it; `BEATS`/`beatLocal`
+   give the DOM panels their per-beat phase. Consumed by Scene's Rig (camera
+   position), BlackHole3D (grow-on-approach) and FlowPanels (per-beat fly-past). */
 
-export const FLIGHT_Z = 1120; // total forward camera travel over the scroll
+/* Total forward camera travel (world units) across the full scroll. Large
+   enough that the 5 beats sit far apart in depth — only one panel is ever near
+   the camera plane at a time, so beats approach and recede instead of clumping
+   at the vanishing point. */
+export const FLIGHT_Z = 1180;
 
-// segment boundaries in p
-export const SEG = { heroEnd: 0.06, warpInEnd: 0.2, decelEnd: 0.26, beatsEnd: 0.88 };
+/* The five content beats, in scroll-progress space. Camera decelerates ONTO
+   each of these and accelerates BETWEEN them. */
+export const BEATS: number[] = [0.3, 0.42, 0.54, 0.66, 0.78];
 
-const easeInQuad = (u: number) => u * u;
-const easeOutQuad = (u: number) => 1 - (1 - u) * (1 - u);
-const clamp01 = (u: number) => (u < 0 ? 0 : u > 1 ? 1 : u);
+const clamp01 = (u: number): number => (u < 0 ? 0 : u > 1 ? 1 : u);
 
-// distance budget per segment (fractions of FLIGHT_Z): hero is slow, warp-in
-// covers the most ground (the acceleration), cruise is the long steady stretch
-// the planets live in, warp-out re-accelerates briefly.
-const DH = 0.02 * FLIGHT_Z; // hero
-const DW = 0.24 * FLIGHT_Z; // warp-in (accelerate)
-const DD = 0.06 * FLIGHT_Z; // decel
-const DC = 0.62 * FLIGHT_Z; // cruise (planet beats)
-// warp-out gets the remaining 0.06
-const CW = DH; // cumulative distance at start of warp-in
-const CD = DH + DW; // start of decel
-const CC = DH + DW + DD; // start of cruise
-const CO = DH + DW + DD + DC; // start of warp-out
+/* Hermite smoothstep — slow at both ends (zero slope), fast in the middle.
+   Used per inter-anchor segment so each segment reads as "accelerate out of the
+   beat just left, decelerate into the beat ahead". */
+const smoothstep = (u: number): number => {
+  const t = clamp01(u);
+  return t * t * (3 - 2 * t);
+};
 
-/* Cumulative forward distance travelled by p. Strictly increasing (each
-   segment ease maps [0,1]→[0,1] monotonically) → reversible. */
-export function dist(p: number): number {
+/* smootherstep (Perlin) — even flatter ends than smoothstep, for the heavy
+   decel of the final arrival glide. */
+const smootherstep = (u: number): number => {
+  const t = clamp01(u);
+  return t * t * t * (t * (t * 6 - 15) + 10);
+};
+
+export function enter(p: number): number {
+  // 0 before the dive, 1 once through; smoothstep across the ENTER window.
+  return smoothstep((p - 0.1) / (0.2 - 0.1));
+}
+
+/* ---- Camera distance budget ------------------------------------------------
+   Anchors in p that the eased travel passes through. The fraction of total
+   distance assigned to each segment is tuned so the long TRAVEL stretch
+   (0.20→0.85) is the bulk of the journey, the ENTER dive is a quick punch, and
+   the final ARRIVAL is a slow settle. Distances are cumulative and strictly
+   increasing → dist(p) is monotonic → fully reversible. */
+const HERO_END = 0.1; //  p0.00–0.10  near-still in the void
+const ENTER_END = 0.2; // p0.10–0.20  punch through the O
+const TRAVEL_START = ENTER_END; // beats live in 0.20–0.85
+const TRAVEL_END = 0.85;
+
+// distance fractions of FLIGHT_Z per phase (sum = 1)
+const F_HERO = 0.015; // barely creeps forward while the wordmark holds
+const F_ENTER = 0.16; // fast forward punch into/through the black hole
+const F_TRAVEL = 0.745; // the long cruise past the 5 beats
+// arrival gets the remainder
+
+const D_HERO = F_HERO * FLIGHT_Z;
+const D_ENTER = F_ENTER * FLIGHT_Z;
+const D_TRAVEL = F_TRAVEL * FLIGHT_Z;
+
+const C_ENTER = D_HERO; // cumulative distance at start of ENTER
+const C_TRAVEL = D_HERO + D_ENTER; // at start of TRAVEL
+const C_ARRIVE = D_HERO + D_ENTER + D_TRAVEL; // at start of ARRIVAL
+
+/* TRAVEL sub-segmentation: anchors at the start, each BEAT, and the end. Within
+   each sub-segment the camera covers an equal-ish share of the travel distance,
+   but eased "slow-fast-slow" (smoothstep) so it decelerates as it reaches the
+   next beat and accelerates as it leaves the previous one. Equal distance per
+   beat-gap keeps beats evenly spaced in depth. */
+const TRAVEL_ANCHORS: number[] = [TRAVEL_START, ...BEATS, TRAVEL_END];
+const TRAVEL_SEGS = TRAVEL_ANCHORS.length - 1;
+const D_PER_SEG = D_TRAVEL / TRAVEL_SEGS;
+
+/* Cumulative forward distance travelled by progress p. */
+function dist(p: number): number {
   if (p <= 0) return 0;
-  if (p < SEG.heroEnd) return (p / SEG.heroEnd) * DH;
-  if (p < SEG.warpInEnd) {
-    const u = (p - SEG.heroEnd) / (SEG.warpInEnd - SEG.heroEnd);
-    return CW + easeInQuad(u) * DW;
+
+  // HERO — gentle linear creep (camera near-still in the void)
+  if (p < HERO_END) {
+    return (p / HERO_END) * D_HERO;
   }
-  if (p < SEG.decelEnd) {
-    const u = (p - SEG.warpInEnd) / (SEG.decelEnd - SEG.warpInEnd);
-    return CD + easeOutQuad(u) * DD;
+
+  // ENTER — fast smoothstep punch through the black hole
+  if (p < ENTER_END) {
+    const u = (p - HERO_END) / (ENTER_END - HERO_END);
+    return C_ENTER + smoothstep(u) * D_ENTER;
   }
-  if (p < SEG.beatsEnd) {
-    const u = (p - SEG.decelEnd) / (SEG.beatsEnd - SEG.decelEnd);
-    return CC + u * DC;
+
+  // TRAVEL — per-beat eased sub-segments (decel onto beat, accel between)
+  if (p < TRAVEL_END) {
+    let i = 0;
+    while (i < TRAVEL_SEGS && p >= TRAVEL_ANCHORS[i + 1]) i++;
+    const a = TRAVEL_ANCHORS[i];
+    const b = TRAVEL_ANCHORS[i + 1];
+    const u = (p - a) / (b - a);
+    return C_TRAVEL + i * D_PER_SEG + smoothstep(u) * D_PER_SEG;
   }
-  const u = clamp01((p - SEG.beatsEnd) / (1 - SEG.beatsEnd));
-  return CO + easeInQuad(u) * (FLIGHT_Z - CO);
+
+  // ARRIVAL — slow settle to the calm wide shot (heavy decel)
+  const u = (p - TRAVEL_END) / (1 - TRAVEL_END);
+  return C_ARRIVE + smootherstep(u) * (FLIGHT_Z - C_ARRIVE);
 }
 
+/* Eased camera z. Camera starts at z = +Z0 looking down -z (the black-hole O
+   sits ahead at a fixed negative z) and flies FORWARD (z decreasing) by dist(p).
+   ease-OUT decel into each beat, ease-IN accel between (see dist). */
+const Z0 = 14; // hero camera z; the black hole lives near z ≈ -40 ahead
 export function zOfP(p: number): number {
-  return 12 - dist(p);
+  return Z0 - dist(p);
 }
 
-/* World-z for a planet so it sits `approach` units ahead of the camera at its
-   peak. Derived against the non-linear map → keeps each planet framed at its
-   beat regardless of the easing. */
-export function planetZ(peak: number, approach = 42): number {
-  return zOfP(peak) - approach;
+/* Gentle lateral S-curve drift (x,y) so the cruise feels piloted, not on rails.
+   Small amplitude; two out-of-phase sines on x and a slower cosine bob on y.
+   Amplitude eases in after the ENTER punch (still while diving) and tapers to
+   ~0 at ARRIVAL so the final shot is dead calm. Pure in p → reverses. */
+export function driftXY(p: number): [number, number] {
+  // 0 during hero/enter, full through travel, back to ~0 at arrival
+  const amp = smoothstep((p - 0.18) / 0.12) * (1 - smoothstep((p - 0.86) / 0.14));
+  const x = Math.sin(p * Math.PI * 3.0) * 3.2 * amp;
+  const y = Math.cos(p * Math.PI * 2.0 + 0.6) * 1.6 * amp;
+  return [x, y];
 }
 
-/* Rocket z-offset relative to the camera (negative = AHEAD of the camera).
-   Starts behind the camera (hidden), accelerates past during warp-in (crosses
-   0 ≈ p0.11 = the swoosh), settles to a steady lead through cruise, then races
-   far ahead into the warp-out. Pure function of p → the swoosh reverses on
-   scroll-up. */
-export function rocketLead(p: number): number {
-  if (p < 0.05) return 30; // behind the camera, off-screen
-  if (p < 0.15) return 30 + easeInQuad((p - 0.05) / 0.1) * -75; // 30 -> -45 (swoosh past)
-  if (p < 0.24) return -45 + easeOutQuad((p - 0.15) / 0.09) * 25; // -45 -> -20 (settle)
-  if (p < SEG.beatsEnd) return -20; // lead the cruise
-  return -20 + easeInQuad(clamp01((p - SEG.beatsEnd) / (1 - SEG.beatsEnd))) * -110; // -20 -> -130 (race out)
-}
-
-/* Rocket lateral offset (x,y) relative to the camera. Enters low-left, sweeps
-   in beside the camera during the swoosh, then leads low-centre through cruise
-   and rises toward the centre as it races into the warp-out hole. */
-export function rocketPath(p: number): [number, number] {
-  if (p < 0.05) return [-7, -7.5];
-  if (p < 0.24) {
-    const s = easeOutQuad((p - 0.05) / 0.19);
-    return [-7 + s * 7, -7.5 + s * 1.5]; // -> (0, -6) low-centre, leading
-  }
-  if (p < SEG.beatsEnd) return [0, -6];
-  const s = easeInQuad(clamp01((p - SEG.beatsEnd) / (1 - SEG.beatsEnd)));
-  return [0, -6 + s * 4.5]; // rise toward centre into the warp hole
-}
-
-/* Warp intensity 0..1, pulsed BETWEEN dwell points (hero + 5 beats + exit):
-   ~0 when settled on a planet, ramping to 1 in the gaps so we "warp between
-   galaxies" — the light-speed streaks mask each crossfade. Pure function of p. */
-const DWELL = [0.0, 0.22, 0.38, 0.54, 0.7, 0.85, 1.0];
-export function warp(p: number): number {
-  let dd = 1;
-  for (const d of DWELL) dd = Math.min(dd, Math.abs(p - d));
-  return clamp01((dd - 0.02) / 0.05); // 0 within 0.02 of a dwell → 1 by 0.07 away
+/* Raw signed scroll-distance of p from beat i. Negative = beat is still ahead
+   (approaching), 0 = centred, positive = camera has passed it (receding).
+   FlowPanels builds each panel's transform as a continuous f(beatLocal). */
+export function beatLocal(i: number, p: number): number {
+  return p - BEATS[i];
 }

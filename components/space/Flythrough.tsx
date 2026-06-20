@@ -1,78 +1,79 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { useLenis } from "lenis/react";
 import { flightState, resetFlight } from "./flightState";
-import { SKILLS } from "./skills";
-import { SCENES, HERO_IMG } from "./scenes";
+import { enter } from "./phase";
+import { FlowPanels } from "./FlowPanels";
+import { SCENES } from "./scenes";
 import { profile } from "@/lib/site-data";
 
+/* The ONE WebGL canvas (starfield + black-hole O + post FX + camera Rig) is
+   loaded client-only — it relies on browser/GPU APIs, so we skip SSR. While the
+   chunk loads we show the same deep-void backdrop the canvas resolves into, so
+   there's no flash. */
 const Scene = dynamic(() => import("./Scene"), {
   ssr: false,
   loading: () => <div className="fly__fallback" aria-hidden="true" />,
 });
 
-const MARK = profile.nickname.toUpperCase();
+/* ============================================================================
+   FLYTHROUGH — the sticky shell for the continuous, scroll-scrubbed fly-through.
 
-/* The cinematic journey — REAL imagery. A tall sticky section; scroll drives a
-   crossfade between a deep-field hero and five real-planet beats (each a large
-   graded object over a moving starfield), with a push-in on approach, bold
-   work hotspots, and a warp-out that bleaches into the cream content. */
+   A tall .fly section gives the scroll its length; a position:sticky .fly__sticky
+   pins the single <Scene/> canvas for the whole journey. A Lenis scroll callback
+   writes flightState.target = the .fly section's scroll progress (0..1) — the
+   single source the camera + black hole read. The hero wordmark overlay
+   ("I BUILD THINGS / THAT W{O}RK") drifts apart and fades via enter(p) — the {O}
+   is a transparent gap so the real 3D black hole renders THROUGH it from the
+   canvas behind. FlowPanels is a DOM overlay (not in the canvas) that flies the
+   5 content beats past. Everything is a pure function of p, so it scrubs and
+   reverses exactly.
+   ============================================================================ */
 function FlythroughFull() {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  const heroImgRef = useRef<HTMLImageElement>(null);
+  const leftRef = useRef<HTMLSpanElement>(null);
+  const rightRef = useRef<HTMLSpanElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const [open, setOpen] = useState<{ s: number; h: number } | null>(null);
 
-  const lenis = useLenis(() => {
+  useLenis(() => {
     const el = ref.current;
     if (!el) return;
+    // scroll progress THROUGH the .fly section, clamped 0..1
     const total = el.offsetHeight - window.innerHeight;
-    const scrolled = Math.min(Math.max(-el.getBoundingClientRect().top, 0), Math.max(total, 1));
-    const p = total > 0 ? scrolled / total : 0;
+    const scrolled = -el.getBoundingClientRect().top;
+    const p = total > 0 ? Math.min(Math.max(scrolled / total, 0), 1) : 0;
+
+    // SINGLE source of truth. No second lerp — progress mirrors target; only
+    // Lenis smooths the underlying scroll (anti-pattern #8).
     flightState.target = p;
-    // hero (deep field + name) owns the opening, fades by ~p0.12
-    const fade = Math.max(0, 1 - p / 0.12);
-    if (heroRef.current) heroRef.current.style.opacity = String(fade);
-    if (heroImgRef.current) heroImgRef.current.style.opacity = String(Math.max(0, 1 - p / 0.16));
-    if (cueRef.current) cueRef.current.style.opacity = String(fade);
-    // warp-out: cream veil bleaches the warp into the content (full by ~p0.99)
-    if (endRef.current) endRef.current.style.opacity = String(Math.max(0, Math.min(1, (p - 0.93) / 0.06)));
-    // each beat: crossfade its scene + push the planet in on approach, and
-    // reveal its label on a tighter window. Pure functions of p → reverse cleanly.
-    el.querySelectorAll<HTMLElement>(".cine-scene").forEach((scene) => {
-      const peak = parseFloat(scene.dataset.peak || "0");
-      const op = Math.max(0, 1 - Math.abs(p - peak) / 0.075);
-      scene.style.opacity = String(op);
-      scene.style.pointerEvents = op > 0.85 ? "auto" : "none";
-      const planet = scene.querySelector<HTMLElement>(".cine-planet");
-      if (planet) {
-        const grow = Math.max(0, Math.min(1, (0.14 - (p - peak)) / 0.2)); // grows as we arrive + pass
-        planet.style.transform = `translate(-50%, -50%) scale(${(0.82 + grow * 0.3).toFixed(3)})`;
-      }
-    });
-    // beat labels live in the overlay (crisp, above the grade); tighter window
-    el.querySelectorAll<HTMLElement>(".fly__plabel").forEach((lbl) => {
-      const peak = parseFloat(lbl.dataset.peak || "0");
-      const lop = Math.max(0, 1 - Math.abs(p - peak) / 0.08);
-      lbl.style.opacity = String(lop);
-      lbl.style.transform = `translateY(${(1 - lop) * 28}px)`;
-    });
+    flightState.progress = p;
+
+    // Hero wordmark: as enter() drives 0→1 across p∈[0.10,0.20], the two halves
+    // drift apart (we fly between them) and the whole mark fades out. Pure in p.
+    const e = enter(p);
+    if (heroRef.current) heroRef.current.style.opacity = String(1 - e);
+    if (leftRef.current) {
+      leftRef.current.style.transform = `translate3d(${(-e * 16).toFixed(2)}vw, 0, 0)`;
+    }
+    if (rightRef.current) {
+      rightRef.current.style.transform = `translate3d(${(e * 16).toFixed(2)}vw, 0, 0)`;
+    }
+    // scroll cue lives only in the near-still hero window
+    if (cueRef.current) cueRef.current.style.opacity = String(Math.max(0, 1 - p / 0.08));
   });
 
-  // On home mount / route-return: don't let a reload or nav-back leave the
-  // flight + name mid-scroll. Reset state and snap to the top. Scoped to "/"
-  // so /story and /work are untouched.
+  // On home mount / route-return: never leave the flight + wordmark stranded
+  // mid-scroll after a reload or nav-back. Reset state, snap to top, restore the
+  // hero overlay. Scoped to "/" so /story and /work are untouched.
   useEffect(() => {
-    // dev-only: drive the flight from the console without scrolling the DOM
-    // (window.flightState.target = 0.5) so mid-flight states are screenshot-able
-    // — the sticky canvas stays pinned at scroll 0, which CDP captures cleanly.
+    // dev-only: drive the flight from the console (window.flightState.target =
+    // 0.5) without scrolling the DOM — the sticky canvas stays pinned at scroll 0
+    // for clean screenshots of mid-flight states.
     if (process.env.NODE_ENV !== "production") {
       (window as unknown as { flightState?: typeof flightState }).flightState = flightState;
     }
@@ -81,128 +82,80 @@ function FlythroughFull() {
       window.history.scrollRestoration = "manual";
     }
     resetFlight();
-    flightState.target = 0;
+    const lenis = (window as unknown as { lenis?: { scrollTo: (t: number, o?: { immediate?: boolean }) => void } }).lenis;
     if (lenis) lenis.scrollTo(0, { immediate: true });
     else window.scrollTo(0, 0);
     if (heroRef.current) heroRef.current.style.opacity = "1";
-    if (heroImgRef.current) heroImgRef.current.style.opacity = "1";
+    if (leftRef.current) leftRef.current.style.transform = "translate3d(0,0,0)";
+    if (rightRef.current) rightRef.current.style.transform = "translate3d(0,0,0)";
     if (cueRef.current) cueRef.current.style.opacity = "1";
-  }, [pathname, lenis]);
-
-  // close the work panel on Escape; resume scroll
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(null);
-        lenis?.start();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, lenis]);
+  }, [pathname]);
 
   return (
     <section className="fly" ref={ref} aria-label="Intro">
       <div className="fly__sticky">
+        {/* THE one canvas: starfield + 3D black-hole O + effects + camera Rig */}
         <Scene />
-        {/* hero deep-field (full-bleed, graded) — fades to reveal the starfield */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cine-hero" ref={heroImgRef} src={HERO_IMG} alt="" aria-hidden="true" />
-        {/* the five real-planet beats */}
-        <div className="cine-scenes">
-          {SCENES.map((s, si) => (
-            <div className="cine-scene" data-peak={s.peak} key={s.key}>
-              <div className="cine-tint" style={{ background: `radial-gradient(60% 60% at 50% 45%, ${s.tint}55, transparent 70%)` }} aria-hidden="true" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="cine-planet" src={s.img} alt="" aria-hidden="true" style={{ height: `${s.scale}vh` }} />
-              {s.hotspots.map((h, j) => (
-                <button
-                  type="button"
-                  className={`cine-hot ${open && open.s === si && open.h === j ? "is-open" : ""}`}
-                  key={j}
-                  style={{ left: `${h.x}%`, top: `${h.y}%` }}
-                  aria-label={`${h.title} — ${h.oneLine}`}
-                  onClick={() => { setOpen({ s: si, h: j }); lenis?.stop(); }}
-                >
-                  <span className="cine-hot__dot" />
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="cine-grade" aria-hidden="true" />
+
+        {/* DOM overlay: the 5 content beats fly past (continuous f(beatLocal)) */}
+        <FlowPanels />
+
+        {/* Hero wordmark — sits over the canvas; the {O} is a transparent gap so
+            the real 3D black hole shows through from behind. Drifts apart +
+            fades via enter(p). */}
         <div className="fly__overlay" aria-hidden="false">
           <div className="fly__hero" ref={heroRef}>
-            <h1 className="fly__title" aria-label={profile.name}>
-              {MARK}
-              <span className="fly__sub">THANAWAROTHON</span>
+            <h1 className="fly__wordmark" aria-label="I build things that work">
+              <span className="fly__wm-half fly__wm-half--l" ref={leftRef} aria-hidden="true">
+                <span className="fly__wm-line">I BUILD</span>
+                <span className="fly__wm-line">THINGS</span>
+              </span>
+              <span className="fly__wm-half fly__wm-half--r" ref={rightRef} aria-hidden="true">
+                <span className="fly__wm-line">THAT</span>
+                <span className="fly__wm-line">
+                  W<span className="fly__wm-o" aria-hidden="true" />RK
+                </span>
+              </span>
             </h1>
-            <div className="fly__meta">
-              <span>{profile.name}</span>
-              <span>— founder · engineer · strategist</span>
-            </div>
+            <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
           </div>
-          {SCENES.map((s) => (
-            <div className={`fly__plabel fly__plabel--${s.side}`} data-peak={s.peak} key={s.key}>
-              <span className="fly__plabel__idx">{s.idx} / 05</span>
-              <h2 className="fly__plabel__label">{s.label}</h2>
-              <p className="fly__plabel__desc">{s.desc}</p>
-            </div>
-          ))}
-          <div className="fly__cue" ref={cueRef}><span>scroll</span></div>
+          <div className="fly__cue" ref={cueRef}>
+            <span>scroll</span>
+          </div>
         </div>
-        <div className="cine-bars" aria-hidden="true" />
-        {open && (() => {
-          const sc = SCENES[open.s];
-          const h = sc.hotspots[open.h];
-          const close = () => { setOpen(null); lenis?.start(); };
-          const lx = Math.min(80, Math.max(20, h.x));
-          const isWork = h.href.startsWith("/work");
-          return (
-            <>
-              <button className="cine-backdrop" onClick={close} aria-label="Close" tabIndex={-1} />
-              <div className="cine-panel" style={{ left: `${lx}%`, top: `${Math.min(70, h.y)}%` }}>
-                <button className="cine-panel__x" onClick={close} aria-label="Close panel">×</button>
-                <span className="cine-panel__kicker">{sc.label} · {sc.idx}</span>
-                <h3 className="cine-panel__title">{h.title}</h3>
-                <p className="cine-panel__line">{h.oneLine}</p>
-                <Link className="cine-panel__link" href={h.href} onClick={close}>
-                  {isWork ? "View project →" : "Get in touch →"}
-                </Link>
-              </div>
-            </>
-          );
-        })()}
-        <div className="fly__exit" ref={endRef} aria-hidden="true" />
       </div>
     </section>
   );
 }
 
-/* Static fallback — no WebGL. Shown for reduced-motion or small touch devices:
-   a graded deep-field hero + the name + the 5 skills as a clean stacked list.
-   The heavy <Scene> is never mounted in this mode. */
+/* Static fallback — no WebGL, no scroll-scrub. Shown for reduced-motion or small
+   touch screens: the wordmark + a clean stacked list of the 5 beats. The heavy
+   <Scene>/<FlowPanels> are never mounted in this mode. */
 function FlyStatic() {
   return (
     <section className="fly-static" aria-label="Intro">
       <div className="fly-static__inner">
         <div className="fly-static__hero">
-          <h1 className="fly__title" aria-label={profile.name}>
-            {MARK}
-            <span className="fly__sub">THANAWAROTHON</span>
+          <h1 className="fly__wordmark" aria-label="I build things that work">
+            <span className="fly__wm-half" aria-hidden="true">
+              <span className="fly__wm-line">I BUILD</span>
+              <span className="fly__wm-line">THINGS</span>
+            </span>
+            <span className="fly__wm-half" aria-hidden="true">
+              <span className="fly__wm-line">THAT</span>
+              <span className="fly__wm-line">W&#x25EF;RK</span>
+            </span>
           </h1>
-          <div className="fly__meta">
-            <span>{profile.name}</span>
-            <span>— founder · engineer · strategist</span>
-          </div>
+          <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
         </div>
         <ol className="fly-static__skills">
-          {SKILLS.map((s, i) => (
+          {SCENES.map((s, i) => (
             <li className="fly-static__skill" key={s.key}>
-              <span className="fly__plabel__idx">{String(i + 1).padStart(2, "0")} / 05</span>
+              <span className="fly-static__skill-idx">
+                {String(i + 1).padStart(2, "0")} / 05
+              </span>
               <h2 className="fly-static__skill-label">{s.label}</h2>
-              <p className="fly__plabel__desc">{s.desc}</p>
+              <p className="fly-static__skill-desc">{s.desc}</p>
             </li>
           ))}
         </ol>
@@ -211,20 +164,21 @@ function FlyStatic() {
   );
 }
 
-/* Picks the experience. Defaults to the full WebGL flythrough (the showcase,
+/* Picks the experience. Defaults to the full WebGL fly-through (the showcase,
    and what SSR renders → no hydration mismatch). After mount, switches to the
-   static fallback for reduced-motion or small touch screens, so the WebGL
-   Scene is never run there. A `?static` query param forces it in dev for
-   verification. */
-export function Flythrough() {
+   static fallback for reduced-motion or small touch screens, so the WebGL Scene
+   is never run there. A `?static` query param forces it in dev for verification. */
+export function Flythrough(): JSX.Element {
   const [mode, setMode] = useState<"full" | "static" | null>(null);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     const touchSmall = window.matchMedia("(pointer: coarse) and (max-width: 768px)");
     const devForce =
-      process.env.NODE_ENV !== "production" && new URLSearchParams(window.location.search).has("static");
-    const decide = () => setMode(reduce.matches || touchSmall.matches || devForce ? "static" : "full");
+      process.env.NODE_ENV !== "production" &&
+      new URLSearchParams(window.location.search).has("static");
+    const decide = () =>
+      setMode(reduce.matches || touchSmall.matches || devForce ? "static" : "full");
     decide();
     reduce.addEventListener("change", decide);
     touchSmall.addEventListener("change", decide);
