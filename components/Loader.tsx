@@ -20,7 +20,7 @@ export function Loader() {
     <div className={`loader ${phase === "lift" ? "loader--lift" : ""}`} aria-hidden="true">
       <div className="loader__inner">
         <span className="loader__name">Micky</span>
-        <span className="loader__sub">Baramee Thanawarothon · บารมี</span>
+        <span className="loader__sub">Baramee Thanawarothon</span>
       </div>
     </div>
   );

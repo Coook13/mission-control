@@ -56,8 +56,8 @@ export function HeroEditorial() {
         </div>
       </div>
       <div className="hero-ed__caption">
-        <span>Baramee Thanawarothon · บารมี</span>
-        <span>EST. Bangkok กรุงเทพฯ — OPS. Manchester</span>
+        <span>Baramee Thanawarothon</span>
+        <span>EST. Bangkok — OPS. Manchester</span>
       </div>
     </section>
   );
@@ -104,7 +104,7 @@ export function RolesMarquee() {
   return (
     <Marquee
       outline
-      items={["FOUNDER", "ENGINEER", "STRATEGIST", "BUILDER", "กรุงเทพฯ → MANCHESTER"]}
+      items={["FOUNDER", "ENGINEER", "STRATEGIST", "BUILDER", "BANGKOK → MANCHESTER"]}
     />
   );
 }
@@ -190,7 +190,7 @@ export function ContactSection() {
 export function Footer() {
   return (
     <>
-      <Marquee items={["LET'S BUILD SOMETHING THAT WORKS", "พร้อมลุย"]} duration={20} />
+      <Marquee items={["LET'S BUILD SOMETHING THAT WORKS", "GET IN TOUCH"]} duration={20} />
       <footer className="footer-ed">
         <span>{profile.name} © 2026</span>
         <span>Manchester / Bangkok</span>

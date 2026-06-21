@@ -47,14 +47,14 @@ export default function StoryPage() {
                     </span>
                     <span className="portrait__rule" aria-hidden="true" />
                   </div>
-                  <figcaption data-speed={0.9}>{profile.name} · บารมี ธนวโรธร</figcaption>
+                  <figcaption data-speed={0.9}>{profile.name}</figcaption>
                 </figure>
               </Reveal>
             </div>
           </div>
         </section>
 
-        <Marquee outline items={["NUMBERS", "ตัวเลข", "NUMBERS", "ตัวเลข"]} duration={24} />
+        <Marquee outline items={["NUMBERS", "THE NUMBERS", "NUMBERS", "THE NUMBERS"]} duration={24} />
 
         <section className="section-ed--tight section-ed">
           <div className="shell">

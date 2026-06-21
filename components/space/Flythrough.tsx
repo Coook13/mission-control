@@ -280,7 +280,7 @@ function FlythroughFull() {
             contact link, so the arrival lands on the actual CTA. */}
         <div className="fly__finale" ref={finaleRef} aria-hidden="true">
           <div className="fly__finale-bloom" />
-          <a className="fly__finale-line" href="/#contact" aria-label="Let's make it work — get in touch">
+          <a className="fly__finale-line" href="/story#contact" aria-label="Let's make it work — get in touch">
             <span className="fly__finale-word">LET&rsquo;S MAKE IT</span>
             {/* same W{O}RK construction as the hero wordmark: equal-basis flanks
                 pin the transparent {O} gap to the exact line centre, so it

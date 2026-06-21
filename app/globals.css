@@ -622,16 +622,17 @@ body::after {
   z-index: 1002;
   pointer-events: none;
   border-radius: 50%;
+  mix-blend-mode: difference; /* white over black void, inverts over light imagery → always visible */
 }
 .cursor-dot {
   width: 7px; height: 7px;
   margin: -3.5px 0 0 -3.5px;
-  background: var(--ink);
+  background: #fff;
 }
 .cursor-ring {
   width: 34px; height: 34px;
   margin: -17px 0 0 -17px;
-  border: 1px solid var(--ink);
+  border: 1px solid #fff;
   transition: opacity 0.25s;
 }
 @media (pointer: coarse) {
