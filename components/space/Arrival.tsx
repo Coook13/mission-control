@@ -13,11 +13,15 @@ import { zOfP } from "./phase";
    framed the "W{O}RK" wordmark at the start re-forms, now colossal, so the journey
    rhymes (Group 1's wordmark {O} re-aligns over this returned hole at the finale).
 
-   Built to match BlackHole3D EXACTLY in spirit: a billboarded disc plane carrying
-   a bright event-horizon rim + a sharp photon ring + a soft accretion glow + a
-   pure-black core, additive over the void so only the rim/ring blooms. Monochrome
-   (the one cool accent on the cool side, a warm Doppler bias on the other), nothing
-   grey, no full sphere, no raymarch — a stylised bloomed ring (anti-patterns #2/#5).
+   Built on BlackHole3D's family but deliberately LARGER-ORDER and a different
+   CHARACTER (not the opener replayed): a billboarded disc plane carrying a bright
+   event-horizon rim, a sharp photon ring AND a second concentric (lensing) photon
+   ring, a slowly-orbiting accretion hot-spot, a faint gravitational-lens warp of
+   the field read through the core, and a pure-black shadow — additive over the
+   void so only the rings/arc bloom. It grows far past the hero ring's scale so it
+   overflows the frame edges and its bloom spills past them. Monochrome (the one
+   cool accent, a warm accretion bias), nothing grey, no full sphere, no raymarch —
+   a stylised bloomed ring (anti-patterns #2/#5).
 
    PURE-IN-P (anti-pattern #10): every per-frame value — the lead distance ahead of
    the camera, the swell scale, the master opacity, and the ring/flare shaping — is
@@ -72,8 +76,8 @@ function arrivalOpacity(p: number): number {
    in, so perspective does most of the "growing to fill the frame" — the same trick
    BlackHole3D uses on ENTER, run in reverse-direction (approach, never overtaken,
    so it holds dead-ahead and dominant at the finale). Pure in p. */
-const LEAD_FAR = 200; // distant emergent point at the start of arrival
-const LEAD_NEAR = 46; // close + colossal at the finale (still ahead — never passed)
+const LEAD_FAR = 210; // distant emergent point at the start of arrival
+const LEAD_NEAR = 30; // close + COLOSSAL at the finale (still ahead — never passed)
 function leadOfP(a: number): number {
   return LEAD_FAR + (LEAD_NEAR - LEAD_FAR) * a;
 }
@@ -86,11 +90,24 @@ const vert = /* glsl */ `
   }
 `;
 
-/* Same ring/disc field family as BlackHole3D, tuned grander: a wide soft glow, a
-   broad event-horizon rim, and a tight bright photon ring, all dying to EXACTLY 0
-   well inside the quad (radial edge-fade) so the additive falloff never paints a
-   square — the disc reads as a clean CIRCLE at every scale. uArrive sharpens the
-   photon ring + lifts the flare as the hole closes in for the climactic reveal. */
+/* The finale {O} is deliberately a LARGER-ORDER body than the hero hole, and a
+   different CHARACTER — not the opener replayed. On the same ring/disc family as
+   BlackHole3D (all dying to EXACTLY 0 well inside the quad via the radial edge-
+   fade, so the additive falloff never paints a square — a clean CIRCLE at every
+   scale, even overflowing the frame), it ADDS three things the hero ring never had:
+
+     1. ACCRETION-DISC SPIN BAND — a bright arc that sweeps slowly AROUND the rim
+        (a rotating angular hot-spot, not the hero's static Doppler side), reading
+        as matter orbiting a far heavier body.
+     2. A SECOND CONCENTRIC PHOTON RING — an inner light ring inside the main
+        photon ring, the gravitational-lensing signature of a supermassive hole.
+     3. A GRAVITATIONAL-LENS RADIAL WARP — the field read THROUGH the core is bent
+        radially (a faint pinch toward the photon sphere just outside the shadow),
+        so light appears to wrap the hole rather than pass it.
+
+   uArrive sharpens the rings + lifts the flare + intensifies the lens as the hole
+   closes in for the climactic reveal. uTime drives only the cosmetic spin/shimmer
+   — never the scrub. Monochrome: the one cool accent + a warm accretion bias. */
 const frag = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
@@ -105,16 +122,35 @@ const frag = /* glsl */ `
     float ang = atan(p.y, p.x);
     float t = uTime * 0.2;
 
-    // grand ring: a touch wider than the hero hole, photon ring tightens on arrive
-    float r0 = 0.66 + uArrive * 0.04;
-    float rimW = 0.06 + uArrive * 0.03;
-    float rim = exp(-pow((r - r0) / rimW, 2.0));
-    float photon = exp(-pow((r - (r0 - 0.08)) / 0.014, 2.0)) * (0.9 + uArrive * 0.9);
-    float glow = exp(-pow((r - r0) / (0.30 + uArrive * 0.10), 2.0));
+    // GRAVITATIONAL-LENS radial warp: pinch the sampled radius toward the photon
+    // sphere just outside the shadow so the field reads as bent around the hole.
+    // Pure cosmetic on r; strengthens as the hole closes in (uArrive). The warp
+    // is centred on the rim radius and dies away from it, so only light NEAR the
+    // hole appears to wrap — exactly the lensing look, never a global distortion.
+    float r0 = 0.66 + uArrive * 0.04;          // event-horizon rim radius
+    float lensAmt = (0.05 + uArrive * 0.06);
+    float rl = r - lensAmt * exp(-pow((r - r0) / 0.34, 2.0)) * sign(r - r0);
 
-    // slow Doppler-bright side + faint shimmer (cosmetic; uTime only)
+    // grand ring: a touch wider than the hero hole, photon ring tightens on arrive
+    float rimW = 0.06 + uArrive * 0.03;
+    float rim = exp(-pow((rl - r0) / rimW, 2.0));
+    // PRIMARY photon ring (tight + bright, just inside the rim)
+    float photon = exp(-pow((rl - (r0 - 0.08)) / 0.014, 2.0)) * (0.9 + uArrive * 0.9);
+    // SECOND CONCENTRIC photon ring — an inner lensing ring (the supermassive
+    // signature the hero hole lacks). Fainter, tighter, closer to the shadow.
+    float photon2 = exp(-pow((rl - (r0 - 0.155)) / 0.010, 2.0)) * (0.45 + uArrive * 0.7);
+    float glow = exp(-pow((rl - r0) / (0.30 + uArrive * 0.10), 2.0));
+
+    // ACCRETION-DISC SPIN BAND: a bright arc that orbits AROUND the ring (a moving
+    // hot-spot in angle, t-driven), distinct from a static Doppler side. Narrow
+    // raised-cosine lobe sweeping at a slow rate → matter circling a heavy body.
+    float spinPhase = ang - t * 0.9;
+    float band = pow(0.5 + 0.5 * cos(spinPhase), 6.0);   // tight orbiting lobe
+    float spin = 0.55 + 1.05 * band;                     // baseline + hot arc
+
+    // residual slow Doppler-bright side + faint shimmer (cosmetic; uTime only)
     float side = 0.5 + 0.5 * cos(ang - t * 1.6);
-    float dopp = 0.66 + 0.5 * side;
+    float dopp = 0.66 + 0.4 * side;
     float shim = 0.92 + 0.08 * sin(ang * 4.0 - t * 2.4);
 
     vec3 cool = vec3(0.72, 0.84, 1.0);   // the one cool accent (#b8d6ff)
@@ -122,8 +158,9 @@ const frag = /* glsl */ `
     vec3 col = mix(cool, warm, side * 0.5);
 
     float core = smoothstep(0.30, 0.54, r);          // pure black inside the ring
-    float flare = 1.0 + uArrive * 1.1;                // overall reveal gain
-    float intensity = (rim * 1.7 + photon * 1.6 + glow * 0.55) * dopp * shim * core * flare;
+    float flare = 1.0 + uArrive * 1.3;               // overall reveal gain (grander)
+    float rings = rim * 1.7 + photon * 1.6 + photon2 * 1.1 + glow * 0.55;
+    float intensity = rings * dopp * spin * shim * core * flare;
     // radial edge-fade: kill intensity to exactly 0 across r∈[1.35,1.55], far
     // inside the quad edges (r≈1.7) → no box ever shows, even filling the frame.
     float edgeFade = smoothstep(1.55, 1.35, r);
@@ -168,9 +205,11 @@ export function Arrival() {
     cam.getWorldDirection(fwd);
     g.position.copy(cam.position).addScaledVector(fwd, leadOfP(a));
 
-    // GRAND swell: large to begin with, far larger at the finale so it dominates
-    // the frame. Combined with the closing lead, the {O} grows to fill the view.
-    const s = 24 + a * 150;
+    // COLOSSAL swell: starts large and grows FAR larger than the hero hole so the
+    // ring overflows the frame edges (and its bloom spills past them). Combined
+    // with the much-closer lead, the {O} reads as a larger-ORDER body than the
+    // hero ring — not the opener replayed, but the destination it always implied.
+    const s = 30 + a * 320;
     g.scale.setScalar(s);
   });
 

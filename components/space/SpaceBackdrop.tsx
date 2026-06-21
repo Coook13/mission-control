@@ -21,7 +21,17 @@ import { mulberry32 } from "./rng";
    eases with the far layer so /story and /work feel like the same void, paused.
    The drift wraps by modulo so the offset never accumulates and the paint stays
    cheap. Honours prefers-reduced-motion: paints one still frame and stops, with
-   the drift offset pinned to zero. */
+   the drift offset pinned to zero.
+
+   It also BREATHES with the reader: a small scroll-coupled offset is added to
+   each layer's drift (the near layer reacts more than the far — same parallax
+   law as the time drift), so moving down /story or /work nudges the field as if
+   the void is sliding past. Scroll is read from the smoothed Lenis position when
+   present (window.lenis, exposed by Providers) and falls back to window.scrollY;
+   it is normalised by viewport height and wrapped by fract() so it can never
+   accumulate or pop. Pinned to zero under prefers-reduced-motion alongside the
+   time drift. No new listeners, no WebGL — the read happens inside the existing
+   paint loop, so the home page keeps the one and only <Canvas>. */
 
 type Star = {
   x: number; // normalised 0..1 across the viewport
@@ -110,13 +120,28 @@ export function SpaceBackdrop({
     function paint(t: number) {
       ctx!.clearRect(0, 0, w, h);
       const time = t * 0.001;
+      const fract = (v: number) => v - Math.floor(v);
+
+      // scroll-coupled offset so the field breathes as the reader moves down the
+      // page. prefer the smoothed Lenis position (Providers exposes it in dev as
+      // window.lenis; .actualScroll is the eased px value) and fall back to the
+      // native scroll. normalise by viewport height so the rate is resolution-
+      // independent, then keep it as a small additional NORMALISED drift — the
+      // near layer reacts more than the far, the same parallax law as the time
+      // drift. reduced-motion pins it to zero. fract() downstream prevents any
+      // accumulation, so this can never wrap-pop or run away.
+      const lenisScroll = (
+        window as unknown as { lenis?: { actualScroll?: number } }
+      ).lenis?.actualScroll;
+      const scrollPx =
+        typeof lenisScroll === "number" ? lenisScroll : window.scrollY || 0;
+      const scrollN = reduce ? 0 : (scrollPx / Math.max(1, h)) * 0.08;
 
       // pure-time drift, normalised (0..1). reduced-motion pins it to zero.
       // far layer creeps; near layer drifts ~2.4x faster — a parallax that reads
       // as gentle motion through the field. fract() so it never accumulates.
-      const fract = (v: number) => v - Math.floor(v);
-      const driftFar = reduce ? 0 : fract(time * 0.0042);
-      const driftNear = reduce ? 0 : fract(time * 0.0102);
+      const driftFar = reduce ? 0 : fract(time * 0.0042 + scrollN * 0.5);
+      const driftNear = reduce ? 0 : fract(time * 0.0102 + scrollN * 1.25);
 
       // faint top-biased nebular wash — eases laterally with the far layer so the
       // void has slow depth without a photo. centre wanders a few % of the width.

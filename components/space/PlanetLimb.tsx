@@ -8,9 +8,10 @@ import { zOfP } from "./phase";
 
 /* PLANET LIMB — the SCALE ANCHOR. A single COLOSSAL dark form: the edge of a vast
    unlit body, with only a thin bright rim-light (the terminator / limb) crossing
-   one corner of the frame. It looms during a mid beat (p ≈ 0.5–0.6) and DWARFS the
-   tiny FlowPanels + particles streaming past, so the whole field suddenly gains a
-   sense of vastness — one massive thing against a swarm of small ones.
+   one corner of the frame. It looms in the QUIET dark gap between beats 1 and 2
+   (peak p ≈ 0.48), with black space all to itself, so it DWARFS the tiny
+   FlowPanels — one massive thing against the void, NOT competing with the debris
+   belt or the sun-flare (which now own later, separate p-windows).
 
    We render ONLY the lit limb, never a full sphere (anti-pattern #2): a big
    billboarded quad whose shader paints a curved bright arc (the rim where grazing
@@ -28,21 +29,26 @@ import { zOfP } from "./phase";
    the group so it costs nothing outside the beat. uTime drives only a faint rim
    shimmer; it never touches the scrub. Scroll back up → it returns identically. */
 
-/* Mid-cruise window — straddles beats 2 (0.54) and into 4's run-up, peaking ~0.55
-   so it dominates one mid beat. Kept inside the debris window's neighbourhood so
-   the giant edge reads against the small shards raking past. */
-const LIMB_LO = 0.46;
-const LIMB_HI = 0.64;
-const LIMB_PEAK = 0.55; // p where the camera is level with the limb (max loom)
+/* QUIET-stretch window — pulled into the dark GAP between beats 1 (0.42) and 2
+   (0.54), peaking ~0.48. This deliberately sits OFF the bright set-pieces: it
+   ends (~0.53) before the debris belt's 0.555–0.645 window opens and well before
+   the sun-flare's 0.60–0.74 window, so the colossal lit edge has black space all
+   to itself and visibly DWARFS the small FlowPanels rather than competing with
+   raking shards or a blaze. Beats 1 and 2 are in HOLD only at 0.40–0.44 / 0.52–
+   0.56, so the loom crests cleanly in the dark between them. */
+const LIMB_LO = 0.43;
+const LIMB_HI = 0.53;
+const LIMB_PEAK = 0.48; // p where the camera is level with the limb (max loom)
 
 /* Fixed world position: deep along the flight axis, biased to the lower-left so the
    lit edge crosses ONE corner of the frame (it must not sit dead-centre). The body
    is enormous and positioned so its CENTRE is far off-screen — only the limb arc
    intrudes into frame, which is what sells the scale (you never see the whole
    thing). zOfP anchors it ahead of the peak camera z like SunFlare. */
-const LIMB_LEAD = 120; // world units the limb sits ahead of the peak camera z
-const LIMB_OFFSET_X = -52; // pushed off to the lower-left corner
-const LIMB_OFFSET_Y = -34;
+const LIMB_LEAD = 86; // world units ahead of the peak camera z — NEARER than
+// before (was 120) so the body LOOMS markedly larger and dominates the frame
+const LIMB_OFFSET_X = -38; // pulled CLOSER to frame (was -52) so the lit edge
+const LIMB_OFFSET_Y = -24; // crowds further into the corner and reads colossal
 const LIMB_Z = zOfP(LIMB_PEAK) - LIMB_LEAD;
 const LIMB_SIZE = 200; // quad size — vast, so the edge alone fills a frame corner
 
@@ -109,10 +115,14 @@ const frag = /* glsl */ `
     float ang = atan(d.y, d.x);
     float shim = 0.9 + 0.1 * sin(ang * 6.0 + uTime * 0.4);
 
-    float intensity = (rim * 1.6 + inner) * crescent * shim;
+    // rim pushed HARD (was 1.6) so the lit crescent over-blooms and the colossal
+    // edge reads as a blazing scale anchor against the black void. The COLOUR is
+    // driven past 1.0 (additive → the bloom pass catches it), while the alpha is
+    // clamped so the dark body side never paints a square.
+    float intensity = (rim * 2.6 + inner) * crescent * shim;
     intensity *= uOpacity;
     float a = clamp(intensity, 0.0, 1.0);
-    gl_FragColor = vec4(uRim * intensity, a);
+    gl_FragColor = vec4(uRim * intensity * 1.35, a);
   }
 `;
 

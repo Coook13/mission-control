@@ -1773,6 +1773,46 @@ body { color: #fff; }
 .flowpanel--left  { text-align: left; }
 .flowpanel--right { text-align: right; }
 
+/* CONTRAST-FLOOR SCRIM — a soft, blurred dark ellipse that sits behind the type
+   (z 0) and above the canvas, so the labels keep a legibility floor over the
+   warp / debris / sun frames. ~70vw wide, feathered to nothing at the edges so
+   it never reads as a box. Opacity is written each frame by the rAF loop (pure
+   in beatLocal). Monochrome (pure black). */
+.flowpanel__scrim {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 72vw;
+  height: 132%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    58% 50% at 50% 50%,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.42) 38%,
+    rgba(0, 0, 0, 0.18) 62%,
+    rgba(0, 0, 0, 0) 80%
+  );
+  filter: blur(22px);
+  pointer-events: none;
+  opacity: 0; /* rAF writes this */
+  will-change: opacity;
+}
+/* keep the scrim biased toward the type on side-aligned panels (left/right) so
+   the floor sits under the words, not dead-centre of the column */
+.flowpanel--left  .flowpanel__scrim { left: 38%; }
+.flowpanel--right .flowpanel__scrim { left: 62%; }
+
+/* all real content rides ABOVE the scrim */
+.flowpanel__idx,
+.flowpanel__label,
+.flowpanel__desc,
+.flowpanel__slot,
+.flowpanel__work {
+  position: relative;
+  z-index: 1;
+}
+
 .flowpanel__idx {
   display: block;
   font-family: var(--font-dot-var), monospace;
@@ -1792,7 +1832,13 @@ body { color: #fff; }
   font-size: clamp(2.8rem, 8.5vw, 7rem);
   line-height: 0.88;
   letter-spacing: -0.04em;
-  text-shadow: 0 6px 60px rgba(0, 0, 0, 0.65);
+  /* dual-stack contrast floor: a tight near-opaque drop for hard edge legibility
+     over bright warp/sun frames, plus a wide soft halo for the dark stretches.
+     Opacity itself is driven per-frame by the rAF loop (faster than the body). */
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 6px 60px rgba(0, 0, 0, 0.65);
+  will-change: opacity;
 }
 
 .flowpanel__desc {
@@ -1801,40 +1847,33 @@ body { color: #fff; }
   font-size: clamp(0.84rem, 1.3vw, 1.05rem);
   letter-spacing: 0.04em;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
   max-width: 40ch;
 }
 .flowpanel--right .flowpanel__desc { margin-left: auto; }
 
-/* framed placeholder image slot — a subtle bordered box, parallaxed at its own
-   rate by the JS (sits "deeper" than the type). No photo wallpaper. */
+/* DEPTH PLATE — a procedural monochrome star-wash that sits "deeper" than the
+   type (parallaxed by the JS at its own rate). No border, no placeholder tag: a
+   few feathered radial-gradient "stars" over a faint accent wash, consistent
+   with the deep-space grade. Procedural only — never a photo wallpaper. */
 .flowpanel__slot {
-  position: relative;
   margin: clamp(20px, 3vh, 34px) 0 0;
   aspect-ratio: 16 / 10;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 2px;
   background:
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.018) 0px,
-      rgba(255, 255, 255, 0.018) 1px,
-      transparent 1px,
-      transparent 11px
-    ),
-    radial-gradient(120% 120% at 50% 40%, rgba(169, 198, 255, 0.06), transparent 70%);
+    radial-gradient(1.4px 1.4px at 18% 32%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(1.1px 1.1px at 64% 22%, rgba(255, 255, 255, 0.38), transparent 60%),
+    radial-gradient(1.6px 1.6px at 82% 58%, rgba(214, 230, 255, 0.42), transparent 60%),
+    radial-gradient(1px 1px at 38% 70%, rgba(255, 255, 255, 0.32), transparent 60%),
+    radial-gradient(1.2px 1.2px at 50% 48%, rgba(255, 255, 255, 0.28), transparent 60%),
+    radial-gradient(0.9px 0.9px at 26% 84%, rgba(169, 198, 255, 0.34), transparent 60%),
+    radial-gradient(1.3px 1.3px at 90% 36%, rgba(255, 255, 255, 0.3), transparent 60%),
+    radial-gradient(140% 120% at 50% 42%, rgba(169, 198, 255, 0.05), rgba(0, 0, 0, 0) 72%);
+  -webkit-mask-image: radial-gradient(120% 110% at 50% 50%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(120% 110% at 50% 50%, #000 55%, transparent 100%);
+  opacity: 0.7;
   will-change: transform;
-}
-.flowpanel__slot-tag {
-  position: absolute;
-  left: 12px;
-  bottom: 10px;
-  font-family: var(--font-dot-var), monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.38);
 }
 
 .flowpanel__work {
@@ -1916,7 +1955,7 @@ body { color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
   .flowpanel__link-arrow { transition: none; }
-  .flowpanel, .flowpanel__slot { will-change: auto; }
+  .flowpanel, .flowpanel__slot, .flowpanel__scrim, .flowpanel__label { will-change: auto; }
 }
 
 /* ============================================================================
@@ -2195,8 +2234,18 @@ body { color: #fff; }
   font-family: var(--font-sans); font-weight: 700;
   text-transform: uppercase; line-height: 0.92; letter-spacing: -0.04em;
   font-size: clamp(2rem, 7.2vw, 5.4rem);
-  /* dark ink so it reads against the bright bloom it arrives into */
-  color: #0a0d14;
+  /* HARD LANDING — crossfade the ink with --arrive (written by Flythrough from
+     the same arrival ramp that brightens the bloom). EARLY (--arrive≈0) the bloom
+     is still dim/dark, so the line is WHITE; at PEAK (--arrive≈1) the bloom is a
+     vast bright field, so the line resolves to near-black ink → a clean logo
+     lockup at p=1, killing the grey-on-grey moment at p≈0.96. Pure in p via the
+     custom prop → reverses exactly. */
+  color: color-mix(in srgb, #0a0d14 calc(var(--arrive, 0) * 100%), #ffffff);
+  /* the halo inverts WITH the ink: a dark glow while the line is white over the
+     dark field, fading to a faint light glow as it lands on the bright bloom. */
+  text-shadow:
+    0 2px 14px rgba(0, 0, 0, calc((1 - var(--arrive, 0)) * 0.78)),
+    0 0 32px rgba(255, 255, 255, calc(var(--arrive, 0) * 0.35));
   /* clickable only once arrived (--arrive saturates near 1); the rAF loop also
      guards this, but keep CSS honest so it never intercepts mid-journey. */
   pointer-events: var(--finale-hit, none);
@@ -2228,7 +2277,10 @@ body { color: #fff; }
   display: inline-block;
   width: 0.66em; height: 0.66em;
   border-radius: 50%;
-  border: 0.055em solid #0a0d14;
+  /* ring tracks the same ink crossfade as the line so the {O} stays visible the
+     whole landing: light ring while the line is white over dark → dark ring as
+     it resolves on the bright bloom. */
+  border: 0.055em solid color-mix(in srgb, #0a0d14 calc(var(--arrive, 0) * 100%), #ffffff);
   vertical-align: -0.04em; margin: 0 0.04em;
   box-sizing: border-box;
 }

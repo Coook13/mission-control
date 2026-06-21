@@ -8,6 +8,7 @@ import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { BlackHole3D } from "./BlackHole3D";
 import { WarpJump } from "./WarpJump";
+import { Shockwave } from "./Shockwave"; // P2-B set-piece: concussive impact ring
 import { DebrisField } from "./DebrisField";
 import { SunFlare } from "./SunFlare"; // P2-B set-piece: distant additive sun pass
 import { PlanetLimb } from "./PlanetLimb"; // scale anchor: colossal lit limb at a mid beat
@@ -76,6 +77,7 @@ function Rig() {
      PlanetLimb  — colossal dark body's lit edge looming at a mid beat (scale anchor)
      BlackHole3D — the {O} ring the hero centres on; the camera punches through it
      WarpJump    — light-speed streaks driven by warpAt(p), zero outside its windows
+     Shockwave   — concussive additive ring blasting out on the punch + climax (shockAt)
      Arrival     — the {O} RETURNS, massive + dead-ahead, growing to fill the finale
      Effects     — bloom + warp-coupled chromatic aberration + vignette + grain
    Every child is a pure function of p, so the whole scene scrubs AND reverses. */
@@ -105,6 +107,8 @@ export default function Scene() {
         <BlackHole3D />
         {/* light-speed streaks — intensity is warpAt(p), exactly 0 between windows */}
         <WarpJump />
+        {/* concussive impact ring — blasts out on the punch + climax (shockAt) */}
+        <Shockwave />
         {/* FINALE PAYLOAD — the {O} returns, massive, dead-ahead, fills the frame */}
         <Arrival />
       </Suspense>

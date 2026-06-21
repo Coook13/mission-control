@@ -32,31 +32,75 @@ const L_IN = -0.09; // start of approach
 const L_HOLD = 0.02; // end of the centred hold
 const L_OUT = 0.11; // fully receded / passed
 
-type Frame = { vis: number; scale: number; tx: number; slot: number; active: boolean };
+/* `vis` = panel body opacity. `label` = the giant wordmark's own opacity, which
+   peels away FASTER than the body as the beat leaves centre, so the title never
+   collides off-centre with the next panel's body (sharper hierarchy through the
+   transition). `scrim` = the contrast-floor backing opacity (0..1). All pure in
+   beat-local l → scrub + reverse exactly. */
+type Frame = {
+  vis: number;
+  label: number;
+  scrim: number;
+  scale: number;
+  tx: number;
+  slot: number;
+  active: boolean;
+};
 
 /* Continuous panel transform from beat-local distance l. */
 function frameAt(l: number): Frame {
   if (l <= L_IN || l >= L_OUT) {
-    return { vis: 0, scale: l <= L_IN ? 0.62 : 1.5, tx: l <= L_IN ? -1 : 1, slot: 0, active: false };
+    return {
+      vis: 0,
+      label: 0,
+      scrim: 0,
+      scale: l <= L_IN ? 0.62 : 1.5,
+      tx: l <= L_IN ? -1 : 1,
+      slot: 0,
+      active: false,
+    };
   }
   if (l < 0) {
     // APPROACH: emerge from depth, slide in from the side, fade up
     const t = smooth(L_IN, 0, l); // 0..1
-    return { vis: t, scale: 0.62 + t * 0.38, tx: -(1 - t), slot: 1 - t, active: false };
+    return {
+      vis: t,
+      // title leads in slightly ahead of the body (reads first), so it's the
+      // anchor as the beat arrives.
+      label: smooth(L_IN * 0.82, -0.012, l),
+      scrim: t,
+      scale: 0.62 + t * 0.38,
+      tx: -(1 - t),
+      slot: 1 - t,
+      active: false,
+    };
   }
   if (l <= L_HOLD) {
     // HOLD: centred, fully present
-    return { vis: 1, scale: 1, tx: 0, slot: 0, active: true };
+    return { vis: 1, label: 1, scrim: 1, scale: 1, tx: 0, slot: 0, active: true };
   }
   // RECEDE: blow past the camera and dissolve
   const t = smooth(L_HOLD, L_OUT, l); // 0..1
-  return { vis: 1 - t, scale: 1 + t * 0.5, tx: t, slot: t, active: false };
+  // title fades roughly twice as fast as the body and drops BEHIND it (lower z),
+  // so a receding giant wordmark can't smear across the incoming panel's copy.
+  const labelT = smooth(L_HOLD, L_HOLD + (L_OUT - L_HOLD) * 0.5, l);
+  return {
+    vis: 1 - t,
+    label: 1 - labelT,
+    scrim: 1 - t,
+    scale: 1 + t * 0.5,
+    tx: t,
+    slot: t,
+    active: false,
+  };
 }
 
 export function FlowPanels() {
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<(HTMLElement | null)[]>([]);
   const slotRefs = useRef<(HTMLElement | null)[]>([]);
+  const scrimRefs = useRef<(HTMLElement | null)[]>([]);
+  const labelRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     // Defensive: this overlay only mounts on the WebGL path (reduced-motion uses
@@ -88,6 +132,25 @@ export function FlowPanels() {
         // faded/receding panel never intercept the cursor.
         el.style.pointerEvents = f.active ? "auto" : "none";
         el.style.zIndex = f.active ? "3" : "1";
+
+        // CONTRAST FLOOR — the scrim is a soft dark ellipse behind the text that
+        // keeps the labels legible over whatever warp/debris/sun frame is behind
+        // the canvas. Ramped purely by f.scrim (= panel visibility), so it fades
+        // with the beat and never persists. Backing element only; z below text.
+        const scrim = scrimRefs.current[i];
+        if (scrim) scrim.style.opacity = f.scrim.toFixed(3);
+
+        // HIERARCHY — the giant wordmark fades on its OWN faster ramp and drops a
+        // touch behind the body as it recedes, so a passing title can't collide
+        // off-centre with the next panel's copy.
+        const label = labelRefs.current[i];
+        if (label) {
+          label.style.opacity = f.label.toFixed(3);
+          // push the receding title behind the body (negative translateZ via a
+          // tiny scale-down + lower opacity reads as depth without a new stacking
+          // context fight); keep approach flush.
+          label.style.zIndex = f.label >= f.vis ? "1" : "0";
+        }
 
         // inner image-slot parallaxes at a slightly different rate → depth.
         const slot = slotRefs.current[i];
@@ -127,23 +190,44 @@ export function FlowPanels() {
           style={{ opacity: 0, transform: "translate(-50%, -50%) scale(0.62)" }}
           data-beat={BEATS[i]}
         >
+          {/* CONTRAST-FLOOR SCRIM — soft dark ellipse behind the type, above the
+              canvas, below the text/links. Opacity driven per-frame (pure in
+              beatLocal) by the rAF loop. Pure decoration → aria-hidden. */}
+          <span
+            className="flowpanel__scrim"
+            ref={(el) => {
+              scrimRefs.current[i] = el;
+            }}
+            aria-hidden="true"
+          />
+
           <span className="flowpanel__idx">
             {s.idx} <span className="flowpanel__idx-dim">/ 05</span>
           </span>
 
-          <h2 className="flowpanel__label">{s.label}</h2>
+          <h2
+            className="flowpanel__label"
+            ref={(el) => {
+              labelRefs.current[i] = el;
+            }}
+          >
+            {s.label}
+          </h2>
 
           <p className="flowpanel__desc">{s.desc}</p>
 
+          {/* DEPTH PLATE — a procedural monochrome star-wash, parallaxed at its
+              own (slower) rate by the JS so it sits "deeper" than the type. No
+              border chrome, no placeholder tag: it reads as part of the deep-space
+              grade, not a half-built image frame. Procedural only (anti-pattern
+              #4). */}
           <div
             className="flowpanel__slot"
             ref={(el) => {
               slotRefs.current[i] = el;
             }}
             aria-hidden="true"
-          >
-            <span className="flowpanel__slot-tag">image</span>
-          </div>
+          />
 
           <ul className="flowpanel__work">
             {s.hotspots.map((h, j) => {

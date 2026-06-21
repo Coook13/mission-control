@@ -251,6 +251,53 @@ export function warpAt(p: number): number {
   // start of the arrival reveal (ARRIVE_LO = 0.86) — closing the old flat-drift
   // dead zone at p0.87–0.90. Speed peak + streak blowout + arrival now coincide.
   const climax = bump(p, 0.81, 0.89);
-  // climax punches a touch harder than the first surge
-  return Math.min(1, escalation * 0.92 + climax * 1.0);
+  // WHITE-OUT CREST: a second, STEEPER sub-bump nested just past the climax peak
+  // (0.84–0.875) — a brief blinding spike riding ON TOP of the broad climax bump.
+  // This makes the final jump read as a "punch INTO light", qualitatively unlike
+  // the first surge (which has no crest). It's a pure raised-cosine inside the
+  // climax window, so it scrubs + reverses and stays 0 outside. The crest pushes
+  // the combined value above the escalation ceiling → the streaks blow white.
+  const crest = bump(p, 0.84, 0.875);
+  // climax punches a touch harder than the first surge; the crest adds the spike
+  return Math.min(1, escalation * 0.92 + climax * 1.0 + crest * 0.35);
+}
+
+/* Mid-act PULSE 0..1, pure in p — a SMALL build in the calm TRADING/STRATEGY
+   stretch between beat 0 (0.30) and beat 1 (0.42), where no Group-1 set-piece
+   plays (debris 0.44+, limb 0.46+, sun 0.60+) and no warp window touches (warp-1
+   ends 0.285). A single tight raised-cosine at 0.355–0.405 so the quiet middle
+   gets a faint surge/texture WITHOUT widening either main warp window into the
+   re-windowed debris/sun. Kept deliberately gentle (caps ~0.5 via the consumers)
+   so it reads as a heartbeat, not a third warp. Returns 0 everywhere else.
+   Consumed by WarpJump-adjacent texture / letterbox as a light secondary cue. */
+export function pulseAt(p: number): number {
+  return bump(p, 0.355, 0.405);
+}
+
+/* SHOCKWAVE intensity 0..1, pure in p — a SHARP concussive spike (narrow window,
+   steep raised-cosine) at TWO impact moments:
+     - ENTER PUNCH   p ~0.135–0.185 (peak 0.16): the moment the camera tears
+       through the {O}; a ring blasts outward past the lens.
+     - CLIMAX        p ~0.825–0.875 (peak 0.85): the final punch-into-light; a
+       second, harder ring races out as the arrival breaks.
+   Both are tight bumps (narrower than the warp windows) so the impact reads as a
+   CONCUSSION, not a sustained glow. The climax spike punches harder. 0 elsewhere
+   → Shockwave.tsx hides (visible=false) outside its two windows. Pure in p. */
+export function shockAt(p: number): number {
+  const punch = bump(p, 0.135, 0.185) * 0.85; // ENTER punch-through
+  const climax = bump(p, 0.825, 0.875) * 1.0; // the climactic break
+  return Math.min(1, punch + climax);
+}
+
+/* BLOOM-FLASH envelope 0..1, pure in p — a TIGHT raised-cosine blowout on the
+   SAME two impacts as the shockwave, used by Effects to lift Bloom intensity for
+   ~1–2 frames of genuine over-bright RELEASE (the punch + the climax break) and
+   by Flythrough to ramp the finale brightness. Narrower + steeper than warpAt so
+   the bloom spikes and snaps back rather than dwelling. The climax flash sits a
+   hair later than the shock peak (0.85) so the light blowout reads as the wave's
+   wake. Pure in p → scrubs + reverses; exactly 0 outside the two windows. */
+export function flashAt(p: number): number {
+  const punch = bump(p, 0.14, 0.18) * 0.9; // ENTER punch blowout
+  const climax = bump(p, 0.835, 0.88) * 1.0; // climax punch-into-light blowout
+  return Math.min(1, punch + climax);
 }

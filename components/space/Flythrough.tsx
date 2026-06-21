@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type JSX } from "react";
 import { useLenis } from "lenis/react";
 import { flightState, resetFlight } from "./flightState";
-import { enter, warpAt, FINALE_START } from "./phase";
+import { enter, warpAt, flashAt, pulseAt, FINALE_START } from "./phase";
 import { FlowPanels } from "./FlowPanels";
 import { SCENES } from "./scenes";
 import { profile } from "@/lib/site-data";
@@ -40,7 +40,9 @@ const Scene = dynamic(() => import("./Scene"), {
      · LETTERBOX — cinematic bars that breathe IN during the warp/set-piece
        windows (driven by warpAt(p)) and breathe OUT otherwise. Pure in p.
      · FINALE    — near p=1 the contact line resolves grandly as the camera bursts
-       into a vast bright field. Driven by an arrival ramp on progress. Pure in p.
+       into a vast bright field. Driven by an arrival ramp on progress, plus a
+       COUPLED --finale-bright var lifted by flashAt(p) so the climax warp crest
+       and the arrival bloom blowout read as ONE punch into light. Pure in p.
    ============================================================================ */
 function FlythroughFull() {
   const ref = useRef<HTMLElement>(null);
@@ -109,9 +111,15 @@ function FlythroughFull() {
 
       // LETTERBOX bars breathe IN on the warp/set-piece windows. warpAt(p) is 0
       // except in the two acceleration surges → bars are invisibly thin on the
-      // beats and clamp down hard mid-warp. Pure in p, so it reverses exactly.
+      // beats and clamp down hard mid-warp. The mid-act pulseAt(p) adds a FAINT
+      // half-weight breath in the calm TRADING/STRATEGY stretch (0.355–0.405) so
+      // that quiet middle gets a build without widening either warp window into
+      // the re-windowed debris/sun. Pure in p, so it reverses exactly.
       const bars = barsRef.current;
-      if (bars) bars.style.setProperty("--bar", warpAt(p).toFixed(3));
+      if (bars) {
+        const bar = Math.min(1, warpAt(p) + pulseAt(p) * 0.5);
+        bars.style.setProperty("--bar", bar.toFixed(3));
+      }
 
       // FINALE: an ARRIVAL ramp from FINALE_START → 1 (shared with phase.ts, so
       // there's no flat-drift dead zone: the ramp starts as the climax warp peaks
@@ -123,6 +131,15 @@ function FlythroughFull() {
         const a = clamp01((p - FINALE_START) / (1 - FINALE_START));
         const arrive = a * a * (3 - 2 * a); // smoothstep
         finale.style.setProperty("--arrive", arrive.toFixed(3));
+        // COUPLE the climax warp crest to the finale bloom flash so the warp peak
+        // and the arrival flash read as ONE continuous event: --finale-bright is
+        // the arrival ramp LIFTED by flashAt(p) (the same pure-in-p blowout the
+        // Bloom pass spikes on at the climax break). It rides above `arrive` for
+        // the 1–2 frames of the punch-into-light, then settles back to it. The CSS
+        // group consumes this for the finale colour ramp (brighter crest at the
+        // exact moment the WebGL bloom blows out). Pure in p → reverses exactly.
+        const bright = clamp01(arrive + flashAt(p) * (1 - arrive));
+        finale.style.setProperty("--finale-bright", bright.toFixed(3));
         // the contact link inside becomes clickable only once the arrival has
         // largely resolved (pure in p → reverses: scroll back up and it's inert)
         finale.style.setProperty("--finale-hit", arrive > 0.85 ? "auto" : "none");
@@ -162,6 +179,7 @@ function FlythroughFull() {
     if (barsRef.current) barsRef.current.style.setProperty("--bar", "0");
     if (finaleRef.current) {
       finaleRef.current.style.setProperty("--arrive", "0");
+      finaleRef.current.style.setProperty("--finale-bright", "0");
       finaleRef.current.style.setProperty("--finale-hit", "none");
     }
   }, [pathname]);

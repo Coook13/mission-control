@@ -1,19 +1,24 @@
 "use client";
 
 import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
-import { BlendFunction, ChromaticAberrationEffect } from "postprocessing";
+import { BlendFunction, ChromaticAberrationEffect, BloomEffect } from "postprocessing";
 import { useFrame } from "@react-three/fiber";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { flightState } from "./flightState";
-import { warpAt } from "./phase";
+import { warpAt, flashAt } from "./phase";
 
 /* Cinematic post — MONOCHROME, pure in p (anti-pattern #10/#11 safe).
 
    Static stack (always on):
      • Bloom — blooms ONLY the brightest cores (high luminance threshold →
        blacks stay black) so the star/black-hole/sun shaders that push >1 read
-       as light, not a grey wash.
+       as light, not a grey wash. Its INTENSITY is driven per-frame from a pure-
+       in-p envelope (see bloomOfP): it SPIKES on flashAt(p) for 1–2 frames of
+       genuine over-bright RELEASE at the punch + the climax break, and DUCKS on
+       the quiet HOLD windows (when no set-piece/flash is active) for Interstellar
+       restraint — widening the dynamic range so the impacts actually read as
+       impacts. Pure in p → scrubs + reverses.
      • Vignette — keeps the frame edges deep so the field reads as a tunnel.
      • Noise (grain) — a whisper of film grain over OVERLAY (no colour, just
        luminance dither).
@@ -44,7 +49,32 @@ import { warpAt } from "./phase";
 // peak per-axis colour offset at full warp (UV space — sub-pixel, tasteful)
 const WARP_CA = 0.0026;
 
+/* Bloom intensity envelope, pure in p. Three regimes, all blended continuously:
+   - BASE     the working intensity through the cruise/beats (the old 0.62).
+   - DUCK     on the quiet HOLD windows (no warp, no flash) lean DOWN toward 0.50
+     for Interstellar restraint — blacks deepen, the field calms.
+   - SPIKE    on flashAt(p) lift HARD toward ~1.25 for a frame or two of genuine
+     over-bright RELEASE on the punch + climax break.
+   The duck only applies where neither warp NOR flash is active, so it can never
+   fight the spike. Pure fn of p → scrubs + reverses with everything else. */
+const BLOOM_BASE = 0.62;
+const BLOOM_DUCK = 0.5;
+const BLOOM_SPIKE = 1.25;
+function bloomOfP(p: number): number {
+  const f = flashAt(p); // 0..1 tight blowout on the two impacts
+  const w = warpAt(p); // 0..1 in the two warp windows (suppresses the duck)
+  // quiet = how "at rest" we are: 1 when no warp/flash, 0 when either is hot.
+  const quiet = 1 - Math.min(1, w + f);
+  // base ducks toward DUCK on the quiet holds, then the flash spike rides on top
+  const rest = BLOOM_BASE + (BLOOM_DUCK - BLOOM_BASE) * quiet;
+  return rest + (BLOOM_SPIKE - rest) * f;
+}
+
 export function Effects() {
+  // the Bloom effect instance — owned via ref so we can mutate its intensity
+  // per-frame (allocation-free) from the pure-in-p envelope above.
+  const bloom = useRef<BloomEffect>(null);
+
   // the chromatic-aberration effect, owned here so we can mutate its offset
   // per-frame without rebuilding the React tree (allocation-free below)
   const ca = useMemo(() => {
@@ -62,20 +92,28 @@ export function Effects() {
 
   useFrame(() => {
     // pure in p: progress = target (single source of truth, no 2nd lerp)
-    const w = warpAt(flightState.progress); // 0..1, spikes only mid-warp
+    const p = flightState.progress;
+    const w = warpAt(p); // 0..1, spikes only mid-warp
     // diagonal smear, scaled by warp; squared so it ramps in late & snaps off
     const m = WARP_CA * w * w;
     off.set(m, m * 0.6);
     ca.offset = off;
+
+    // bloom intensity rides the pure-in-p envelope: spike on the flash impacts,
+    // duck on the quiet holds. Mutating the live instance is allocation-free and
+    // never re-renders the React tree (same pattern as the CA offset above).
+    const b = bloom.current;
+    if (b) b.intensity = bloomOfP(p);
   });
 
   return (
     <EffectComposer multisampling={0}>
       <Bloom
+        ref={bloom}
         mipmapBlur
         luminanceThreshold={0.9}
         luminanceSmoothing={0.25}
-        intensity={0.62}
+        intensity={BLOOM_BASE}
         radius={0.82}
       />
       <primitive object={ca} dispose={null} />
