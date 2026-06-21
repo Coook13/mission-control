@@ -1,9 +1,15 @@
 "use client";
 
-import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
-import { BlendFunction, ChromaticAberrationEffect, BloomEffect } from "postprocessing";
+import { EffectComposer } from "@react-three/postprocessing";
+import {
+  BlendFunction,
+  ChromaticAberrationEffect,
+  BloomEffect,
+  VignetteEffect,
+  NoiseEffect,
+} from "postprocessing";
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import * as THREE from "three";
 import { flightState } from "./flightState";
 import { warpAt, flashAt } from "./phase";
@@ -32,17 +38,19 @@ import { warpAt, flashAt } from "./phase";
        resolves to faint cool/warm edges on the brightest streaks, never tints
        the blacks.
 
-       Built IMPERATIVELY (new ChromaticAberrationEffect + <primitive>) rather
-       than via the <ChromaticAberration> JSX wrapper. That wrapper (wrapEffect)
-       memoises on JSON.stringify(props) and re-pushes radialModulation/offset
-       onto the live instance through r3f's prop pipeline; under Next 16 +
-       React 19 that path stringifies an instance carrying r3f's circular
-       __r3f.parent/children state → "Converting circular structure to JSON" →
-       the Canvas loses its WebGL context. Constructing it ourselves sets every
-       define/uniform in the ctor, so r3f only ADOPTS the finished object and
-       never serialises or re-applies props. (Same pattern the lib uses for
-       ColorAverage / DepthOfField.) The blendFunction default for an Effect is
-       already NORMAL, but we set it explicitly to pin intent.
+   ALL effects here are built IMPERATIVELY (new …Effect() in useMemo + adopted
+   via <primitive>), NOT via the @react-three/postprocessing JSX wrappers
+   (<Bloom>/<Vignette>/<Noise>/<ChromaticAberration>). Every one of those
+   wrappers goes through wrapEffect, which memoises the effect on
+   JSON.stringify(props) and re-pushes props onto the live instance through
+   r3f's prop pipeline. Under Next 16 + React 19 the props bag carries r3f's
+   circular __r3f.parent/children graph, so JSON.stringify(props) throws
+   "Converting circular structure to JSON" during the EffectComposer commit and
+   tears down the WebGL Canvas. Constructing each effect ourselves sets every
+   define/uniform in the ctor, so r3f only ADOPTS the finished object and never
+   serialises or re-applies props. (Same pattern the lib uses for
+   ColorAverage / DepthOfField.) The blendFunction default for an Effect is
+   already NORMAL, but we set CA's explicitly to pin intent.
 
    Order: bloom → chromatic aberration → vignette → grain. */
 
@@ -71,9 +79,32 @@ function bloomOfP(p: number): number {
 }
 
 export function Effects() {
-  // the Bloom effect instance — owned via ref so we can mutate its intensity
+  // the Bloom effect instance — owned in useMemo so we can mutate its intensity
   // per-frame (allocation-free) from the pure-in-p envelope above.
-  const bloom = useRef<BloomEffect>(null);
+  const bloom = useMemo(
+    () =>
+      new BloomEffect({
+        mipmapBlur: true,
+        luminanceThreshold: 0.9,
+        luminanceSmoothing: 0.25,
+        intensity: BLOOM_BASE,
+        radius: 0.82,
+      }),
+    [],
+  );
+
+  // edge-darkening vignette → the field reads as a tunnel
+  const vignette = useMemo(
+    () => new VignetteEffect({ offset: 0.3, darkness: 0.62 }),
+    [],
+  );
+
+  // a whisper of film grain over OVERLAY (luminance dither, no colour)
+  const noise = useMemo(() => {
+    const n = new NoiseEffect({ blendFunction: BlendFunction.OVERLAY });
+    n.blendMode.opacity.value = 0.018;
+    return n;
+  }, []);
 
   // the chromatic-aberration effect, owned here so we can mutate its offset
   // per-frame without rebuilding the React tree (allocation-free below)
@@ -102,23 +133,15 @@ export function Effects() {
     // bloom intensity rides the pure-in-p envelope: spike on the flash impacts,
     // duck on the quiet holds. Mutating the live instance is allocation-free and
     // never re-renders the React tree (same pattern as the CA offset above).
-    const b = bloom.current;
-    if (b) b.intensity = bloomOfP(p);
+    bloom.intensity = bloomOfP(p);
   });
 
   return (
     <EffectComposer multisampling={0}>
-      <Bloom
-        ref={bloom}
-        mipmapBlur
-        luminanceThreshold={0.9}
-        luminanceSmoothing={0.25}
-        intensity={BLOOM_BASE}
-        radius={0.82}
-      />
+      <primitive object={bloom} dispose={null} />
       <primitive object={ca} dispose={null} />
-      <Vignette offset={0.3} darkness={0.62} eskil={false} />
-      <Noise opacity={0.018} blendFunction={BlendFunction.OVERLAY} />
+      <primitive object={vignette} dispose={null} />
+      <primitive object={noise} dispose={null} />
     </EffectComposer>
   );
 }
