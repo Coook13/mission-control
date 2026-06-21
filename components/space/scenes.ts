@@ -41,7 +41,7 @@ export const SCENES: Scene[] = [
     key: "trading", idx: "02", label: "Trading", desc: "Systematic FX & quant strategies",
     img: "/img/space/cine-jupiter.webp", peak: 0.38, side: "right", tint: "#8a6a3a", scale: 92,
     hotspots: [
-      { title: "Systematic trading", oneLine: "FX & quant strategies — let's talk", href: "/story#contact", x: 44, y: 46 },
+      { title: "Systematic trading", oneLine: "FX & quant strategies — let's talk", href: "/contact", x: 44, y: 46 },
     ],
   },
   {

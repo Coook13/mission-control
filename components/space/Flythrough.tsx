@@ -236,13 +236,18 @@ function FlythroughFull() {
             className={`fly__hero${lit ? " is-online" : ""}`}
             ref={heroRef}
           >
+            {/* Two natural lines — "I BUILD THINGS THAT" over "W{O}RK" — read as
+                confident type, not a spaced-out 4-word list. W{O}RK is alone on
+                the lower line so its {O} gap can sit at the exact viewport centre
+                (where the camera-centred hole renders) AND keep natural word
+                spacing — the only layout where BOTH hold. The two halves are the
+                two LINES (top/bottom) so the enter(p) drift still parts them and
+                the camera flies BETWEEN them toward the hole on the W{O}RK line. */}
             <h1 className="fly__wordmark" aria-label="I build things that work">
               <span className="fly__wm-half fly__wm-half--l" ref={leftRef} aria-hidden="true">
-                <span className="fly__wm-line">I BUILD</span>
-                <span className="fly__wm-line">THINGS</span>
+                <span className="fly__wm-line">I BUILD THINGS THAT</span>
               </span>
               <span className="fly__wm-half fly__wm-half--r" ref={rightRef} aria-hidden="true">
-                <span className="fly__wm-line">THAT</span>
                 {/* W{O}RK laid out so the {O} gap is the flex centre: equal-basis
                     flanks push the gap to the line's exact midpoint, which the
                     wordmark shift parks at screen centre = the black hole's core.
@@ -280,7 +285,7 @@ function FlythroughFull() {
             contact link, so the arrival lands on the actual CTA. */}
         <div className="fly__finale" ref={finaleRef} aria-hidden="true">
           <div className="fly__finale-bloom" />
-          <a className="fly__finale-line" href="/story#contact" aria-label="Let's make it work — get in touch">
+          <a className="fly__finale-line" href="/contact" aria-label="Let's make it work — get in touch">
             <span className="fly__finale-word">LET&rsquo;S MAKE IT</span>
             {/* same W{O}RK construction as the hero wordmark: equal-basis flanks
                 pin the transparent {O} gap to the exact line centre, so it
@@ -324,11 +329,9 @@ function FlyStatic() {
         <div className="fly-static__hero">
           <h1 className="fly__wordmark" aria-label="I build things that work">
             <span className="fly__wm-half" aria-hidden="true">
-              <span className="fly__wm-line">I BUILD</span>
-              <span className="fly__wm-line">THINGS</span>
+              <span className="fly__wm-line">I BUILD THINGS THAT</span>
             </span>
             <span className="fly__wm-half" aria-hidden="true">
-              <span className="fly__wm-line">THAT</span>
               <span className="fly__wm-line">W&#x25EF;RK</span>
             </span>
           </h1>

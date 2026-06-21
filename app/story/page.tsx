@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { facts, profile, storyLong, timeline } from "@/lib/site-data";
-import { ContactSection, Footer, Header } from "@/components/editorial";
+import { Footer, Header } from "@/components/editorial";
 import { Reveal, WordReveal } from "@/components/motion";
 import { Marquee } from "@/components/Marquee";
 import { StoryFX } from "@/components/StoryFX";
@@ -84,8 +84,6 @@ export default function StoryPage() {
             </div>
           </div>
         </section>
-
-        <ContactSection />
       </main>
       <Footer />
     </div>

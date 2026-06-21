@@ -129,7 +129,7 @@ export const projects: Project[] = [
 export const nav = [
   { label: "Story", href: "/story" },
   { label: "Work", href: "/work" },
-  { label: "Contact", href: "/story#contact" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export const facts = [

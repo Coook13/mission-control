@@ -1242,25 +1242,6 @@ html, body { overflow-x: clip; }
 .timeline__line { position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--ink); transform-origin: top; opacity: 0.8; }
 @media (max-width: 880px) { .timeline { padding-left: 20px; } }
 
-/* route-transition wipe panel */
-.page-wipe {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  background: var(--ink);
-  display: grid;
-  place-items: center;
-  will-change: transform;
-  pointer-events: none;
-}
-.page-wipe span {
-  color: var(--bg);
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(2.4rem, 7vw, 5rem);
-  letter-spacing: -0.02em;
-}
-
 /* image hover zoom-within-frame (paired with clip-path reveal in ParallaxImg) */
 .pimg__zoom {
   width: 100%;
@@ -2678,3 +2659,56 @@ body { color: #fff; }
 @media (max-width: 600px) {
   .contact-ed__links { flex-direction: column; gap: 22px; }
 }
+
+/* ==== pass2 agent 0 ==== */
+/* ==== Flythrough hero wordmark — NATURAL O + 2-line lockup (owned by Flythrough.tsx agent) ====
+   The hero is now a confident 2-line lockup: "I BUILD THINGS THAT" / "W{O}RK".
+   W{O}RK is alone on the lower line so its transparent {O} gap can sit at the
+   exact viewport-centre-x (where the camera-centred 3D black hole renders) AND
+   keep natural word spacing — the only arrangement where both hold. The 3D ring
+   (BlackHole3D.tsx) was re-sized + brightened to read AS the letter O at the
+   surrounding cap-height, concentric in this gap. */
+
+/* 2-line stack: shift UP 0.5 line-pitch so the lower line (W{O}RK) lands at 50%
+   = screen centre = the camera-centred hole. (Was -1.5*wm-lh for the old 4-line
+   stack.) Tighter line-height / letter-spacing / gap so the type reads as a
+   confident lockup, not a spaced-out word list. */
+.fly__wordmark {
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  gap: 0.04em;
+  transform: translateY(calc(-0.5 * var(--wm-lh) + 1.6px));
+}
+/* Never let the longer top line wrap — the 2-line centring math assumes exactly
+   two lines, so a wrap would push the W{O}RK line (and the hole's {O}) off-centre.
+   Harmless on the left-aligned static fallback. */
+.fly__wm-line { white-space: nowrap; }
+
+/* The transparent {O} window, enlarged to the surrounding CAP-HEIGHT (0.66em ->
+   0.74em) so "W{O}RK" reads as a real word with the hole AS the O, and seated on
+   the cap band (not floating low). --o-scale (written by Flythrough from enter(p))
+   still opens it on the ENTER dive — pure in p, scrubs + reverses. */
+.fly__wm-o {
+  width: calc(0.74em * var(--o-scale, 1));
+  height: calc(0.74em * var(--o-scale, 1));
+  vertical-align: -0.06em;
+  margin: 0 0.05em;
+}
+
+/* Mobile / narrow full-mode: shrink the wordmark + tighten tracking so the longer
+   top line "I BUILD THINGS THAT" fits on ONE line (no wrap) down to ~360px, and
+   keep the {O} proportional to cap-height. (Real touch phones get FlyStatic; this
+   covers narrow non-touch windows in the WebGL hero.) */
+@media (max-width: 720px) {
+  .fly__wordmark { font-size: clamp(1.45rem, 8vw, 5rem); letter-spacing: -0.05em; }
+  .fly__wm-o {
+    width: calc(0.7em * var(--o-scale, 1));
+    height: calc(0.7em * var(--o-scale, 1));
+  }
+}
+
+/* ==== pass2 agent 1 ==== */
+.page-dark--contact{display:flex;flex-direction:column;min-height:100svh}.page-dark--contact>main{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center}.page-dark--contact .contact-ed{flex:1 1 auto;display:flex;align-items:center}.page-dark--contact .contact-ed__inner{width:100%}
+
+/* ==== pass2 agent 2 ==== */
+.space-warp-shell { position: fixed; inset: 0; z-index: 95; pointer-events: none; background: #000; will-change: opacity; } .space-warp { position: absolute; inset: 0; overflow: hidden; } .space-warp__canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; } @media (prefers-reduced-motion: reduce) { .space-warp__canvas { display: none; } }

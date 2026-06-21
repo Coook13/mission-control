@@ -86,9 +86,12 @@ const frag = /* glsl */ `
     // the core (below) is forced blacker so the centre stays a void as the rim
     // blazes. This is the dramatic threshold moment, gone in 1–2 frames.
     float r0 = 0.62 + uEnter * 0.05 + uEngulf * 0.95;   // rim races outward on engulf
-    float rimW = 0.045 + uEnter * 0.05 + uEngulf * 0.16; // and broadens to a blaze
+    // Resting ring is a touch BROADER (0.045→0.062) so at the hero it reads as a
+    // solid luminous O the size of the surrounding cap-height letters, not a
+    // hairline. The uEnter/uEngulf broadening is left intact for the blaze.
+    float rimW = 0.062 + uEnter * 0.05 + uEngulf * 0.16; // and broadens to a blaze
     float rim = exp(-pow((r - r0) / rimW, 2.0));
-    float photon = exp(-pow((r - (r0 - 0.07)) / (0.016 + uEngulf * 0.05), 2.0)) * (0.85 + uEnter * 0.7 + uEngulf * 2.2);
+    float photon = exp(-pow((r - (r0 - 0.07)) / (0.024 + uEngulf * 0.05), 2.0)) * (0.92 + uEnter * 0.7 + uEngulf * 2.2);
     float glow = exp(-pow((r - r0) / (0.22 + uEnter * 0.12 + uEngulf * 0.30), 2.0));
 
     float side = 0.5 + 0.5 * cos(ang - t * 2.0);
@@ -108,10 +111,13 @@ const frag = /* glsl */ `
     // pure black inside; engulf DEEPENS + widens the throat so the centre is a
     // dark void even as the rim blazes past the lens (rim of light, dark core).
     float core = smoothstep(0.30 + uEngulf * 0.30, 0.52 + uEngulf * 0.46, r);
-    // Resting brightness dialled DOWN modestly (the lighting was good, just a hair
-    // blown out): base flare 1.0→0.82, rim/photon/glow multipliers trimmed ~12-15%.
-    // The engulf terms are LEFT INTACT so the punch-through still BLAZES hard.
-    float flare = 0.82 + uEnter * 1.3 + uEngulf * 3.2; // engulf BLAZES the rim hard
+    // Resting brightness: 0.82→0.95, a MODEST lift. The hero ring is now ~half the
+    // on-screen radius (base scale 4.5→2.2), so the same rim flux concentrates into
+    // far fewer pixels and reads brighter per-pixel on its own — a big flare bump on
+    // top would blow it out. This small lift just guarantees the cap-height O reads
+    // as a crisp luminous ring. The uEnter/uEngulf terms are LEFT INTACT so the
+    // punch-through still BLAZES hard above this floor.
+    float flare = 0.95 + uEnter * 1.3 + uEngulf * 3.2; // engulf BLAZES the rim hard
     float ringI = (rim * 1.55 + photon * 1.3) * dopp * shim;
     float glowI = glow * 0.42 * dopp;
     float intensity = (ringI + glowI) * core * flare;
@@ -201,13 +207,13 @@ export function BlackHole3D() {
 
     // grow in frame as we approach + punch through; pure fn of enter(p). The
     // perspective approach does most of the work; this adds the stylised swell.
-    // The quad is 4.0× the unit plane (oversized so the radial edge-fade reaches
-    // 0 well inside every boundary → clean circle), so the scale here is scaled
-    // by 3.4/4.0 vs the old 3.4 quad to preserve the on-screen framing exactly.
-    // The engulf term lifts the scale envelope HARD on the threshold frame so the
-    // ring physically engulfs the lens (rim past the frame edges) before the
-    // fade/whip-past punches to warp. Pure in p → reverses exactly.
-    const s = (4.5 + e * 13 + eng * 34) * 0.85;
+    // RESTING base 4.5→2.2: at the hero (e=0) the bright photon ring now projects
+    // to roughly the cap-height of the surrounding W/R/K (~the {O} gap), so the
+    // hole reads AS the letter O, concentric in the gap, instead of an oversized
+    // faint ring bleeding behind the letters. The e*13 / eng*34 growth terms are
+    // UNCHANGED so the ENTER dive + engulf blaze still fill the lens exactly as
+    // before. Pure in p → reverses exactly.
+    const s = (2.2 + e * 13 + eng * 34) * 0.85;
     g.scale.setScalar(s);
 
     // hide outright once faded so it can't catch the cruise (cheap + exact)
