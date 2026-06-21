@@ -47,7 +47,11 @@ const frag = /* glsl */ `
   uniform float uEnter; // 0..1 across the ENTER window (pure fn of p)
   uniform float uFade;  // master opacity (pure fn of p)
   void main() {
-    vec2 p = (vUv - 0.5) * 2.0;
+    // The quad is oversized vs the disc (geometry is ~1.7×1.7, world scale
+    // divided to compensate) so there is generous transparent margin around the
+    // ring. p is scaled to span [-1.7,1.7]^2 → corners sit at r≈2.4, far outside
+    // the disc, and the edge-fade below can fully reach 0 before any quad edge.
+    vec2 p = (vUv - 0.5) * 3.4;
     float r = length(p);
     float ang = atan(p.y, p.x);
     float t = uTime * 0.25;
@@ -70,6 +74,11 @@ const frag = /* glsl */ `
     float core = smoothstep(0.30, 0.52, r);         // pure black inside
     float flare = 1.0 + uEnter * 1.4;               // overall punch-through gain
     float intensity = (rim * 1.8 + photon * 1.5 + glow * 0.5) * dopp * shim * core * flare;
+    // radial edge-fade: force the glow to die to EXACTLY 0 well inside the quad
+    // so the additive falloff never reaches the square corners (no box at scale).
+    // p spans [-1,1]^2, so corners sit at r≈1.41 — fade out across r∈[1.35,1.55].
+    float edgeFade = smoothstep(1.55, 1.35, r);
+    intensity *= edgeFade;
     intensity *= uFade;
     float a = clamp(intensity, 0.0, 1.0);
     gl_FragColor = vec4(col * intensity, a);
@@ -133,7 +142,10 @@ export function BlackHole3D() {
 
     // grow in frame as we approach + punch through; pure fn of enter(p). The
     // perspective approach does most of the work; this adds the stylised swell.
-    const s = 9 + e * 26;
+    // The quad is 3.4× the unit plane (oversized for glow margin), and p now
+    // maps 1 UV-unit → 1 world-unit, so the visible ring is 2× what the old
+    // [1,1] quad gave at the same scale — halve the scale to preserve framing.
+    const s = 4.5 + e * 13;
     g.scale.setScalar(s);
 
     // hide outright once faded so it can't catch the cruise (cheap + exact)
@@ -143,7 +155,11 @@ export function BlackHole3D() {
   return (
     <group ref={group}>
       <mesh frustumCulled={false}>
-        <planeGeometry args={[1, 1]} />
+        {/* Oversized quad (3.4 vs unit) gives the additive glow generous
+            transparent margin; the shader's radial edge-fade kills intensity to
+            exactly 0 at r≈1.55, far inside the quad edges (r≈1.7) and corners
+            (r≈2.4), so the disc reads as a clean CIRCLE at every scale. */}
+        <planeGeometry args={[3.4, 3.4]} />
         <shaderMaterial
           ref={mat}
           vertexShader={vert}

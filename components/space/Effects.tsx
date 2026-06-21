@@ -9,7 +9,7 @@ import { BlendFunction } from "postprocessing";
 export function Effects() {
   return (
     <EffectComposer multisampling={0}>
-      <Bloom mipmapBlur luminanceThreshold={0.9} luminanceSmoothing={0.22} intensity={0.6} radius={0.72} />
+      <Bloom mipmapBlur luminanceThreshold={0.9} luminanceSmoothing={0.25} intensity={0.62} radius={0.82} />
       <Vignette offset={0.3} darkness={0.62} eskil={false} />
       <Noise opacity={0.018} blendFunction={BlendFunction.OVERLAY} />
     </EffectComposer>

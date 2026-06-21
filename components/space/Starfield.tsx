@@ -7,8 +7,11 @@ import { mulberry32 } from "./rng";
 import { makeStarUniforms, starFragment, starVertex } from "./starMaterial";
 
 /* The flythrough star field: soft round twinkling points filling a long box
-   ahead of the camera. Stars that fall behind recycle to the far end → endless
-   field. Varied size/brightness/tint give real depth. Uses the built-in
+   ahead of the camera. The rendered z of every star is a PURE FUNCTION of the
+   camera z — wrapped into a rolling band in the vertex shader (see
+   starMaterial) — so the field is identical scrubbing forward AND backward and
+   never depletes on reverse scroll (BUG 2). No mutated position buffer.
+   Varied size/brightness/tint give real depth. Uses the built-in
    <shaderMaterial> (no extend needed). */
 export function Starfield({ count = 6500, spread = 180, depth = 360 }: { count?: number; spread?: number; depth?: number }) {
   const points = useRef<THREE.Points>(null);
@@ -25,7 +28,9 @@ export function Starfield({ count = 6500, spread = 180, depth = 360 }: { count?:
     for (let i = 0; i < count; i++) {
       positions[i * 3] = (rand() - 0.5) * spread;
       positions[i * 3 + 1] = (rand() - 0.5) * spread * 0.62;
-      positions[i * 3 + 2] = 2 - rand() * depth; // ahead of the camera (z=12)
+      // base z spans one band width; the vertex shader wraps it relative to the
+      // camera each frame (pure f(camZ)), so this is just a uniform seed in [0,depth)
+      positions[i * 3 + 2] = rand() * depth;
       const r = rand();
       sizes[i] = 0.45 + r * r * 1.7;
       brights[i] = 0.28 + rand() * 0.72;
@@ -37,18 +42,13 @@ export function Starfield({ count = 6500, spread = 180, depth = 360 }: { count?:
 
   useFrame((state) => {
     const m = mat.current as THREE.ShaderMaterial | null;
-    if (m && m.uniforms && m.uniforms.uTime) {
-      m.uniforms.uTime.value = state.clock.elapsedTime;
-      m.uniforms.uFar.value = depth;
-    }
-    const pts = points.current;
-    if (!pts) return;
-    const camZ = state.camera.position.z;
-    const arr = pts.geometry.attributes.position.array as Float32Array;
-    for (let i = 2; i < arr.length; i += 3) {
-      if (arr[i] > camZ + 8) arr[i] -= depth;
-    }
-    pts.geometry.attributes.position.needsUpdate = true;
+    if (!m || !m.uniforms || !m.uniforms.uTime) return;
+    // Feed the camera z to the shader; the wrap is a pure function of it, so no
+    // position buffer is mutated and the field reverses exactly (BUG 2 fix).
+    m.uniforms.uTime.value = state.clock.elapsedTime;
+    m.uniforms.uFar.value = depth;
+    m.uniforms.uCamZ.value = state.camera.position.z;
+    m.uniforms.uWrapDepth.value = depth;
   });
 
   return (

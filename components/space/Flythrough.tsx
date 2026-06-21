@@ -56,7 +56,12 @@ function FlythroughFull() {
     // Hero wordmark: as enter() drives 0→1 across p∈[0.10,0.20], the two halves
     // drift apart (we fly between them) and the whole mark fades out. Pure in p.
     const e = enter(p);
-    if (heroRef.current) heroRef.current.style.opacity = String(1 - e);
+    if (heroRef.current) {
+      heroRef.current.style.opacity = String(1 - e);
+      // The {O} gap opens as the 3D black hole swells (scale 9+e*26 ≈ ×3.9) so
+      // the window keeps framing the hole through the punch. Pure in p → reverses.
+      heroRef.current.style.setProperty("--o-scale", String(1 + e * 2.9));
+    }
     if (leftRef.current) {
       leftRef.current.style.transform = `translate3d(${(-e * 16).toFixed(2)}vw, 0, 0)`;
     }
@@ -85,7 +90,10 @@ function FlythroughFull() {
     const lenis = (window as unknown as { lenis?: { scrollTo: (t: number, o?: { immediate?: boolean }) => void } }).lenis;
     if (lenis) lenis.scrollTo(0, { immediate: true });
     else window.scrollTo(0, 0);
-    if (heroRef.current) heroRef.current.style.opacity = "1";
+    if (heroRef.current) {
+      heroRef.current.style.opacity = "1";
+      heroRef.current.style.setProperty("--o-scale", "1");
+    }
     if (leftRef.current) leftRef.current.style.transform = "translate3d(0,0,0)";
     if (rightRef.current) rightRef.current.style.transform = "translate3d(0,0,0)";
     if (cueRef.current) cueRef.current.style.opacity = "1";
@@ -112,8 +120,14 @@ function FlythroughFull() {
               </span>
               <span className="fly__wm-half fly__wm-half--r" ref={rightRef} aria-hidden="true">
                 <span className="fly__wm-line">THAT</span>
-                <span className="fly__wm-line">
-                  W<span className="fly__wm-o" aria-hidden="true" />RK
+                {/* W{O}RK laid out so the {O} gap is the flex centre: equal-basis
+                    flanks push the gap to the line's exact midpoint, which the
+                    wordmark shift parks at screen centre = the black hole's core.
+                    Metric-independent, so it stays aligned across the clamp. */}
+                <span className="fly__wm-line fly__wm-line--work">
+                  <span className="fly__wm-flank fly__wm-flank--l">W</span>
+                  <span className="fly__wm-o" aria-hidden="true" />
+                  <span className="fly__wm-flank fly__wm-flank--r">RK</span>
                 </span>
               </span>
             </h1>

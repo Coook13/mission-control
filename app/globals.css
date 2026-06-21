@@ -1924,30 +1924,65 @@ body { color: #fff; }
   position: absolute; inset: 0;
   background: radial-gradient(130% 120% at 50% 42%, #060912, #000 70%);
 }
+/* Overlay is a positioning context only; the hero is hard-centred (no flex
+   justify, so the kicker below the wordmark can't drag the block off-centre). */
 .fly__overlay {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
+/* Hero is anchored at the exact viewport centre. The wordmark is then nudged up
+   (see .fly__wordmark) so its LAST line — the one carrying the {O} — lands on
+   50%/50%, where the camera-centred 3D black hole renders. */
 .fly__hero {
-  position: relative; width: 100%; text-align: center;
-  padding-inline: clamp(20px, 5vw, 72px); color: #fff; will-change: opacity;
+  --wm-lh: 0.94em; /* per-line pitch shared by wordmark + kicker (see below) */
+  position: absolute; top: 50%; left: 50%;
+  bottom: auto; right: auto; /* clear the stale bottom/left from the superseded rule */
+  width: min(100%, 1200px); transform: translate(-50%, -50%);
+  text-align: center; padding-inline: clamp(20px, 5vw, 72px);
+  color: #fff; will-change: opacity;
 }
+/* line-height is the load-bearing unit: --wm-lh is the per-line pitch (0.92 +
+   the 0.02em flex gap). The wordmark is shifted UP by 1.5 line-pitches so the
+   4th line (W{O}RK) sits at the block's vertical centre = screen centre. Four
+   lines tall at this size never exceeds ~50vh upward, so nothing clips. */
 .fly__wordmark {
+  --wm-lh: 0.94em;
   margin: 0; font-family: var(--font-sans);
   font-weight: 700; text-transform: uppercase;
   line-height: 0.92; letter-spacing: -0.04em;
   font-size: clamp(1.7rem, 6.6vw, 5rem);
   display: flex; flex-direction: column; align-items: center; gap: 0.02em;
+  transform: translateY(calc(-1.5 * var(--wm-lh)));
 }
 .fly__wm-half { display: block; will-change: transform; }
 .fly__wm-half--l, .fly__wm-half--r { text-shadow: 0 4px 70px rgba(0, 0, 0, 0.55); }
 .fly__wm-line { display: block; }
-.fly__wm-o {
-  display: inline-block; width: 0.62em; height: 0.62em;
-  vertical-align: -0.02em; margin: 0 0.03em;
+/* The W{O}RK line: equal-basis flanks keep the {O} gap pinned to the exact line
+   centre regardless of glyph widths, so the gap (and the hole behind it) sit
+   dead-centre horizontally. Flanks hug the gap (right/left aligned). */
+.fly__wm-line--work {
+  display: flex; align-items: center; justify-content: center;
 }
+.fly__wm-flank { flex: 1 1 0; min-width: 0; }
+.fly__wm-flank--l { text-align: right; }
+.fly__wm-flank--r { text-align: left; }
+/* The {O} is a transparent window in the wordmark; the real 3D black hole shows
+   through it. It sits on the W{O}RK line which the wordmark shift parks at screen
+   centre, so the gap's centre coincides with the hole's core. --o-scale (written
+   by Flythrough from enter(p)) lets the window open up as the hole swells on the
+   ENTER dive — pure in p, so it scrubs and reverses. */
+.fly__wm-o {
+  display: inline-block;
+  width: calc(0.66em * var(--o-scale, 1));
+  height: calc(0.66em * var(--o-scale, 1));
+  vertical-align: -0.04em; margin: 0 0.04em;
+  will-change: width, height;
+}
+/* Kicker is parked just below the wordmark's last (W{O}RK) line, which the shift
+   centres at 50%. Absolute so it never feeds back into the wordmark's centring. */
 .fly__kicker {
-  margin: clamp(20px, 3.4vh, 44px) 0 0;
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, calc(0.5 * var(--wm-lh, 0.94em) + clamp(20px, 3.4vh, 44px)));
+  margin: 0; white-space: nowrap;
   font-family: var(--font-dot-var), monospace;
   font-size: clamp(0.66rem, 1vw, 0.84rem);
   letter-spacing: 0.28em; text-transform: uppercase;
@@ -1975,8 +2010,13 @@ body { color: #fff; }
 }
 .fly-static__inner { width: 100%; max-width: 1120px; margin: 0 auto; }
 .fly-static__hero { margin-bottom: clamp(48px, 10vh, 96px); }
-.fly-static__hero .fly__wordmark { align-items: flex-start; }
-.fly-static__hero .fly__kicker { text-align: left; }
+/* Static fallback reuses .fly__wordmark but is a normal-flow left-aligned stack —
+   undo the centre-anchoring shift and the absolute kicker the WebGL hero needs. */
+.fly-static__hero .fly__wordmark { align-items: flex-start; transform: none; }
+.fly-static__hero .fly__kicker {
+  position: static; transform: none; margin: clamp(20px, 3.4vh, 44px) 0 0;
+  white-space: normal; text-align: left;
+}
 .fly-static__skills {
   list-style: none; margin: 0; padding: 0;
   display: grid; gap: clamp(28px, 5vh, 52px);
@@ -1999,5 +2039,8 @@ body { color: #fff; }
 }
 @media (max-width: 720px) {
   .fly__wordmark { font-size: clamp(2.3rem, 13vw, 5rem); letter-spacing: -0.025em; }
-  .fly__wm-o { width: 0.6em; height: 0.6em; }
+  .fly__wm-o {
+    width: calc(0.64em * var(--o-scale, 1));
+    height: calc(0.64em * var(--o-scale, 1));
+  }
 }
