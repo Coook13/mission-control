@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type JSX } from "react";
 import { useLenis } from "lenis/react";
 import { flightState, resetFlight } from "./flightState";
-import { enter, warpAt } from "./phase";
+import { enter, warpAt, FINALE_START } from "./phase";
 import { FlowPanels } from "./FlowPanels";
 import { SCENES } from "./scenes";
 import { profile } from "@/lib/site-data";
@@ -59,6 +59,12 @@ function FlythroughFull() {
   const [lit, setLit] = useState(false);
   const [ignitionDone, setIgnitionDone] = useState(false);
 
+  // SCROLL → SINGLE SOURCE OF TRUTH. The Lenis callback does ONE thing: write
+  // flightState.target = flightState.progress = scroll progress p. No second
+  // lerp (anti-pattern #8) — Lenis is the only smoother. It writes NO overlay
+  // styles, so the overlay can never be stranded when progress is driven from a
+  // source other than this callback (e.g. the console dev-hook setting
+  // window.flightState.target without any DOM scroll).
   useLenis(() => {
     const el = ref.current;
     if (!el) return;
@@ -66,46 +72,67 @@ function FlythroughFull() {
     const total = el.offsetHeight - window.innerHeight;
     const scrolled = -el.getBoundingClientRect().top;
     const p = total > 0 ? Math.min(Math.max(scrolled / total, 0), 1) : 0;
-
-    // SINGLE source of truth. No second lerp — progress mirrors target; only
-    // Lenis smooths the underlying scroll (anti-pattern #8).
     flightState.target = p;
     flightState.progress = p;
-
-    // Hero wordmark: as enter() drives 0→1 across p∈[0.10,0.20], the two halves
-    // drift apart (we fly between them) and the whole mark fades out. Pure in p.
-    const e = enter(p);
-    if (heroRef.current) {
-      heroRef.current.style.opacity = String(1 - e);
-      // The {O} gap opens as the 3D black hole swells (scale 9+e*26 ≈ ×3.9) so
-      // the window keeps framing the hole through the punch. Pure in p → reverses.
-      heroRef.current.style.setProperty("--o-scale", String(1 + e * 2.9));
-    }
-    if (leftRef.current) {
-      leftRef.current.style.transform = `translate3d(${(-e * 16).toFixed(2)}vw, 0, 0)`;
-    }
-    if (rightRef.current) {
-      rightRef.current.style.transform = `translate3d(${(e * 16).toFixed(2)}vw, 0, 0)`;
-    }
-    // scroll cue lives only in the near-still hero window
-    if (cueRef.current) cueRef.current.style.opacity = String(Math.max(0, 1 - p / 0.08));
-
-    // LETTERBOX bars breathe IN on the warp/set-piece windows. warpAt(p) is 0
-    // except in the two acceleration surges → bars are invisibly thin on the
-    // beats and clamp down hard mid-warp. Pure in p, so it reverses exactly.
-    if (barsRef.current) {
-      barsRef.current.style.setProperty("--bar", warpAt(p).toFixed(3));
-    }
-
-    // FINALE: an ARRIVAL ramp over p∈[0.9,1]. The contact line resolves and the
-    // screen blooms into a vast bright field as the camera settles. Pure in p:
-    // scrub up past 0.9 and it fades back out, scrub down and it lands again.
-    if (finaleRef.current) {
-      const a = clamp01((p - 0.9) / 0.1); // 0 → 1 across the last 10% of scroll
-      const arrive = a * a * (3 - 2 * a); // smoothstep
-      finaleRef.current.style.setProperty("--arrive", arrive.toFixed(3));
-    }
   });
+
+  // OVERLAY DRIVER — a single rAF loop that reads flightState.progress DIRECTLY
+  // (mirrors FlowPanels exactly) and writes every pure-in-p overlay value. This
+  // is what makes the hero / cue / letterbox / finale true functions of
+  // flightState.progress: they scrub AND reverse whether progress comes from
+  // real Lenis scroll OR the console dev-hook. The loop is allocation-free and
+  // cancelled on unmount.
+  useEffect(() => {
+    let raf = 0;
+    const draw = () => {
+      const p = flightState.progress;
+
+      // Hero wordmark: as enter() drives 0→1 across p∈[0.10,0.20], the two halves
+      // drift apart (we fly between them) and the whole mark fades out by p≈0.20
+      // and STAYS out (enter saturates at 1). Pure in p.
+      const e = enter(p);
+      const hero = heroRef.current;
+      if (hero) {
+        hero.style.opacity = (1 - e).toFixed(3);
+        // The {O} gap opens as the 3D black hole swells so the window keeps
+        // framing the hole through the punch. Pure in p → reverses.
+        hero.style.setProperty("--o-scale", (1 + e * 2.9).toFixed(3));
+      }
+      const left = leftRef.current;
+      if (left) left.style.transform = `translate3d(${(-e * 16).toFixed(2)}vw, 0, 0)`;
+      const right = rightRef.current;
+      if (right) right.style.transform = `translate3d(${(e * 16).toFixed(2)}vw, 0, 0)`;
+
+      // scroll cue lives only in the near-still hero window
+      const cue = cueRef.current;
+      if (cue) cue.style.opacity = Math.max(0, 1 - p / 0.08).toFixed(3);
+
+      // LETTERBOX bars breathe IN on the warp/set-piece windows. warpAt(p) is 0
+      // except in the two acceleration surges → bars are invisibly thin on the
+      // beats and clamp down hard mid-warp. Pure in p, so it reverses exactly.
+      const bars = barsRef.current;
+      if (bars) bars.style.setProperty("--bar", warpAt(p).toFixed(3));
+
+      // FINALE: an ARRIVAL ramp from FINALE_START → 1 (shared with phase.ts, so
+      // there's no flat-drift dead zone: the ramp starts as the climax warp peaks
+      // and the dist surge lands). The contact line resolves and the screen blooms
+      // into a vast bright field as the camera settles. Pure in p → fully
+      // reversible: scrub up and it lands, scrub down and it dissolves.
+      const finale = finaleRef.current;
+      if (finale) {
+        const a = clamp01((p - FINALE_START) / (1 - FINALE_START));
+        const arrive = a * a * (3 - 2 * a); // smoothstep
+        finale.style.setProperty("--arrive", arrive.toFixed(3));
+        // the contact link inside becomes clickable only once the arrival has
+        // largely resolved (pure in p → reverses: scroll back up and it's inert)
+        finale.style.setProperty("--finale-hit", arrive > 0.85 ? "auto" : "none");
+      }
+
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   // On home mount / route-return: never leave the flight + wordmark stranded
   // mid-scroll after a reload or nav-back. Reset state, snap to top, restore the
@@ -133,7 +160,10 @@ function FlythroughFull() {
     if (rightRef.current) rightRef.current.style.transform = "translate3d(0,0,0)";
     if (cueRef.current) cueRef.current.style.opacity = "1";
     if (barsRef.current) barsRef.current.style.setProperty("--bar", "0");
-    if (finaleRef.current) finaleRef.current.style.setProperty("--arrive", "0");
+    if (finaleRef.current) {
+      finaleRef.current.style.setProperty("--arrive", "0");
+      finaleRef.current.style.setProperty("--finale-hit", "none");
+    }
   }, [pathname]);
 
   // IGNITION trigger: arm the timeline one frame after mount (so the unlit
@@ -210,14 +240,28 @@ function FlythroughFull() {
           <span className="fly__bar fly__bar--b" />
         </div>
 
-        {/* FINALE — the arrival. Hidden (opacity 0) for the whole journey; over
-            p∈[0.9,1] (--arrive) the screen blooms to a vast bright field and the
-            contact line resolves. Pure in p → fully reversible on scroll-up. */}
+        {/* FINALE — the arrival, and the STRUCTURAL CALLBACK to the hero. Hidden
+            (opacity 0) for the whole journey; over p∈[FINALE_START,1] (--arrive)
+            the screen blooms to a vast bright field and the wordmark RE-FORMS:
+            the hero opened on "...THAT W{O}RK" with a transparent {O} gap framing
+            the 3D hole; the journey flew THROUGH that hole; the finale re-aligns
+            the very same {O} gap dead-centre on 50/50 (where the returned Arrival
+            hole renders) and resolves to the contact CTA "LET'S MAKE IT W{O}RK".
+            Pure in p → fully reversible on scroll-up. The whole line is the
+            contact link, so the arrival lands on the actual CTA. */}
         <div className="fly__finale" ref={finaleRef} aria-hidden="true">
           <div className="fly__finale-bloom" />
-          <p className="fly__finale-line">
-            LET&rsquo;S BUILD SOMETHING THAT <em>works</em>
-          </p>
+          <a className="fly__finale-line" href="/#contact" aria-label="Let's make it work — get in touch">
+            <span className="fly__finale-word">LET&rsquo;S MAKE IT</span>
+            {/* same W{O}RK construction as the hero wordmark: equal-basis flanks
+                pin the transparent {O} gap to the exact line centre, so it
+                re-aligns over the hole the journey opened on. */}
+            <span className="fly__finale-work" aria-hidden="true">
+              <span className="fly__finale-flank fly__finale-flank--l">W</span>
+              <span className="fly__finale-o" />
+              <span className="fly__finale-flank fly__finale-flank--r">RK</span>
+            </span>
+          </a>
         </div>
 
         {/* IGNITION pre-roll — replaces the loader. Pure CSS timeline gated by

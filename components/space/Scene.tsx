@@ -10,6 +10,8 @@ import { BlackHole3D } from "./BlackHole3D";
 import { WarpJump } from "./WarpJump";
 import { DebrisField } from "./DebrisField";
 import { SunFlare } from "./SunFlare"; // P2-B set-piece: distant additive sun pass
+import { PlanetLimb } from "./PlanetLimb"; // scale anchor: colossal lit limb at a mid beat
+import { Arrival } from "./Arrival"; // finale payload: the {O} returns, massive, dead-ahead
 import { Nebula } from "./Nebula";
 import { Effects } from "./Effects";
 
@@ -71,8 +73,10 @@ function Rig() {
      Nebula      — faint cold ADDITIVE wisps far ahead (a backdrop, never grey)
      SunFlare    — a distant additive sun + streak pass for the escalation/climax
      DebrisField — instanced shards drifting past (reverse-safe like the stars)
+     PlanetLimb  — colossal dark body's lit edge looming at a mid beat (scale anchor)
      BlackHole3D — the {O} ring the hero centres on; the camera punches through it
      WarpJump    — light-speed streaks driven by warpAt(p), zero outside its windows
+     Arrival     — the {O} RETURNS, massive + dead-ahead, growing to fill the finale
      Effects     — bloom + warp-coupled chromatic aberration + vignette + grain
    Every child is a pure function of p, so the whole scene scrubs AND reverses. */
 export default function Scene() {
@@ -95,10 +99,14 @@ export default function Scene() {
         <SunFlare />
         {/* instanced shards drifting past, reverse-safe like the starfield */}
         <DebrisField />
+        {/* SCALE ANCHOR — colossal dark body's lit limb looms at a mid beat */}
+        <PlanetLimb />
         {/* the {O} ring — hero centres on it, camera punches through on ENTER */}
         <BlackHole3D />
         {/* light-speed streaks — intensity is warpAt(p), exactly 0 between windows */}
         <WarpJump />
+        {/* FINALE PAYLOAD — the {O} returns, massive, dead-ahead, fills the frame */}
+        <Arrival />
       </Suspense>
       <Rig />
       <Effects />

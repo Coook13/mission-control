@@ -13,8 +13,15 @@ import { mulberry32 } from "./rng";
    accent (#a9c6ff) reserved for a small minority of the brightest points so the
    field reads cohesive with the fly-through register. Stars are laid out from a
    seeded PRNG (deterministic, no Math.random in the paint loop) and twinkle by a
-   cheap per-star sine. Honours prefers-reduced-motion: paints one still frame
-   and stops. */
+   cheap per-star sine.
+
+   The field is alive at rest: TWO depth layers drift slowly across the viewport
+   on pure time (the near layer faster than the far layer — a parallax that reads
+   as gentle motion through space), plus one faint monochrome nebula wisp that
+   eases with the far layer so /story and /work feel like the same void, paused.
+   The drift wraps by modulo so the offset never accumulates and the paint stays
+   cheap. Honours prefers-reduced-motion: paints one still frame and stops, with
+   the drift offset pinned to zero. */
 
 type Star = {
   x: number; // normalised 0..1 across the viewport
@@ -25,6 +32,7 @@ type Star = {
   spd: number; // twinkle speed
   phase: number; // twinkle phase offset
   accent: boolean; // cool-accent tint (small minority)
+  depth: number; // 0 = far (slow), 1 = near (fast) — drives parallax rate
 };
 
 export function SpaceBackdrop({
@@ -68,16 +76,19 @@ export function SpaceBackdrop({
       const next: Star[] = [];
       for (let i = 0; i < target; i++) {
         const rr = rand();
+        // ~38% near layer (bigger, brighter, drifts faster); rest far layer.
+        const near = rand() > 0.62;
         next.push({
           x: rand(),
           y: rand(),
-          r: 0.4 + rr * rr * 1.5, // mostly tiny, a few larger
-          base: 0.18 + rand() * 0.55,
+          r: (near ? 0.6 : 0.4) + rr * rr * (near ? 1.7 : 1.2), // mostly tiny
+          base: (near ? 0.24 : 0.16) + rand() * 0.52,
           amp: 0.1 + rand() * 0.4,
           spd: 0.4 + rand() * 1.3,
           phase: rand() * Math.PI * 2,
           // ~14% of the brighter stars carry the faint cool tint
           accent: rr > 0.78 && rand() > 0.5,
+          depth: near ? 1 : 0,
         });
       }
       stars = next;
@@ -98,12 +109,23 @@ export function SpaceBackdrop({
 
     function paint(t: number) {
       ctx!.clearRect(0, 0, w, h);
-      // faint top-biased nebular wash so the void has depth without a photo
+      const time = t * 0.001;
+
+      // pure-time drift, normalised (0..1). reduced-motion pins it to zero.
+      // far layer creeps; near layer drifts ~2.4x faster — a parallax that reads
+      // as gentle motion through the field. fract() so it never accumulates.
+      const fract = (v: number) => v - Math.floor(v);
+      const driftFar = reduce ? 0 : fract(time * 0.0042);
+      const driftNear = reduce ? 0 : fract(time * 0.0102);
+
+      // faint top-biased nebular wash — eases laterally with the far layer so the
+      // void has slow depth without a photo. centre wanders a few % of the width.
+      const sway = reduce ? 0 : Math.sin(time * 0.05) * 0.04;
       const grad = ctx!.createRadialGradient(
-        w * 0.5,
+        w * (0.5 + sway),
         h * 0.32,
         0,
-        w * 0.5,
+        w * (0.5 + sway),
         h * 0.32,
         Math.max(w, h) * 0.9
       );
@@ -113,14 +135,29 @@ export function SpaceBackdrop({
       ctx!.fillStyle = grad;
       ctx!.fillRect(0, 0, w, h);
 
-      const time = t * 0.001;
+      // one faint monochrome nebula wisp (the cool-accent reserve), drifting with
+      // the far layer — a soft off-centre cold radial wash, ADDITIVE-feeling over
+      // the black so the deep void stays black, never lifted to grey.
+      const wx = w * (0.74 - driftFar * 0.18);
+      const wy = h * 0.66;
+      const wr = Math.max(w, h) * 0.5;
+      const wisp = ctx!.createRadialGradient(wx, wy, 0, wx, wy, wr);
+      wisp.addColorStop(0, "rgba(169, 198, 255, 0.07)");
+      wisp.addColorStop(0.5, "rgba(120, 150, 220, 0.03)");
+      wisp.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx!.fillStyle = wisp;
+      ctx!.fillRect(0, 0, w, h);
+
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
         const tw = reduce
           ? s.base
           : s.base + Math.sin(time * s.spd + s.phase) * s.amp;
         const a = Math.max(0, Math.min(1, tw));
-        const px = s.x * w;
+        // toroidal drift: wrap normalised x by the layer rate so a star leaving
+        // the left edge reappears on the right — an endless field, no popping.
+        const drift = s.depth === 1 ? driftNear : driftFar;
+        const px = fract(s.x - drift) * w;
         const py = s.y * h;
         ctx!.beginPath();
         ctx!.arc(px, py, s.r, 0, Math.PI * 2);

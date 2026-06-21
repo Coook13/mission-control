@@ -38,9 +38,10 @@ const SUN_PEAK = 0.69; // p where the camera is level with the sun (max blaze)
    to the side and behind as the camera overtakes it — a real fly-PAST, not a
    crossfade. Lateral offset ≈ tan(12°)·lead keeps it inside the fov at peak (it
    would shoot off-screen if placed far off-axis but only a little ahead). */
-const SUN_LEAD = 80; // world units the sun sits ahead of the peak camera z
-const SUN_OFFSET_X = -16; // gentle upper-left bias so it sweeps off, not dead-centre
-const SUN_OFFSET_Y = 9;
+const SUN_LEAD = 52; // world units the sun sits ahead of the peak camera z —
+// closer than before so the body LOOMS large and sweeps fast (blinding flyby)
+const SUN_OFFSET_X = -22; // upper-left bias so it sweeps hard across frame, not dead-centre
+const SUN_OFFSET_Y = 12;
 const SUN_Z = zOfP(SUN_PEAK) - SUN_LEAD; // fixed world z, ahead of the peak
 
 const clamp01 = (u: number): number => (u < 0 ? 0 : u > 1 ? 1 : u);
@@ -77,9 +78,9 @@ const coreFrag = /* glsl */ `
     vec2 p = (vUv - 0.5) * 2.0;
     float r = length(p);
     float ang = atan(p.y, p.x);
-    // blazing core pushed >1 so only it blooms; soft cool halo around it
-    float core = exp(-pow(r / 0.2, 2.0)) * 3.2;
-    float halo = exp(-pow(r / 0.6, 2.0)) * 0.7;
+    // blazing core pushed hard >1 so it blooms HARD; broader, brighter cool halo
+    float core = exp(-pow(r / 0.24, 2.0)) * 5.2;
+    float halo = exp(-pow(r / 0.72, 2.0)) * 1.05;
     // faint shimmering corona rays (cosmetic; uTime only — never touches p)
     float rays = (0.85 + 0.15 * sin(ang * 12.0 + uTime * 0.6)) ;
     float intensity = (core + halo * rays);
@@ -100,8 +101,12 @@ const streakFrag = /* glsl */ `
   uniform vec3 uColor;
   void main() {
     vec2 p = (vUv - 0.5) * 2.0;
-    // very tight on y (thin bar), broad on x (long smear)
-    float bar = exp(-pow(p.y / 0.06, 2.0)) * exp(-pow(p.x / 0.85, 2.0));
+    // tight on y (thin bar), broad on x (long smear). A hotter narrow spine sits
+    // inside a softer wide flare so the streak both blooms bright AND reaches
+    // far across the frame — the anamorphic light-speed smear.
+    float spine = exp(-pow(p.y / 0.045, 2.0)) * exp(-pow(p.x / 0.95, 2.0));
+    float wide  = exp(-pow(p.y / 0.11, 2.0)) * exp(-pow(p.x / 0.7, 2.0));
+    float bar = spine * 1.6 + wide * 0.7;
     float a = bar * uOpacity;
     gl_FragColor = vec4(uColor * (1.0 + bar) * uOpacity, a);
   }
@@ -157,7 +162,7 @@ export function SunFlare() {
       coreMat.current.uniforms.uOpacity.value = op;
     }
     if (streakMat.current) {
-      streakMat.current.uniforms.uOpacity.value = op * 0.9;
+      streakMat.current.uniforms.uOpacity.value = op;
     }
     // ghosts share the window opacity (set on their materials)
     const gh = ghostsRef.current;
@@ -171,9 +176,9 @@ export function SunFlare() {
 
   return (
     <group ref={group} visible={false}>
-      {/* blazing white core + cool halo */}
+      {/* blazing white core + cool halo — LARGE so it blooms hard and looms */}
       <mesh frustumCulled={false}>
-        <planeGeometry args={[64, 64]} />
+        <planeGeometry args={[200, 200]} />
         <shaderMaterial
           ref={coreMat}
           vertexShader={coreVert}
@@ -187,9 +192,9 @@ export function SunFlare() {
         />
       </mesh>
 
-      {/* anamorphic horizontal streak through the sun */}
+      {/* anamorphic horizontal streak through the sun — sweeps wide across frame */}
       <mesh frustumCulled={false} position={[0, 0, 0.1]}>
-        <planeGeometry args={[260, 64]} />
+        <planeGeometry args={[760, 180]} />
         <shaderMaterial
           ref={streakMat}
           vertexShader={coreVert}
@@ -206,8 +211,8 @@ export function SunFlare() {
       {/* lens-flare ghosts along the local screen axis */}
       <group ref={ghostsRef}>
         {ghosts.map((gst, i) => (
-          <mesh key={i} position={[gst.d * 40, gst.d * 14, 0.2]} frustumCulled={false}>
-            <circleGeometry args={[gst.s * 3.4, 32]} />
+          <mesh key={i} position={[gst.d * 78, gst.d * 26, 0.2]} frustumCulled={false}>
+            <circleGeometry args={[gst.s * 7.0, 32]} />
             <meshBasicMaterial
               color="#cdddff"
               transparent

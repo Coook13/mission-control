@@ -59,6 +59,23 @@ const ENTER_END = 0.2; // p0.10–0.20  punch through the O
 const TRAVEL_START = ENTER_END; // beats live in 0.20–0.85
 const TRAVEL_END = 0.85;
 
+/* Where the FINALE (arrival reveal) ramp begins. Set to TRAVEL_END so the
+   climax warp blowout, the camera's speed peak (dist surge into ARRIVAL) and the
+   arrival reveal all coincide at ~p0.85–0.88 — no flat-drift dead zone between
+   the warp and the finale. Consumed by Flythrough's --arrive ramp and shared so
+   the timing lives in ONE place (this module owns p-timing). */
+export const FINALE_START = TRAVEL_END; // 0.85
+
+/* The arrival window, exported so Group 2's Arrival.tsx / PlanetLimb.tsx can
+   read WHEN the arrival object should reveal WITHOUT editing this module. The
+   reveal ramps across [ARRIVE_LO, ARRIVE_HI]; arrivalAt(p) is the eased 0..1
+   intensity over that window (pure in p → scrubs and reverses). */
+export const ARRIVE_LO = 0.86;
+export const ARRIVE_HI = 1.0;
+export function arrivalAt(p: number): number {
+  return smoothstep((p - ARRIVE_LO) / (ARRIVE_HI - ARRIVE_LO));
+}
+
 // distance fractions of FLIGHT_Z per phase (sum = 1)
 const F_HERO = 0.008; // barely creeps forward while the wordmark holds (vast/slow)
 const F_ENTER = 0.15; // fast forward punch into/through the black hole
@@ -187,13 +204,34 @@ function bump(p: number, lo: number, hi: number): number {
    levels off dead-calm for the arrival. Small amplitude (~7°): it reads as a
    piloted craft leaning into the move, never a barrel-roll. Consumed by Scene's
    Rig (cam.rotation.z). */
-const ROLL_AMP = 0.12; // ~6.9° max bank
+const ROLL_AMP = 0.12; // ~6.9° gentle continuous bank
+const ROLL_SNAP = 0.24; // ~13.7° sharp transient lean during each warp jump
 export function rollOfP(p: number): number {
-  // ease the bank in after the punch-through, taper to 0 for arrival
+  // ---- continuous bank: ease in after the punch-through, taper to 0 for arrival
   const gate = smoothstep((p - 0.2) / 0.08) * (1 - smoothstep((p - 0.84) / 0.12));
   // two opposed slow leans across the cruise (one full slow S over 0.2→0.84)
-  const lean = Math.sin((p - 0.2) * Math.PI * 2.0);
-  return lean * ROLL_AMP * gate;
+  const lean = Math.sin((p - 0.2) * Math.PI * 2.0) * ROLL_AMP * gate;
+
+  // ---- warp IMPULSE: a sharp, short-lived snap-lean keyed to each warp window
+  // so the bank is actually visible during the jumps. Inside each warp window we
+  // run ONE full sine cycle (lean hard one way INTO the jump, whip back the other
+  // way OUT of it) enveloped by the same raised-cosine bump that drives the
+  // streaks → zero slope at the window edges (no kink). Opposed signs on the two
+  // jumps so they don't read as the same move. Pure in p → reverses exactly. */
+  const snap1 = warpRoll(p, 0.205, 0.285) * +1; // escalation: lean right→left
+  const snap2 = warpRoll(p, 0.81, 0.89) * -1; // climax: opposite, harder lean
+  const impulse = (snap1 + snap2) * ROLL_SNAP;
+
+  return lean + impulse;
+}
+
+/* One enveloped sine cycle across [lo,hi]: sin(2π·u) gives lean-one-way then the
+   other; the bump envelope (0 at edges, 1 mid) keeps the ends slope-free so the
+   craft snaps in and settles out cleanly. Pure. */
+function warpRoll(p: number, lo: number, hi: number): number {
+  if (p <= lo || p >= hi) return 0;
+  const u = (p - lo) / (hi - lo); // 0..1 across the window
+  return Math.sin(u * Math.PI * 2) * bump(p, lo, hi);
 }
 
 /* Warp-streak intensity 0..1, pure in p, spiking in EXACTLY TWO windows that
@@ -208,7 +246,11 @@ export function rollOfP(p: number): number {
    WarpJump.tsx. */
 export function warpAt(p: number): number {
   const escalation = bump(p, 0.205, 0.285);
-  const climax = bump(p, 0.8, 0.87);
+  // CLIMAX shifted to 0.81–0.89 so its peak (0.85) lands ON the dist surge at
+  // the end of seg 5 (TRAVEL_END/FINALE_START = 0.85) and stays alive into the
+  // start of the arrival reveal (ARRIVE_LO = 0.86) — closing the old flat-drift
+  // dead zone at p0.87–0.90. Speed peak + streak blowout + arrival now coincide.
+  const climax = bump(p, 0.81, 0.89);
   // climax punches a touch harder than the first surge
   return Math.min(1, escalation * 0.92 + climax * 1.0);
 }

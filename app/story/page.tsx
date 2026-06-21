@@ -3,7 +3,6 @@ import { facts, profile, storyLong, timeline } from "@/lib/site-data";
 import { ContactSection, Footer, Header } from "@/components/editorial";
 import { Reveal, WordReveal } from "@/components/motion";
 import { Marquee } from "@/components/Marquee";
-import { PixelMicky } from "@/components/PixelMicky";
 import { StoryFX } from "@/components/StoryFX";
 import { SecLabel } from "@/components/SecLabel";
 import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
@@ -43,10 +42,10 @@ export default function StoryPage() {
               <Reveal delay={0.12}>
                 <figure className="portrait">
                   <div className="portrait__frame">
-                    <div className="portrait__stand">
-                      <PixelMicky height={96} />
-                    </div>
-                    <span className="portrait__note">portrait incoming</span>
+                    <span className="portrait__mark serif" aria-hidden="true">
+                      MT
+                    </span>
+                    <span className="portrait__rule" aria-hidden="true" />
                   </div>
                   <figcaption data-speed={0.9}>{profile.name} · บารมี ธนวโรธร</figcaption>
                 </figure>

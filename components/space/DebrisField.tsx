@@ -43,7 +43,7 @@ function debrisOpacity(p: number): number {
   return up * down;
 }
 
-export function DebrisField({ count = 340, spread = 36, band = 240 }: { count?: number; spread?: number; band?: number }) {
+export function DebrisField({ count = 1200, spread = 52, band = 170 }: { count?: number; spread?: number; band?: number }) {
   const inst = useRef<THREE.InstancedMesh>(null);
 
   // per-shard immutable seeds (base position in the band, size, spin axis/rate)
@@ -51,10 +51,15 @@ export function DebrisField({ count = 340, spread = 36, band = 240 }: { count?: 
     const rand = mulberry32(count * 22695477 + 13);
     const arr: { x: number; y: number; z: number; s: number; ax: THREE.Vector3; rate: number; phase: number }[] = [];
     for (let i = 0; i < count; i++) {
+      // wider belt cross-section so the camera threads a VAST field, not a
+      // mid-frame clump; areal-ish fill keeps the edges populated too.
       const x = (rand() - 0.5) * spread;
-      const y = (rand() - 0.5) * spread * 0.8;
+      const y = (rand() - 0.5) * spread * 0.82;
       const z = rand() * band; // wrapped per-frame relative to the camera
-      const s = 0.12 + rand() * rand() * 0.9; // mostly small shards, a few bigger
+      // size range widened hard: most shards stay small, but a meaningful tail of
+      // BIG boulders (up to ~2.6u) whip past close to the lens for real parallax.
+      const big = rand() < 0.16 ? 1.0 + rand() * 1.6 : rand() * rand() * 0.95;
+      const s = 0.16 + big;
       const ax = new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize();
       const rate = 0.2 + rand() * 0.8;
       const phase = rand() * 6.283;

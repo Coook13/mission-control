@@ -28,6 +28,7 @@ const warpVertex = /* glsl */ `
   attribute float aLen;     // per-streak length multiplier (varied)
   attribute float aBright;  // per-streak brightness
   attribute float aSeed;    // shimmer phase
+  attribute float aRank;    // 0..1 activation rank — low ranks switch on first
   uniform float uTime;
   uniform float uWarp;      // 0..1 master intensity (warpAt(p))
   uniform float uCamZ;      // camera z this frame (drives the pure wrap)
@@ -36,33 +37,44 @@ const warpVertex = /* glsl */ `
   varying float vBright;
   varying float vWarp;
   varying float vShim;
+  varying vec2  vDir;       // screen-space radial direction (vanishing-point → out)
   void main() {
     // Wrap each streak's base z into a band ahead of the camera — identical
     // pure-in-camZ scheme as the starfield, so it reverses exactly and never
-    // depletes. Streaks live in a tighter tube around the flight axis so they
-    // rake past close to the camera and read as speed.
+    // depletes. Streaks fill a WIDE cone so, projected, they blanket the whole
+    // frame and rake past the lens edges — a tunnel, not a centred tube.
     float top = uCamZ + uWrapMargin;
     float zWrapped = top - mod(top - position.z, uWrapDepth);
     vec3 pos = vec3(position.x, position.y, zWrapped);
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    gl_Position = projectionMatrix * mv;
+    vec4 clip = projectionMatrix * mv;
+    gl_Position = clip;
     float dist = -mv.z;
 
-    // points grow toward the camera; the streak look comes from aLen + the
-    // fragment alpha (we keep this a Points cloud for cheapness, the ribbon
-    // illusion is the dense additive overlap when uWarp is high).
-    float size = (4.0 + aLen * 26.0) * uWarp;
-    gl_PointSize = clamp(size * (120.0 / dist), 0.0, 64.0);
+    // COVERAGE rides warp: at low warp only the lowest-ranked streaks light, and
+    // the field thickens toward a full tunnel as warp → 1 (coverage AND length
+    // both driven by warpAt, per the contract). gate is a soft per-streak ramp.
+    float gate = smoothstep(aRank - 0.18, aRank, uWarp * 1.18);
+
+    // Sprite grows hard toward the camera AND elongates with warp — the long
+    // streaks are the warp's signature. Both size and the fragment stretch scale
+    // with uWarp so the tunnel both fills and lengthens as we punch into warp.
+    float size = (10.0 + aLen * 96.0) * (0.35 + uWarp * 0.85);
+    gl_PointSize = clamp(size * (260.0 / dist), 0.0, 220.0);
+
+    // screen-space radial direction from the vanishing point (clip-space centre)
+    // so each sprite stretches OUTWARD — the radiating light-speed look.
+    vec2 ndc = clip.xy / max(clip.w, 1e-3);
+    vDir = normalize(ndc + 1e-4);
 
     vBright = aBright;
-    vWarp = uWarp;
     vShim = 0.7 + 0.3 * sin(uTime * 6.0 + aSeed);
-    // fade streaks that are very near (avoid a blown-out wall right on the lens)
-    // and far (no wrap pop) — same shaping idea as the starfield vFade.
-    float near = smoothstep(1.0, 10.0, dist);
-    float far = 1.0 - smoothstep(uWrapDepth * 0.7, uWrapDepth, dist);
-    vWarp *= near * far;
+    // fade streaks very near the lens (no blown-out wall) and at the far wrap
+    // seam (no pop). Same shaping idea as the starfield vFade.
+    float near = smoothstep(1.0, 14.0, dist);
+    float far = 1.0 - smoothstep(uWrapDepth * 0.72, uWrapDepth, dist);
+    vWarp = uWarp * gate * near * far;
   }
 `;
 
@@ -72,24 +84,33 @@ const warpFragment = /* glsl */ `
   varying float vBright;
   varying float vWarp;
   varying float vShim;
+  varying vec2  vDir;
   void main() {
-    // Vertically-squashed sprite → an elongated vertical glint that, dense and
-    // additive, reads as a forward warp streak. Soft radial falloff like the
-    // star sprite so there is never a hard square edge.
+    // Stretch the sprite ALONG the screen-space radial direction (vDir) so every
+    // streak smears outward from the vanishing point — dense + additive this
+    // reads as a full-frame light-speed tunnel, not vertical rain. The smear
+    // length grows with warp so the tunnel lengthens as we punch into it.
     vec2 c = gl_PointCoord - 0.5;
-    // squash X so the sprite is a tall thin streak (anisotropic falloff)
-    c.x *= 3.2;
-    float d = length(c);
+    vec2 dir = normalize(vDir);
+    vec2 perp = vec2(-dir.y, dir.x);
+    float along = dot(c, dir);
+    float across = dot(c, perp);
+    // longer along the streak as warp climbs (3.2..6.5×), thin across → a ribbon
+    float stretch = 3.4 + vWarp * 3.1;
+    vec2 e = vec2(along / 1.0, across * stretch);
+    float d = length(e);
     if (d > 0.5) discard;
-    float core = pow(smoothstep(0.5, 0.0, d), 2.2);
-    float a = core * vBright * vShim * vWarp;
+    float core = pow(smoothstep(0.5, 0.0, d), 2.0);
+    // a hotter spine right down the streak axis for the bloomed light-speed core
+    float spine = exp(-pow(across * stretch / 0.22, 2.0)) * smoothstep(0.5, 0.0, abs(along));
+    float a = (core + spine * 0.8) * vBright * vShim * vWarp;
     // push the brightest cores >1 so ONLY the warp blooms (blacks stay black)
-    vec3 col = uColor * (0.6 + vBright * 0.9) * (1.0 + vWarp * 0.6);
+    vec3 col = uColor * (0.6 + vBright * 0.9) * (1.0 + vWarp * 0.7);
     gl_FragColor = vec4(col, a);
   }
 `;
 
-export function WarpJump({ count = 1400, tube = 26, depth = 280 }: { count?: number; tube?: number; depth?: number }) {
+export function WarpJump({ count = 5200, tube = 64, depth = 280 }: { count?: number; tube?: number; depth?: number }) {
   const points = useRef<THREE.Points>(null);
   const mat = useRef<THREE.ShaderMaterial>(null);
 
@@ -105,25 +126,28 @@ export function WarpJump({ count = 1400, tube = 26, depth = 280 }: { count?: num
     [depth]
   );
 
-  const { positions, lens, brights, seeds } = useMemo(() => {
+  const { positions, lens, brights, seeds, ranks } = useMemo(() => {
     const rand = mulberry32(count * 1013904223 + 7);
     const positions = new Float32Array(count * 3);
     const lens = new Float32Array(count);
     const brights = new Float32Array(count);
     const seeds = new Float32Array(count);
+    const ranks = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      // cluster streaks in a tube around the flight axis: bias toward the centre
-      // (r = R * sqrt-ish) so most streaks rake close past the camera.
+      // fill a WIDE cone around the flight axis — flat radial distribution (not
+      // centre-biased) so the projected streaks blanket the whole frame, edges
+      // included, and rake past the lens like a tunnel rather than a tube.
       const ang = rand() * Math.PI * 2;
-      const r = Math.pow(rand(), 0.7) * tube;
+      const r = Math.sqrt(rand()) * tube; // uniform areal fill out to the rim
       positions[i * 3] = Math.cos(ang) * r;
-      positions[i * 3 + 1] = Math.sin(ang) * r * 0.85;
+      positions[i * 3 + 1] = Math.sin(ang) * r * 0.9;
       positions[i * 3 + 2] = rand() * depth; // wrapped per-frame in the shader
-      lens[i] = 0.3 + rand() * rand();
+      lens[i] = 0.4 + rand() * rand() * 1.1; // longer mean length, fat tail
       brights[i] = 0.35 + rand() * 0.65;
       seeds[i] = rand() * 6.283;
+      ranks[i] = rand(); // activation rank — coverage thickens as warp climbs
     }
-    return { positions, lens, brights, seeds };
+    return { positions, lens, brights, seeds, ranks };
   }, [count, tube, depth]);
 
   useFrame((state) => {
@@ -146,6 +170,7 @@ export function WarpJump({ count = 1400, tube = 26, depth = 280 }: { count?: num
         <bufferAttribute attach="attributes-aLen" args={[lens, 1]} />
         <bufferAttribute attach="attributes-aBright" args={[brights, 1]} />
         <bufferAttribute attach="attributes-aSeed" args={[seeds, 1]} />
+        <bufferAttribute attach="attributes-aRank" args={[ranks, 1]} />
       </bufferGeometry>
       <shaderMaterial
         ref={mat}

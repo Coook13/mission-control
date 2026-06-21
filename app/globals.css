@@ -767,26 +767,35 @@ body::after {
 }
 .story-page__body p + p { margin-top: 1.2em; }
 
-/* portrait slot (PoC pending) */
+/* portrait slot — finished monochrome monogram treatment (no placeholder) */
 .portrait__frame {
   position: relative;
   aspect-ratio: 3 / 4;
+  overflow: clip;
   border: 1px solid var(--ink);
   background:
     repeating-linear-gradient(45deg, transparent 0 14px, rgba(17,17,16,0.04) 14px 15px),
     #EFEDE7;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
 }
-.portrait__stand { width: 100%; }
-.portrait__note {
+.portrait__mark {
+  font-size: clamp(3.5rem, 9vw, 6rem);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  font-weight: 400;
+  opacity: 0.92;
+}
+.portrait__rule {
   position: absolute;
-  top: 14px;
   left: 14px;
-  font-size: 0.72rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--dim);
+  right: 14px;
+  bottom: 14px;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.28;
 }
 .portrait figcaption {
   padding-top: 10px;
@@ -1951,7 +1960,12 @@ body { color: #fff; }
   line-height: 0.92; letter-spacing: -0.04em;
   font-size: clamp(1.7rem, 6.6vw, 5rem);
   display: flex; flex-direction: column; align-items: center; gap: 0.02em;
-  transform: translateY(calc(-1.5 * var(--wm-lh)));
+  /* Shift UP 1.5 line-pitches so the 4th line (W{O}RK) lands at the block centre
+     = screen centre = the camera-centred 3D hole. The +1.6px corrects a constant
+     (viewport-independent, measured at 1080p AND 1440p) line-box rounding residue
+     so the transparent {O} gap centre sits dead-on the rendered ring, not 1.6px
+     above it. Pure layout offset — does not affect the enter(p) drift/scale. */
+  transform: translateY(calc(-1.5 * var(--wm-lh) + 1.6px));
 }
 .fly__wm-half { display: block; will-change: transform; }
 .fly__wm-half--l, .fly__wm-half--r { text-shadow: 0 4px 70px rgba(0, 0, 0, 0.55); }
@@ -2170,22 +2184,59 @@ body { color: #fff; }
   mix-blend-mode: screen;
   will-change: transform;
 }
+/* The finale line is the structural callback to the hero wordmark: a flex
+   column whose LAST line re-forms "W{O}RK" with the same transparent {O} gap,
+   re-aligned dead-centre. It is also the contact link. */
 .fly__finale-line {
+  --fin-lh: 0.94em; /* per-line pitch: line-height 0.92 + 0.02em flex gap */
   position: relative; z-index: 1; margin: 0;
-  max-width: min(92vw, 22ch); text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 0.02em;
+  text-align: center; text-decoration: none;
   font-family: var(--font-sans); font-weight: 700;
-  text-transform: uppercase; line-height: 0.94; letter-spacing: -0.035em;
+  text-transform: uppercase; line-height: 0.92; letter-spacing: -0.04em;
   font-size: clamp(2rem, 7.2vw, 5.4rem);
   /* dark ink so it reads against the bright bloom it arrives into */
   color: #0a0d14;
-  /* settle UP into place + sharpen as --arrive climbs */
-  transform: translateY(calc((1 - var(--arrive, 0)) * 3vh));
+  /* clickable only once arrived (--arrive saturates near 1); the rAF loop also
+     guards this, but keep CSS honest so it never intercepts mid-journey. */
+  pointer-events: var(--finale-hit, none);
+  /* Shift UP half a line-pitch so the 2nd line (W{O}RK) — not the block centre —
+     lands on 50vh, the same screen point the hero's {O} (and the returned
+     Arrival hole) occupies. Layered with the arrival settle-up + sharpen. */
+  transform:
+    translateY(calc(-0.5 * var(--fin-lh)))
+    translateY(calc((1 - var(--arrive, 0)) * 3vh));
   filter: blur(calc((1 - var(--arrive, 0)) * 6px));
   will-change: transform, filter;
 }
-.fly__finale-line em {
-  font-family: var(--font-serif); font-style: italic;
-  font-weight: 500; text-transform: lowercase; letter-spacing: -0.01em;
+.fly__finale-word { display: block; }
+/* W{O}RK line — identical construction to the hero's .fly__wm-line--work so the
+   transparent {O} gap lands on the line's exact centre (= 50vw), and the line
+   itself sits at the column centre (= 50vh via the grid place-items:center on
+   .fly__finale). The journey opened on this gap framing the hole and now
+   resolves onto it — the gap re-aligns over the returned Arrival hole. */
+.fly__finale-work {
+  display: flex; align-items: center; justify-content: center;
+  align-self: stretch;
+}
+.fly__finale-flank { flex: 1 1 0; min-width: 0; }
+.fly__finale-flank--l { text-align: right; }
+.fly__finale-flank--r { text-align: left; }
+/* transparent {O} window — a ring drawn in the dark finale ink so the gap reads
+   as the same O even where no hole is behind it; monochrome only. */
+.fly__finale-o {
+  display: inline-block;
+  width: 0.66em; height: 0.66em;
+  border-radius: 50%;
+  border: 0.055em solid #0a0d14;
+  vertical-align: -0.04em; margin: 0 0.04em;
+  box-sizing: border-box;
+}
+@media (hover: hover) {
+  .fly__finale-line:hover { color: #000; }
+}
+.fly__finale-line:focus-visible {
+  outline: 2px solid #0a0d14; outline-offset: 0.18em; border-radius: 2px;
 }
 @media (prefers-reduced-motion: reduce) {
   .fly__finale-line { transform: none; filter: none; }
@@ -2341,15 +2392,16 @@ body { color: #fff; }
 .page-dark .timeline__row { border-bottom-color: rgba(255, 255, 255, 0.16); }
 .page-dark .timeline__line { background: rgba(255, 255, 255, 0.5); }
 
-/* portrait placeholder frame: invert the light hatch to a faint white hatch on
-   a near-black panel so the pixel walker still reads */
+/* portrait monogram frame: invert the light hatch to a faint white hatch on a
+   near-black panel; the monogram + rule pick up white via the dark --ink */
 .page-dark .portrait__frame {
   border-color: rgba(255, 255, 255, 0.22);
   background:
     repeating-linear-gradient(45deg, transparent 0 14px, rgba(255, 255, 255, 0.04) 14px 15px),
     rgba(255, 255, 255, 0.015);
 }
-.page-dark .portrait__note,
+.page-dark .portrait__mark { color: rgba(255, 255, 255, 0.9); }
+.page-dark .portrait__rule { background: rgba(255, 255, 255, 0.85); opacity: 0.3; }
 .page-dark .portrait figcaption,
 .page-dark .story__media figcaption { color: rgba(255, 255, 255, 0.55); }
 
