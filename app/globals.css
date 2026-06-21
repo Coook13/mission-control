@@ -2518,3 +2518,162 @@ body { color: #fff; }
 .page-dark .footer-ed { color: rgba(255, 255, 255, 0.6); }
 .page-dark .footer-ed .footer-ed__credit a { color: rgba(255, 255, 255, 0.78); border-bottom: 1px solid rgba(255, 255, 255, 0.3); }
 .page-dark .footer-ed .footer-ed__credit a:hover { color: #fff; }
+
+/* ==== polish agent 0 ==== */
+/* ── Flythrough fixes (owned by the Flythrough.tsx agent) ─────────────────────
+   1) HERO KICKER SPACING — the founder kicker was jammed flush against the
+   bottom of "W{O}RK" (zero gap). The globals .fly__kicker offset used
+   `0.5 * var(--wm-lh)` with --wm-lh:0.94em, which resolves against the kicker's
+   own ~13px font (≈6px), not the wordmark. Re-anchor the offset to the WORDMARK's
+   scale via --wm-fs (= the wordmark's own clamp) so the kicker always clears the
+   W{O}RK descender with a clean, size-stable gap. The wordmark is NOT moved, so
+   the transparent {O} keeps sitting dead-centre on the 3D black hole. */
+.fly__hero { --wm-fs: clamp(1.7rem, 6.6vw, 5rem); }
+.fly__kicker {
+  top: 50%;
+  /* clear the W{O}RK line (its descender sits ~0.46·fs below centre) + add a
+     breathing clamp so the kicker reads as its own line, never crowding the type */
+  transform: translate(-50%, calc(0.6 * var(--wm-fs, 5rem) + clamp(18px, 3vh, 38px)));
+}
+
+/* 2) HEADER SCRIM — the fixed Header (white text, mix-blend) rides over the
+   moving WebGL field. When a BRIGHT region rises into the top strip — the galaxy
+   arm through the cruise beats (TRADING) and the sun-flare blaze (~p0.71, which
+   blows the top of the strip to white) — a difference-blend header inverts toward
+   black and the bar reads as "gone". This short, subtle dark gradient floors the
+   backdrop luminance under the header for the whole journey so the white header
+   stays legible. Fades to nothing by ~9vh (never reads as a UI bar); below the
+   header (z<50), inert. Static (not p-driven) → no scrub interaction. */
+.fly__topscrim {
+  position: absolute; top: 0; left: 0; right: 0; height: 9vh;
+  z-index: 3; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(2, 3, 10, 0.82) 0%,
+    rgba(2, 3, 10, 0.55) 38%,
+    rgba(2, 3, 10, 0.22) 70%,
+    rgba(2, 3, 10, 0) 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* reduced-motion uses the static fallback (no .fly__sticky stage); the scrim
+     never mounts there, but keep it inert if it ever does */
+  .fly__topscrim { display: none; }
+}
+
+/* ==== polish agent 4 ==== */
+/* ============================================================
+   CONTACT — re-skinned to the deep-space register (was a warm photo +
+   cream overlay). White-on-black, one cool accent (#a9c6ff). These rules
+   come after globals.css so they win at equal specificity. Scoped to
+   .contact-ed* — never touches .fly* / .flowpanel*.
+   ============================================================ */
+.contact-ed {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+  /* clear the fixed header when the #contact anchor lands */
+  scroll-margin-top: clamp(72px, 9vh, 104px);
+  padding: clamp(64px, 12vh, 150px) 0 clamp(56px, 9vh, 120px);
+}
+/* the old photo frame + warm overlay no longer render; neutralise any
+   residual rules from the light skin */
+.contact-ed__media { display: none; }
+.contact-ed__overlay {
+  position: static;
+  inset: auto;
+  padding: 0;
+  background: none;
+}
+
+.contact-ed__inner {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+/* a whisper of radial darkening so the lead + links stay crisp over stars,
+   matching the .story / .index-grid treatment elsewhere on the dark pages */
+.contact-ed__inner::before {
+  content: "";
+  position: absolute;
+  inset: clamp(-32px, -5vw, -72px) clamp(-20px, -4vw, -56px);
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 28% 36%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.44) 48%, transparent 80%);
+}
+
+/* warp echo: cool-white speed-lines (was warm cream) — bookends the page with
+   the flythrough's hyperspace, masked to fade behind the text */
+.contact-ed__warp {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 44%,
+    rgba(214, 230, 255, 0) 0deg,
+    rgba(214, 230, 255, 0) 1.4deg,
+    rgba(214, 230, 255, 0.6) 1.5deg,
+    rgba(214, 230, 255, 0) 1.7deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side at 50% 44%, transparent 16%, #000 64%, transparent 100%);
+  mask-image: radial-gradient(closest-side at 50% 44%, transparent 16%, #000 64%, transparent 100%);
+  opacity: 0.08;
+  animation: warpEcho 7s ease-in-out infinite;
+}
+
+.contact-ed__lead {
+  color: #fff;
+  text-shadow: none;
+  font-size: clamp(2.2rem, 6vw, 5rem);
+  font-weight: 600;
+  line-height: 1.0;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  max-width: 16ch;
+  margin-top: clamp(18px, 3vw, 34px);
+}
+.contact-ed__lead .serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  text-transform: none;
+  color: #d6e6ff;
+}
+
+/* two stacked link rows, each a kind/value pair — generous space, no photo */
+.contact-ed__links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(20px, 4vw, 56px);
+  margin-top: clamp(34px, 5vw, 64px);
+}
+.contact-ed__links a {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  text-shadow: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  padding-bottom: 8px;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+.contact-ed__links a:hover { border-color: #a9c6ff; }
+.contact-ed__kind {
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+.contact-ed__links a:hover .contact-ed__kind { color: #a9c6ff; }
+.contact-ed__val {
+  font-size: clamp(1.05rem, 2.2vw, 1.7rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-transform: none;
+}
+
+@media (max-width: 600px) {
+  .contact-ed__links { flex-direction: column; gap: 22px; }
+}

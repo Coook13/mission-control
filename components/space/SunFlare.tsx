@@ -98,9 +98,12 @@ const coreFrag = /* glsl */ `
     // blazing core pushed hard >1 so it blooms HARD; at the CREST it over-bloows:
     // the core radius widens and its peak intensity spikes so the white blaze
     // flares OUTWARD past the frame edges as the camera draws level, then relaxes.
-    float coreR = 0.24 + 0.20 * uCrest;       // blaze swells at the crest
-    float core = exp(-pow(r / coreR, 2.0)) * (5.2 + 7.0 * uCrest);
-    float halo = exp(-pow(r / 0.72, 2.0)) * 1.05;
+    // Intensity dialled DOWN so the Strategy (beat 04) text stays readable while
+    // the sun still reads as a distant flare: core peak 5.2→3.0 (+7.0→+4.2 crest),
+    // halo 1.05→0.62. It blooms and looms, but no longer floods the frame white.
+    float coreR = 0.20 + 0.18 * uCrest;       // blaze swells at the crest (tightened)
+    float core = exp(-pow(r / coreR, 2.0)) * (3.0 + 4.2 * uCrest);
+    float halo = exp(-pow(r / 0.66, 2.0)) * 0.62;
     // faint shimmering corona rays (cosmetic; uTime only — never touches p)
     float rays = (0.85 + 0.15 * sin(ang * 12.0 + uTime * 0.6)) ;
     float intensity = (core + halo * rays);
@@ -134,10 +137,12 @@ const streakFrag = /* glsl */ `
     // far across the frame — the anamorphic light-speed smear. At the CREST the
     // smear WIDENS (x-falloff broadens) and brightens, so the streak SWEEPS out
     // across the frame as the camera crests the sun, then snaps back thin.
-    float xWide = 0.95 + 0.9 * uCrest; // smear reaches farther at the crest
+    float xWide = 0.85 + 0.8 * uCrest; // smear reaches farther at the crest
     float spine = exp(-pow(p.y / 0.045, 2.0)) * exp(-pow(p.x / xWide, 2.0));
     float wide  = exp(-pow(p.y / 0.11, 2.0)) * exp(-pow(p.x / (xWide * 0.74), 2.0));
-    float bar = (spine * 1.6 + wide * 0.7) * (1.0 + 1.4 * uCrest);
+    // streak amplitude trimmed (spine 1.6→1.05, wide 0.7→0.46, crest gain 1.4→1.0)
+    // so the anamorphic smear reads as a lens flare, not a bar that washes the frame.
+    float bar = (spine * 1.05 + wide * 0.46) * (1.0 + 1.0 * uCrest);
     float a = bar * uOpacity;
     gl_FragColor = vec4(uColor * (1.0 + bar) * uOpacity, a);
   }
@@ -214,9 +219,10 @@ export function SunFlare() {
 
   return (
     <group ref={group} visible={false}>
-      {/* blazing white core + cool halo — LARGE so it blooms hard and looms */}
+      {/* blazing white core + cool halo — sized so it blooms + looms as a distant
+          flare without filling the frame (200→150 so the Strategy text stays clear) */}
       <mesh frustumCulled={false}>
-        <planeGeometry args={[200, 200]} />
+        <planeGeometry args={[150, 150]} />
         <shaderMaterial
           ref={coreMat}
           vertexShader={coreVert}
@@ -230,9 +236,10 @@ export function SunFlare() {
         />
       </mesh>
 
-      {/* anamorphic horizontal streak through the sun — sweeps wide across frame */}
+      {/* anamorphic horizontal streak through the sun — sweeps across frame, but
+          trimmed (760×180→560×140) so it reads as a flare, not a screen-wide bar */}
       <mesh frustumCulled={false} position={[0, 0, 0.1]}>
-        <planeGeometry args={[760, 180]} />
+        <planeGeometry args={[560, 140]} />
         <shaderMaterial
           ref={streakMat}
           vertexShader={coreVert}

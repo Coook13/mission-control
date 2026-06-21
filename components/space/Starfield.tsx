@@ -45,10 +45,23 @@ export function Starfield({ count = 6500, spread = 180, depth = 360 }: { count?:
     if (!m || !m.uniforms || !m.uniforms.uTime) return;
     // Feed the camera z to the shader; the wrap is a pure function of it, so no
     // position buffer is mutated and the field reverses exactly (BUG 2 fix).
-    m.uniforms.uTime.value = state.clock.elapsedTime;
+    const t = state.clock.elapsedTime;
+    m.uniforms.uTime.value = t;
     m.uniforms.uFar.value = depth;
     m.uniforms.uCamZ.value = state.camera.position.z;
     m.uniforms.uWrapDepth.value = depth;
+
+    // AMBIENT drift — a tiny, time-based lateral sway of the WHOLE field so the
+    // deep space breathes even when the user isn't scrolling. This only nudges the
+    // group's x/y by a sub-unit amount (z-wrap stays a pure function of camera z,
+    // untouched), and it never reads or feeds the scroll progress p — so the
+    // scrub-and-reverse contract holds; this is purely additive idle life. Two
+    // slow incommensurate sines → a gentle, non-repeating sway.
+    const pts = points.current;
+    if (pts) {
+      pts.position.x = Math.sin(t * 0.061) * 0.9 + Math.sin(t * 0.027 + 2.1) * 0.4;
+      pts.position.y = Math.cos(t * 0.048 + 0.7) * 0.7 + Math.sin(t * 0.019) * 0.3;
+    }
   });
 
   return (

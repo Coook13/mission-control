@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect } from "react";
 import { flightState } from "./flightState";
-import { zOfP, driftXY, rollOfP } from "./phase";
+import { zOfP, driftXY, rollOfP, idleDrift } from "./phase";
 import { mouseState, initMouseParallax } from "./mouseParallax";
 import { Starfield } from "./Starfield";
 import { BlackHole3D } from "./BlackHole3D";
@@ -55,10 +55,18 @@ function Rig() {
     const px = m.x * 0.9; // sub-unit nudges only
     const py = -m.y * 0.6;
 
-    cam.position.set(dx + px, dy + py, zOfP(p));
+    // AMBIENT idle drift — tiny, time-based, ADDITIVE. Keeps the deep field alive
+    // when the user isn't scrolling. It rides ON TOP of the p-based position and
+    // never touches p, so the scrub-and-reverse journey is still pure in p; this
+    // sub-unit layer is the only non-p motion (mirrors the starfield's twinkle).
+    const [ix, iy] = idleDrift(_state.clock.elapsedTime);
+
+    cam.position.set(dx + px + ix, dy + py + iy, zOfP(p));
     // look down the flight axis, biased to the same drift a little further out,
-    // so the horizon glides with the camera instead of snapping side to side
-    cam.lookAt(dx + px * 0.5, dy + py * 0.5, cam.position.z - 60);
+    // so the horizon glides with the camera instead of snapping side to side.
+    // The idle term is fed at HALF weight to the look target so the sway parallaxes
+    // through the field rather than reading as a rigid camera pan.
+    cam.lookAt(dx + px * 0.5 + ix * 0.5, dy + py * 0.5 + iy * 0.5, cam.position.z - 60);
     // bank: roll about the camera's own forward axis (pure in p). rotateZ acts
     // in local space, so it tilts the horizon without bending the flight path.
     cam.rotateZ(rollOfP(p));

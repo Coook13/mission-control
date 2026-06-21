@@ -212,6 +212,17 @@ function FlythroughFull() {
         {/* THE one canvas: starfield + 3D black-hole O + effects + camera Rig */}
         <Scene />
 
+        {/* HEADER SCRIM — a short, subtle dark gradient pinned to the very top of
+            the stage. The fixed Header (white text, mix-blend) rides above the
+            moving WebGL field; when a BRIGHT region rises into the top strip — the
+            galaxy arm through the cruise beats, and especially the sun-flare blaze
+            (~p0.71, where the top ~half of the strip blows to white) — a
+            difference-blend header inverts toward black and the bar reads as
+            "gone". This floors the backdrop luminance under the header so the white
+            header stays legible the WHOLE journey. Monochrome, fades to nothing by
+            ~9vh so it never reads as a UI bar; below the header (z<50) and inert. */}
+        <div className="fly__topscrim" aria-hidden="true" />
+
         {/* DOM overlay: the 5 content beats fly past (continuous f(beatLocal)) */}
         <FlowPanels />
 

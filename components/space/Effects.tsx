@@ -58,10 +58,11 @@ import { warpAt, flashAt } from "./phase";
 const WARP_CA = 0.0026;
 
 /* Bloom intensity envelope, pure in p. Three regimes, all blended continuously:
-   - BASE     the working intensity through the cruise/beats (the old 0.62).
-   - DUCK     on the quiet HOLD windows (no warp, no flash) lean DOWN toward 0.50
+   - BASE     the working intensity through the cruise/beats (0.54, trimmed from
+     0.62 so the black-hole/sun glow reads as light, not a blown-out wash).
+   - DUCK     on the quiet HOLD windows (no warp, no flash) lean DOWN toward 0.44
      for Interstellar restraint — blacks deepen, the field calms.
-   - SPIKE    on flashAt(p) lift toward ~1.0 for a frame or two of genuine
+   - SPIKE    on flashAt(p) lift toward ~0.92 for a frame or two of genuine
      over-bright RELEASE on the punch + climax break. Dropped from 1.25 so the
      punch-into-light reads as over-bright RELEASE WITHOUT flooding the frame —
      paired with the tamed warpAt crest (climax now caps at 0.9, crest 0.18), the
@@ -69,9 +70,9 @@ const WARP_CA = 0.0026;
      rather than a full white-out.
    The duck only applies where neither warp NOR flash is active, so it can never
    fight the spike. Pure fn of p → scrubs + reverses with everything else. */
-const BLOOM_BASE = 0.62;
-const BLOOM_DUCK = 0.5;
-const BLOOM_SPIKE = 1.0;
+const BLOOM_BASE = 0.54;
+const BLOOM_DUCK = 0.44;
+const BLOOM_SPIKE = 0.92;
 function bloomOfP(p: number): number {
   const f = flashAt(p); // 0..1 tight blowout on the two impacts
   const w = warpAt(p); // 0..1 in the two warp windows (suppresses the duck)
@@ -89,10 +90,12 @@ export function Effects() {
     () =>
       new BloomEffect({
         mipmapBlur: true,
-        luminanceThreshold: 0.9,
+        // threshold lifted 0.9→0.92 so only the very brightest cores bloom — the
+        // black-hole rim/sun read as light, not a blown-out wash; blacks stay black.
+        luminanceThreshold: 0.92,
         luminanceSmoothing: 0.25,
         intensity: BLOOM_BASE,
-        radius: 0.82,
+        radius: 0.78,
       }),
     [],
   );

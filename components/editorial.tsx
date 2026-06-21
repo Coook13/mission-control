@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
 import { profile, workIndex } from "@/lib/site-data";
 import { Lines, ParallaxImg, Reveal, WordReveal } from "./motion";
 import { Marquee } from "./Marquee";
@@ -122,14 +125,40 @@ export function WorkIndexSection() {
   );
 }
 
+/* Resolves the #contact deep-link. Both the nav "CONTACT" item (site-data:
+   "/#contact") and the flythrough finale CTA ("/#contact") point at the home
+   route + #contact hash, but the contact block only lives where ContactSection
+   mounts — so on landing with a #contact hash we smooth-scroll to it (the
+   native jump is unreliable behind the fixed header + Lenis). */
+function useContactAnchor() {
+  useEffect(() => {
+    const scrollToContact = () => {
+      if (window.location.hash !== "#contact") return;
+      const el = document.getElementById("contact");
+      if (!el) return;
+      // rAF so layout/Lenis are settled before we scroll
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    };
+    scrollToContact();
+    window.addEventListener("hashchange", scrollToContact);
+    return () => window.removeEventListener("hashchange", scrollToContact);
+  }, []);
+}
+
+/* CONTACT — the canonical #contact target. Re-skinned to the deep-space
+   register: pure black, white type, one cool accent. No photo (the old
+   /img/contact.jpg ran warm and broke the monochrome). The whole block is
+   the anchor the nav "CONTACT" link and the flythrough finale CTA resolve to,
+   so it carries scroll-margin to clear the fixed header. */
 export function ContactSection() {
+  useContactAnchor();
   return (
     <section className="contact-ed" id="contact">
-      <div className="contact-ed__media">
-        <ParallaxImg src="/img/contact.jpg" alt="A figure standing before a huge moon" strength={28} />
-      </div>
-      <div className="contact-ed__overlay">
-        <div className="contact-ed__warp" aria-hidden="true" />
+      <div className="contact-ed__warp" aria-hidden="true" />
+      <div className="shell contact-ed__inner">
+        <SecLabel speed={1.2}>Contact</SecLabel>
         <WordReveal
           as="h2"
           className="contact-ed__lead"
@@ -142,12 +171,14 @@ export function ContactSection() {
         <div className="contact-ed__links" data-speed={0.92}>
           <Magnetic strength={0.4}>
             <a href={`mailto:${profile.email}`} data-hover>
-              {profile.email}
+              <span className="contact-ed__kind">Email</span>
+              <span className="contact-ed__val">{profile.email}</span>
             </a>
           </Magnetic>
           <Magnetic strength={0.4}>
-            <a href={profile.linkedin.href} target="_blank" rel="noopener" data-hover>
-              LinkedIn / {profile.linkedin.label}
+            <a href={profile.linkedin.href} target="_blank" rel="noopener noreferrer" data-hover>
+              <span className="contact-ed__kind">LinkedIn</span>
+              <span className="contact-ed__val">{profile.linkedin.label}</span>
             </a>
           </Magnetic>
         </div>

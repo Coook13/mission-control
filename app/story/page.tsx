@@ -26,7 +26,7 @@ export default function StoryPage() {
               words={[{ t: "THE" }, { t: "story", serif: true }]}
             />
             <p className="page-head__sub" data-speed={0.9}>
-              Bangkok กรุงเทพฯ raised. Manchester trained. Founder shaped.
+              Bangkok raised. Manchester trained. Founder shaped.
             </p>
           </div>
         </section>

@@ -68,11 +68,13 @@ const frag = /* glsl */ `
   uniform float uEngulf; // 0..1 TIGHT threshold bump (peak 0.16) — the rim blaze
   uniform float uFade;   // master opacity (pure fn of p)
   void main() {
-    // The quad is oversized vs the disc (geometry is ~1.7×1.7, world scale
+    // The quad is oversized vs the disc (geometry is ~2.0×2.0, world scale
     // divided to compensate) so there is generous transparent margin around the
-    // ring. p is scaled to span [-1.7,1.7]^2 → corners sit at r≈2.4, far outside
-    // the disc, and the edge-fade below can fully reach 0 before any quad edge.
-    vec2 p = (vUv - 0.5) * 3.4;
+    // ring. p is scaled to span [-2.0,2.0]^2 → edge-midpoints sit at r=2.0 and
+    // corners at r≈2.83, so the radial edge-fade below can fully reach 0 — in
+    // EVERY direction, including the diagonals — well before any quad boundary.
+    // This is what guarantees a clean CIRCLE at every scale (no box/clip).
+    vec2 p = (vUv - 0.5) * 4.0;
     float r = length(p);
     float ang = atan(p.y, p.x);
     float t = uTime * 0.25;
@@ -106,15 +108,26 @@ const frag = /* glsl */ `
     // pure black inside; engulf DEEPENS + widens the throat so the centre is a
     // dark void even as the rim blazes past the lens (rim of light, dark core).
     float core = smoothstep(0.30 + uEngulf * 0.30, 0.52 + uEngulf * 0.46, r);
-    float flare = 1.0 + uEnter * 1.4 + uEngulf * 3.2; // engulf BLAZES the rim hard
-    float ringI = (rim * 1.8 + photon * 1.5) * dopp * shim;
-    float glowI = glow * 0.5 * dopp;
+    // Resting brightness dialled DOWN modestly (the lighting was good, just a hair
+    // blown out): base flare 1.0→0.82, rim/photon/glow multipliers trimmed ~12-15%.
+    // The engulf terms are LEFT INTACT so the punch-through still BLAZES hard.
+    float flare = 0.82 + uEnter * 1.3 + uEngulf * 3.2; // engulf BLAZES the rim hard
+    float ringI = (rim * 1.55 + photon * 1.3) * dopp * shim;
+    float glowI = glow * 0.42 * dopp;
     float intensity = (ringI + glowI) * core * flare;
     vec3 col = (ringCol * ringI + glowCol * glowI) * core * flare;
-    // radial edge-fade: force the glow to die to EXACTLY 0 well inside the quad
-    // so the additive falloff never reaches the square corners (no box at scale).
-    // p spans [-1,1]^2, so corners sit at r≈1.41 — fade out across r∈[1.35,1.55].
-    float edgeFade = smoothstep(1.55, 1.35, r);
+    // RADIAL edge-fade — the guarantee that the disc is a clean CIRCLE at every
+    // scroll position + scale. p spans [-2,2]^2 (edges r=2.0, corners r≈2.83), so
+    // we can fade the additive field to EXACTLY 0 by r≈1.45 — far inside every
+    // quad boundary in every direction (edges AND diagonals) — and the glow tail
+    // is already near-zero there, so there is no hard radial cutoff for the bloom
+    // pass to amplify into a visible ring or box. During the ENGULF blaze the rim
+    // is pushed outward (r0→~1.6) on purpose; we slide the fade window outward by
+    // the same amount so the blaze can still race past the frame edges, while the
+    // cutoff stays well inside the quad (no square ever appears). Pure in p.
+    float fadeOut = 1.45 + uEngulf * 0.9;
+    float fadeIn  = 1.05 + uEngulf * 0.9;
+    float edgeFade = smoothstep(fadeOut, fadeIn, r);
     intensity *= edgeFade;
     col *= edgeFade;
     intensity *= uFade;
@@ -188,13 +201,13 @@ export function BlackHole3D() {
 
     // grow in frame as we approach + punch through; pure fn of enter(p). The
     // perspective approach does most of the work; this adds the stylised swell.
-    // The quad is 3.4× the unit plane (oversized for glow margin), and p now
-    // maps 1 UV-unit → 1 world-unit, so the visible ring is 2× what the old
-    // [1,1] quad gave at the same scale — halve the scale to preserve framing.
+    // The quad is 4.0× the unit plane (oversized so the radial edge-fade reaches
+    // 0 well inside every boundary → clean circle), so the scale here is scaled
+    // by 3.4/4.0 vs the old 3.4 quad to preserve the on-screen framing exactly.
     // The engulf term lifts the scale envelope HARD on the threshold frame so the
     // ring physically engulfs the lens (rim past the frame edges) before the
     // fade/whip-past punches to warp. Pure in p → reverses exactly.
-    const s = 4.5 + e * 13 + eng * 34;
+    const s = (4.5 + e * 13 + eng * 34) * 0.85;
     g.scale.setScalar(s);
 
     // hide outright once faded so it can't catch the cruise (cheap + exact)
@@ -204,11 +217,12 @@ export function BlackHole3D() {
   return (
     <group ref={group}>
       <mesh frustumCulled={false}>
-        {/* Oversized quad (3.4 vs unit) gives the additive glow generous
+        {/* Oversized quad (4.0 vs unit) gives the additive glow generous
             transparent margin; the shader's radial edge-fade kills intensity to
-            exactly 0 at r≈1.55, far inside the quad edges (r≈1.7) and corners
-            (r≈2.4), so the disc reads as a clean CIRCLE at every scale. */}
-        <planeGeometry args={[3.4, 3.4]} />
+            exactly 0 by r≈1.45 (relaxing outward only during the engulf blaze),
+            far inside the quad edges (r=2.0) and corners (r≈2.83) in EVERY
+            direction, so the disc reads as a clean CIRCLE at every scale. */}
+        <planeGeometry args={[4.0, 4.0]} />
         <shaderMaterial
           ref={mat}
           vertexShader={vert}

@@ -186,8 +186,24 @@ export function zOfP(p: number): number {
 export function driftXY(p: number): [number, number] {
   // 0 during hero/enter, full through travel, back to ~0 at arrival
   const amp = smoothstep((p - 0.18) / 0.12) * (1 - smoothstep((p - 0.86) / 0.14));
-  const x = Math.sin(p * Math.PI * 3.0) * 3.2 * amp;
-  const y = Math.cos(p * Math.PI * 2.0 + 0.6) * 1.6 * amp;
+  // CALMER: lateral drift amplitudes trimmed modestly (3.2→2.4 on x, 1.6→1.2 on y)
+  // so the cruise feels piloted but less swimmy. Zoom path (dist/zOfP) untouched.
+  const x = Math.sin(p * Math.PI * 3.0) * 2.4 * amp;
+  const y = Math.cos(p * Math.PI * 2.0 + 0.6) * 1.2 * amp;
+  return [x, y];
+}
+
+/* AMBIENT IDLE DRIFT — the ONE deliberately time-based term in the flight, and
+   the ONLY thing that moves when the user is NOT scrolling. Returns a tiny
+   (sub-unit) [x,y] offset from two slow, mutually-incommensurate sines so the
+   deep field has a gentle, non-repeating breathing sway even at rest. This is
+   ADDED to the camera position on top of the p-based driftXY/zOfP — it never
+   feeds back into p, never integrates state, and is bounded to ±~0.5u, so the
+   scroll-scrub journey stays a pure function of p (scrubs + reverses exactly);
+   only this faint idle layer rides along on top. Consumed by Scene's Rig. */
+export function idleDrift(time: number): [number, number] {
+  const x = Math.sin(time * 0.13) * 0.42 + Math.sin(time * 0.071 + 1.7) * 0.18;
+  const y = Math.cos(time * 0.097 + 0.4) * 0.34 + Math.sin(time * 0.053) * 0.14;
   return [x, y];
 }
 
@@ -218,8 +234,8 @@ function bump(p: number, lo: number, hi: number): number {
    levels off dead-calm for the arrival. Small amplitude (~7°): it reads as a
    piloted craft leaning into the move, never a barrel-roll. Consumed by Scene's
    Rig (cam.rotation.z). */
-const ROLL_AMP = 0.12; // ~6.9° gentle continuous bank
-const ROLL_SNAP = 0.24; // ~13.7° sharp transient lean during each warp jump
+const ROLL_AMP = 0.09; // CALMER: ~5.2° gentle continuous bank (was 6.9°)
+const ROLL_SNAP = 0.17; // CALMER: ~9.7° transient warp-jump lean (was 13.7°)
 export function rollOfP(p: number): number {
   // ---- continuous bank: ease in after the punch-through, taper to 0 for arrival
   const gate = smoothstep((p - 0.2) / 0.08) * (1 - smoothstep((p - 0.84) / 0.12));
@@ -280,7 +296,10 @@ export function warpAt(p: number): number {
   // spike, the punch reads as over-bright RELEASE with the edges still visible.
   // Escalation (warp window 1) is left roughly as-is. Both windows stay
   // raised-cosine, pure and reversible.
-  return Math.min(0.9, escalation * 0.92 + climax * 0.88 + crest * 0.18);
+  // CALMER: surge peaks trimmed modestly (escalation 0.92→0.78, climax 0.88→0.76,
+  // crest 0.18→0.14, ceiling 0.9→0.82) so the warp reads as a swell, not a frantic
+  // strobe. Windows + raised-cosine shape unchanged → still pure in p, reverses.
+  return Math.min(0.82, escalation * 0.78 + climax * 0.76 + crest * 0.14);
 }
 
 /* ENGULF intensity 0..1, pure in p — a TIGHT raised-cosine bump centred on the

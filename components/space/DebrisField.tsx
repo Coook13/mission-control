@@ -60,7 +60,7 @@ function debrisRake(p: number): number {
   return 0.5 - 0.5 * Math.cos(u * Math.PI * 2); // 0→1→0, zero slope at edges
 }
 
-export function DebrisField({ count = 800, spread = 52, band = 170 }: { count?: number; spread?: number; band?: number }) {
+export function DebrisField({ count = 1700, spread = 52, band = 170 }: { count?: number; spread?: number; band?: number }) {
   const inst = useRef<THREE.InstancedMesh>(null);
 
   // per-shard immutable seeds (base position in the band, size, spin axis/rate)
@@ -73,11 +73,13 @@ export function DebrisField({ count = 800, spread = 52, band = 170 }: { count?: 
       const x = (rand() - 0.5) * spread;
       const y = (rand() - 0.5) * spread * 0.82;
       const z = rand() * band; // wrapped per-frame relative to the camera
-      // size range: most shards stay small; a SLIMMER tail of big boulders (now
-      // ~10% of shards, max ~1.8u not ~2.6u) whip past for parallax WITHOUT
-      // flattening into white near-lens quads under the bloom.
-      const big = rand() < 0.1 ? 0.8 + rand() * 1.0 : rand() * rand() * 0.95;
-      const s = 0.16 + big;
+      // size range: FINER than before — far more shards, each smaller and softer
+      // so the belt reads as fine dust/grit streaming past rather than chunky
+      // blocks. The big-boulder tail is rarer (~6%) and capped lower (max ~1.05u
+      // not ~1.8u), and the common shards are biased small (rand³) so most are
+      // tiny. Net: a smoother, less aggressive, flowing field.
+      const big = rand() < 0.06 ? 0.45 + rand() * 0.6 : rand() * rand() * rand() * 0.6;
+      const s = 0.085 + big;
       const rate = 0.2 + rand() * 0.8;
       const phase = rand() * 6.283;
       arr.push({ x, y, z, s, rate, phase });
@@ -112,8 +114,8 @@ export function DebrisField({ count = 800, spread = 52, band = 170 }: { count?: 
     // speed proxy → how hard the shards RAKE/streak along the flight axis right
     // now. Peaks mid-belt so the camera reads as "tearing through wreckage".
     const rake = debrisRake(p);
-    const streak = 1 + rake * 5.0; // z-elongation at the heart of the belt
-    const squash = 1 - rake * 0.35; // pinch cross-section so it reads as a streak
+    const streak = 1 + rake * 2.6; // SOFTER z-elongation — fine streaks, not blocky smears
+    const squash = 1 - rake * 0.2; // gentler cross-section pinch so it flows
 
     for (let i = 0; i < shards.length; i++) {
       const sh = shards[i];
