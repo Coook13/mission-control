@@ -54,21 +54,47 @@ const smootherstep = (u: number): number => {
   return t * t * t * (t * (t * 6 - 15) + 10);
 };
 
-/* Single normalized arrival progress 0..1 across the window, eased. Drives lead,
-   scale and reveal so they all move together and reverse together. */
+/* The arrival has TWO eased drivers, both pure in p:
+
+   arriveOfP — the monotonic REVEAL intensity (rings sharpen + brighten and HOLD
+   bright). Drives the shader's uArrive so the rings stay their sharpest/brightest
+   through the finale hold — never deflating to a flat wash. Reaches 1 fast and
+   stays 1.
+
+   swellOfP — the SIZE envelope. It SWELLS to a colossal peak at the climax
+   (p≈0.90, where the ring overflows the frame harder than the opener) and then
+   eases BACK across p≈0.94→1.0 to a COMPOSED, contained value — so the last frame
+   is a composed bloomed-ring JEWEL held dead-centre (the wordmark {O} re-aligns
+   over it), not a blown-out gradient that fills the lens. Drives lead + scale. */
+const SWELL_PEAK = 0.9; // colossal crescendo — biggest/brightest hole of the flight
 function arriveOfP(p: number): number {
   if (p <= ARRIVE_LO) return 0;
   if (p >= ARRIVE_HI) return 1;
-  return smootherstep((p - ARRIVE_LO) / (ARRIVE_HI - ARRIVE_LO));
+  // reach full reveal by the peak, then HOLD at 1 through the settle
+  const u = (p - ARRIVE_LO) / (SWELL_PEAK - ARRIVE_LO);
+  return smootherstep(u); // 0→1 by the peak, clamped 1 after
+}
+
+function swellOfP(p: number): number {
+  if (p <= ARRIVE_LO) return 0;
+  if (p <= SWELL_PEAK) {
+    // emerge → colossal peak (overflows the frame)
+    return smootherstep((p - ARRIVE_LO) / (SWELL_PEAK - ARRIVE_LO));
+  }
+  // ease back from the colossal peak (1.0) to a COMPOSED held jewel (~0.62) so the
+  // finale is a contained, dead-centre ring — not a blown gradient. Holds there.
+  const u = smootherstep((p - SWELL_PEAK) / (ARRIVE_HI - SWELL_PEAK));
+  return 1 - u * 0.38; // 1.0 at peak → 0.62 composed hold at p=1.0
 }
 
 /* Master opacity: fade up fast as the form emerges from the dissipating warp, then
-   hold solid through the rest of the settle so the finale lands on a steady hole
-   (the wordmark {O} re-aligns over it). Pure in p. */
+   hold SOLID through the rest of the settle so the finale lands on a steady,
+   composed hole (the wordmark {O} re-aligns over it). Stays solid at p=1 so the
+   last frame is the most composed ring, never a fade-out. Pure in p. */
 function arrivalOpacity(p: number): number {
   if (p <= ARRIVE_LO || p >= ARRIVE_HI + 0.001) return 0;
   const u = (p - ARRIVE_LO) / (ARRIVE_HI - ARRIVE_LO);
-  return smoothstep(u / 0.22); // 0→1 over the first ~22% of the window, then hold
+  return smoothstep(u / 0.18); // 0→1 over the first ~18% of the window, then hold solid
 }
 
 /* How far ahead of the camera the returned hole sits. It starts deep ahead (a
@@ -76,9 +102,12 @@ function arrivalOpacity(p: number): number {
    in, so perspective does most of the "growing to fill the frame" — the same trick
    BlackHole3D uses on ENTER, run in reverse-direction (approach, never overtaken,
    so it holds dead-ahead and dominant at the finale). Pure in p. */
-const LEAD_FAR = 210; // distant emergent point at the start of arrival
-const LEAD_NEAR = 30; // close + COLOSSAL at the finale (still ahead — never passed)
+const LEAD_FAR = 240; // distant emergent point at the start of arrival
+const LEAD_NEAR = 18; // close + COLOSSAL at the finale (still ahead — never passed)
 function leadOfP(a: number): number {
+  // lead closes harder than the opener's punch so perspective dwarfs the hero {O}:
+  // by the peak the ring is parked very near the lens (18u) at a vast scale, so it
+  // overflows the frame edges far harder than the opening punch-through ever does.
   return LEAD_FAR + (LEAD_NEAR - LEAD_FAR) * a;
 }
 
@@ -134,11 +163,13 @@ const frag = /* glsl */ `
     // grand ring: a touch wider than the hero hole, photon ring tightens on arrive
     float rimW = 0.06 + uArrive * 0.03;
     float rim = exp(-pow((rl - r0) / rimW, 2.0));
-    // PRIMARY photon ring (tight + bright, just inside the rim)
-    float photon = exp(-pow((rl - (r0 - 0.08)) / 0.014, 2.0)) * (0.9 + uArrive * 0.9);
+    // PRIMARY photon ring (tight + bright, just inside the rim) — at the arrival
+    // peak it is the single brightest ring of the whole flight (gain > the hero
+    // hole's 0.85+0.7 and the engulf blaze), so the crescendo lands as the payoff.
+    float photon = exp(-pow((rl - (r0 - 0.08)) / 0.014, 2.0)) * (0.9 + uArrive * 1.6);
     // SECOND CONCENTRIC photon ring — an inner lensing ring (the supermassive
     // signature the hero hole lacks). Fainter, tighter, closer to the shadow.
-    float photon2 = exp(-pow((rl - (r0 - 0.155)) / 0.010, 2.0)) * (0.45 + uArrive * 0.7);
+    float photon2 = exp(-pow((rl - (r0 - 0.155)) / 0.010, 2.0)) * (0.45 + uArrive * 1.0);
     float glow = exp(-pow((rl - r0) / (0.30 + uArrive * 0.10), 2.0));
 
     // ACCRETION-DISC SPIN BAND: a bright arc that orbits AROUND the ring (a moving
@@ -153,21 +184,30 @@ const frag = /* glsl */ `
     float dopp = 0.66 + 0.4 * side;
     float shim = 0.92 + 0.08 * sin(ang * 4.0 - t * 2.4);
 
-    vec3 cool = vec3(0.72, 0.84, 1.0);   // the one cool accent (#b8d6ff)
-    vec3 warm = vec3(1.0, 0.86, 0.66);   // warm accretion bias on the bright side
-    vec3 col = mix(cool, warm, side * 0.5);
+    // Temperature contrast at scale: cores stay white-hot, but the broad halo is
+    // pushed COLDER toward #a9c6ff/#d6e6ff so the colossal bloomed rim reads as
+    // cold starlight against a warm accretion bias — real temperature, not grey.
+    vec3 coolGlow = vec3(0.62, 0.76, 1.0);   // coldest broad halo (#a9c6ff-ward)
+    vec3 coolRim  = vec3(0.82, 0.89, 1.0);   // near-white cool rim/photon (#d6e6ff)
+    vec3 warm = vec3(1.0, 0.84, 0.62);       // warm accretion bias on the bright side
+    vec3 ringCol = mix(coolRim, warm, side * 0.40);   // rim + photon rings, cool-led
+    vec3 glowCol = mix(coolGlow, warm, side * 0.26);  // broad halo, coldest
 
     float core = smoothstep(0.30, 0.54, r);          // pure black inside the ring
-    float flare = 1.0 + uArrive * 1.3;               // overall reveal gain (grander)
-    float rings = rim * 1.7 + photon * 1.6 + photon2 * 1.1 + glow * 0.55;
-    float intensity = rings * dopp * spin * shim * core * flare;
+    float flare = 1.0 + uArrive * 2.0;               // grandest reveal gain of the flight
+    float ringsI = (rim * 1.7 + photon * 1.6 + photon2 * 1.1) * dopp * spin * shim;
+    float glowI = glow * 0.55 * dopp;
+    float intensity = (ringsI + glowI) * core * flare;
+    vec3 col = (ringCol * ringsI + glowCol * glowI) * core * flare;
     // radial edge-fade: kill intensity to exactly 0 across r∈[1.35,1.55], far
     // inside the quad edges (r≈1.7) → no box ever shows, even filling the frame.
     float edgeFade = smoothstep(1.55, 1.35, r);
     intensity *= edgeFade;
+    col *= edgeFade;
     intensity *= uFade;
+    col *= uFade;
     float a = clamp(intensity, 0.0, 1.0);
-    gl_FragColor = vec4(col * intensity, a);
+    gl_FragColor = vec4(col, a);
   }
 `;
 
@@ -190,7 +230,8 @@ export function Arrival() {
     g.visible = fade > 0.001;
     if (!g.visible) return;
 
-    const a = arriveOfP(p);
+    const a = arriveOfP(p);   // monotonic reveal intensity (rings hold bright)
+    const sw = swellOfP(p);   // size envelope (peaks colossal, settles to a jewel)
     m.uniforms.uTime.value = state.clock.elapsedTime;
     m.uniforms.uArrive.value = a;
     m.uniforms.uFade.value = fade;
@@ -200,16 +241,18 @@ export function Arrival() {
     g.quaternion.copy(cam.quaternion);
 
     // sit `lead` units dead ahead along the view axis (pure in p) — the lead
-    // closes as `a` rises so perspective grows it; the swell below adds the
-    // stylised final bloom so it reads as colossal, not merely "near".
+    // closes as the swell rises (colossal at the peak) then eases back out a touch
+    // for the composed finale hold, so the ring never blows past into a wash.
     cam.getWorldDirection(fwd);
-    g.position.copy(cam.position).addScaledVector(fwd, leadOfP(a));
+    g.position.copy(cam.position).addScaledVector(fwd, leadOfP(sw));
 
-    // COLOSSAL swell: starts large and grows FAR larger than the hero hole so the
-    // ring overflows the frame edges (and its bloom spills past them). Combined
-    // with the much-closer lead, the {O} reads as a larger-ORDER body than the
-    // hero ring — not the opener replayed, but the destination it always implied.
-    const s = 30 + a * 320;
+    // COLOSSAL swell at the peak: grows FAR larger than the hero hole so the ring
+    // overflows the frame edges (and its bloom spills past them). Combined with the
+    // much-closer lead (18u vs the opener's hero framing), the {O} reads as a
+    // larger-ORDER body than the hero ring — the single biggest, brightest hole of
+    // the whole flight. Then `sw` eases back so the finale settles to a composed,
+    // contained jewel held dead-centre rather than a blown-out wash.
+    const s = 40 + sw * 430;
     g.scale.setScalar(s);
   });
 

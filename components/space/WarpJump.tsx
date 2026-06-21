@@ -38,6 +38,7 @@ const warpVertex = /* glsl */ `
   varying float vWarp;
   varying float vShim;
   varying vec2  vDir;       // screen-space radial direction (vanishing-point → out)
+  varying float vEdge;      // 0 at the dead-centre vanishing point → 1 toward the frame edges
   void main() {
     // Wrap each streak's base z into a band ahead of the camera — identical
     // pure-in-camZ scheme as the starfield, so it reverses exactly and never
@@ -68,13 +69,23 @@ const warpVertex = /* glsl */ `
     vec2 ndc = clip.xy / max(clip.w, 1e-3);
     vDir = normalize(ndc + 1e-4);
 
+    // VANISHING-POINT FIX: bias streak density/brightness toward the frame EDGES
+    // and leave a small DARK CONE at dead-centre, so streaks EMANATE FROM a dark
+    // point rather than blooming INTO a flat white disc. vEdge ramps 0→1 with the
+    // screen-radius of the streak; a streak sitting on the vanishing point reads
+    // ~0, the rim reads full. Pure (only ndc, no state) → reverses with the scrub.
+    float ndcR = length(ndc);
+    vEdge = smoothstep(0.06, 0.42, ndcR);
+
     vBright = aBright;
     vShim = 0.7 + 0.3 * sin(uTime * 6.0 + aSeed);
     // fade streaks very near the lens (no blown-out wall) and at the far wrap
     // seam (no pop). Same shaping idea as the starfield vFade.
     float near = smoothstep(1.0, 14.0, dist);
     float far = 1.0 - smoothstep(uWrapDepth * 0.72, uWrapDepth, dist);
-    vWarp = uWarp * gate * near * far;
+    // edge-bias folds into the master so the centre never saturates: keep a small
+    // floor (0.12) so the cone isn't a hard black hole, then ramp up to the rim.
+    vWarp = uWarp * gate * near * far * (0.12 + 0.88 * vEdge);
   }
 `;
 
@@ -85,6 +96,7 @@ const warpFragment = /* glsl */ `
   varying float vWarp;
   varying float vShim;
   varying vec2  vDir;
+  varying float vEdge;
   void main() {
     // Stretch the sprite ALONG the screen-space radial direction (vDir) so every
     // streak smears outward from the vanishing point — dense + additive this
@@ -104,8 +116,12 @@ const warpFragment = /* glsl */ `
     // a hotter spine right down the streak axis for the bloomed light-speed core
     float spine = exp(-pow(across * stretch / 0.22, 2.0)) * smoothstep(0.5, 0.0, abs(along));
     float a = (core + spine * 0.8) * vBright * vShim * vWarp;
-    // push the brightest cores >1 so ONLY the warp blooms (blacks stay black)
-    vec3 col = uColor * (0.6 + vBright * 0.9) * (1.0 + vWarp * 0.7);
+    // COOL ACCENT: the body of the streak rides uColor (cool #d6e6ff), but the hot
+    // SPINE biases toward pure white so the bloomed cores read as COLD starlight —
+    // white-hot at the spine, cooling out to the cool accent across the streak.
+    // The edge-biased vWarp already keeps the dead-centre vanishing point dark.
+    vec3 col = uColor * (0.55 + vBright * 0.85) * (1.0 + vWarp * 0.7);
+    col = mix(col, vec3(1.0), clamp(spine * 0.7, 0.0, 1.0)); // white-hot spine over cool halo
     gl_FragColor = vec4(col, a);
   }
 `;
@@ -121,7 +137,7 @@ export function WarpJump({ count = 5200, tube = 64, depth = 280 }: { count?: num
       uCamZ: { value: 0 },
       uWrapDepth: { value: depth },
       uWrapMargin: { value: 6 },
-      uColor: { value: new THREE.Color("#d6e6ff") }, // cool-white accent
+      uColor: { value: new THREE.Color("#bcd2ff") }, // cooler accent halo; spine biases white-hot in-shader
     }),
     [depth]
   );

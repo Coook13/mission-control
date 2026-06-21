@@ -65,9 +65,12 @@ function frameAt(l: number): Frame {
     const t = smooth(L_IN, 0, l); // 0..1
     return {
       vis: t,
-      // title leads in slightly ahead of the body (reads first), so it's the
-      // anchor as the beat arrives.
-      label: smooth(L_IN * 0.82, -0.012, l),
+      // title enters LATER than the body now: it does not begin to resolve until
+      // the body is ~40% in, so the giant wordmark never appears while the
+      // PREVIOUS beat's (faster-peeling) title is still on its way out. Window
+      // start raised from L_IN*0.82 (≈ body-onset) toward L_IN*0.55 so the title
+      // onset trails the body — kills the p32/p52/p72 double-wordmark stacks.
+      label: smooth(L_IN * 0.55, -0.01, l),
       scrim: t,
       scale: 0.62 + t * 0.38,
       tx: -(1 - t),
@@ -81,9 +84,12 @@ function frameAt(l: number): Frame {
   }
   // RECEDE: blow past the camera and dissolve
   const t = smooth(L_HOLD, L_OUT, l); // 0..1
-  // title fades roughly twice as fast as the body and drops BEHIND it (lower z),
-  // so a receding giant wordmark can't smear across the incoming panel's copy.
-  const labelT = smooth(L_HOLD, L_HOLD + (L_OUT - L_HOLD) * 0.5, l);
+  // title peels FASTER + EARLIER than the body: it is fully gone by ~32% of the
+  // recede window (was 50%), so the giant wordmark clears the frame well before
+  // the next panel's title resolves in. With the later approach onset above this
+  // guarantees only one giant wordmark on screen at a time (p32 ENGINEERING/nav,
+  // p52 VENTURE/ghost, p72 STRATEGY/RESEARCH stacks fixed).
+  const labelT = smooth(L_HOLD, L_HOLD + (L_OUT - L_HOLD) * 0.32, l);
   return {
     vis: 1 - t,
     label: 1 - labelT,

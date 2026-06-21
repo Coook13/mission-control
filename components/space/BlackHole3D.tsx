@@ -4,7 +4,27 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { flightState } from "./flightState";
+import * as phase from "./phase";
 import { enter } from "./phase";
+
+/* engulfAt(p): a TIGHT bump in [0.14,0.18] (peak 0.16) — the dramatic threshold
+   frame where the photon ring BLAZES past the lens edges, screen rimmed in cool-
+   white light around a dark throat, the instant before the whip-past punches to
+   warp. Group 1 owns this in phase.ts; if it hasn't landed yet we fall back to a
+   local raised-cosine on the same window so the punch-through still choreographs.
+   The window is deliberately the SAME as flashAt's punch (0.14–0.18) and inside
+   shockAt's punch (0.135–0.185) so the rim blaze, the bloom blowout and the
+   shockwave all fire on the same frame. Pure in p → scrubs + reverses. */
+function engulfAt(p: number): number {
+  const fn = (phase as Record<string, unknown>).engulfAt;
+  if (typeof fn === "function") return (fn as (x: number) => number)(p);
+  // fallback: raised-cosine bump, 0 at edges, 1 at centre, flat-ended.
+  const lo = 0.14;
+  const hi = 0.18;
+  if (p <= lo || p >= hi) return 0;
+  const u = (p - lo) / (hi - lo);
+  return 0.5 - 0.5 * Math.cos(u * Math.PI * 2);
+}
 
 /* The black hole as ONE in-scene 3D object — a billboarded disc mesh that lives
    dead ahead on the flight path and reads as the {O} of "W{O}RK" in the hero.
@@ -44,8 +64,9 @@ const frag = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
   uniform float uTime;
-  uniform float uEnter; // 0..1 across the ENTER window (pure fn of p)
-  uniform float uFade;  // master opacity (pure fn of p)
+  uniform float uEnter;  // 0..1 across the ENTER window (pure fn of p)
+  uniform float uEngulf; // 0..1 TIGHT threshold bump (peak 0.16) — the rim blaze
+  uniform float uFade;   // master opacity (pure fn of p)
   void main() {
     // The quad is oversized vs the disc (geometry is ~1.7×1.7, world scale
     // divided to compensate) so there is generous transparent margin around the
@@ -56,32 +77,50 @@ const frag = /* glsl */ `
     float ang = atan(p.y, p.x);
     float t = uTime * 0.25;
 
-    // the ring blooms a touch wider + the photon ring sharpens as we punch in
-    float r0 = 0.62 + uEnter * 0.05;
-    float rimW = 0.045 + uEnter * 0.05;
+    // THRESHOLD ENGULF: at the punch-through frame the photon ring scales OUT so
+    // its rim races toward — and past — the frame edges; the screen is rimmed in
+    // cool-white light wrapped around a DARK CORE (the throat). We push the rim
+    // radius outward (so the bright annulus expands past r≈1) and widen it, while
+    // the core (below) is forced blacker so the centre stays a void as the rim
+    // blazes. This is the dramatic threshold moment, gone in 1–2 frames.
+    float r0 = 0.62 + uEnter * 0.05 + uEngulf * 0.95;   // rim races outward on engulf
+    float rimW = 0.045 + uEnter * 0.05 + uEngulf * 0.16; // and broadens to a blaze
     float rim = exp(-pow((r - r0) / rimW, 2.0));
-    float photon = exp(-pow((r - (r0 - 0.07)) / 0.016, 2.0)) * (0.85 + uEnter * 0.7);
-    float glow = exp(-pow((r - r0) / (0.22 + uEnter * 0.12), 2.0));
+    float photon = exp(-pow((r - (r0 - 0.07)) / (0.016 + uEngulf * 0.05), 2.0)) * (0.85 + uEnter * 0.7 + uEngulf * 2.2);
+    float glow = exp(-pow((r - r0) / (0.22 + uEnter * 0.12 + uEngulf * 0.30), 2.0));
 
     float side = 0.5 + 0.5 * cos(ang - t * 2.0);
     float dopp = 0.62 + 0.5 * side;                 // brighter approaching side
     float shim = 0.9 + 0.1 * sin(ang * 5.0 - t * 3.0);
 
-    vec3 cool = vec3(0.72, 0.84, 1.0);              // the one cool accent (#b8d6ff)
-    vec3 warm = vec3(1.0, 0.83, 0.6);               // warm accretion
-    vec3 col = mix(cool, warm, side * 0.55);
+    // Temperature contrast: the core stays white-hot, but the surrounding halo is
+    // pushed COOLER toward #a9c6ff/#d6e6ff so the bloomed rim reads as cold
+    // starlight against the warm accretion bias — real temperature, not grey.
+    vec3 coolGlow = vec3(0.66, 0.78, 1.0);          // colder halo (#a9c6ff-ward)
+    vec3 coolRim  = vec3(0.84, 0.90, 1.0);          // near-white cool rim (#d6e6ff)
+    vec3 warm = vec3(1.0, 0.82, 0.58);              // warm accretion
+    // rim/photon biased to the cool near-white; broad glow biased coldest.
+    vec3 ringCol = mix(coolRim, warm, side * 0.42);
+    vec3 glowCol = mix(coolGlow, warm, side * 0.30);
 
-    float core = smoothstep(0.30, 0.52, r);         // pure black inside
-    float flare = 1.0 + uEnter * 1.4;               // overall punch-through gain
-    float intensity = (rim * 1.8 + photon * 1.5 + glow * 0.5) * dopp * shim * core * flare;
+    // pure black inside; engulf DEEPENS + widens the throat so the centre is a
+    // dark void even as the rim blazes past the lens (rim of light, dark core).
+    float core = smoothstep(0.30 + uEngulf * 0.30, 0.52 + uEngulf * 0.46, r);
+    float flare = 1.0 + uEnter * 1.4 + uEngulf * 3.2; // engulf BLAZES the rim hard
+    float ringI = (rim * 1.8 + photon * 1.5) * dopp * shim;
+    float glowI = glow * 0.5 * dopp;
+    float intensity = (ringI + glowI) * core * flare;
+    vec3 col = (ringCol * ringI + glowCol * glowI) * core * flare;
     // radial edge-fade: force the glow to die to EXACTLY 0 well inside the quad
     // so the additive falloff never reaches the square corners (no box at scale).
     // p spans [-1,1]^2, so corners sit at r≈1.41 — fade out across r∈[1.35,1.55].
     float edgeFade = smoothstep(1.55, 1.35, r);
     intensity *= edgeFade;
+    col *= edgeFade;
     intensity *= uFade;
+    col *= uFade;
     float a = clamp(intensity, 0.0, 1.0);
-    gl_FragColor = vec4(col * intensity, a);
+    gl_FragColor = vec4(col, a);
   }
 `;
 
@@ -110,7 +149,12 @@ export function BlackHole3D() {
   const group = useRef<THREE.Group>(null);
   const mat = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
-    () => ({ uTime: { value: 0 }, uEnter: { value: 0 }, uFade: { value: 1 } }),
+    () => ({
+      uTime: { value: 0 },
+      uEnter: { value: 0 },
+      uEngulf: { value: 0 },
+      uFade: { value: 1 },
+    }),
     []
   );
   // scratch vectors — allocation-free render loop
@@ -123,10 +167,12 @@ export function BlackHole3D() {
 
     const p = flightState.progress; // progress = target (single source; no 2nd lerp)
     const e = enter(p);             // 0..1 across p∈[0.10,0.20], owned by phase.ts
+    const eng = engulfAt(p);        // 0..1 tight threshold blaze (peak 0.16)
     const fade = fadeOfP(p);
 
     m.uniforms.uTime.value = state.clock.elapsedTime;
     m.uniforms.uEnter.value = e;
+    m.uniforms.uEngulf.value = eng;
     m.uniforms.uFade.value = fade;
 
     const cam = state.camera;
@@ -145,7 +191,10 @@ export function BlackHole3D() {
     // The quad is 3.4× the unit plane (oversized for glow margin), and p now
     // maps 1 UV-unit → 1 world-unit, so the visible ring is 2× what the old
     // [1,1] quad gave at the same scale — halve the scale to preserve framing.
-    const s = 4.5 + e * 13;
+    // The engulf term lifts the scale envelope HARD on the threshold frame so the
+    // ring physically engulfs the lens (rim past the frame edges) before the
+    // fade/whip-past punches to warp. Pure in p → reverses exactly.
+    const s = 4.5 + e * 13 + eng * 34;
     g.scale.setScalar(s);
 
     // hide outright once faded so it can't catch the cruise (cheap + exact)

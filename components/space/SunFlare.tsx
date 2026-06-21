@@ -110,7 +110,11 @@ const coreFrag = /* glsl */ `
     float edge = mix(0.7, 0.92, uCrest);
     intensity *= smoothstep(1.0, edge, r);
     intensity *= uOpacity;
-    vec3 col = vec3(1.0) * core + uHalo * halo * rays; // white core, cool halo
+    // COLD STARLIGHT — NO warm tint. The over-bright core is PURE WHITE (#fff) so
+    // the bloom pass reads it as cold blinding light; the surrounding halo carries
+    // the locked cool accent (uHalo, #a9c6ff). The warmest pixel in the whole
+    // sprite is therefore pure white — nothing drifts warm.
+    vec3 col = vec3(1.0) * core + uHalo * halo * rays; // pure-white core, cool halo
     gl_FragColor = vec4(col * uOpacity, clamp(intensity, 0.0, 1.0));
   }
 `;
@@ -158,7 +162,7 @@ export function SunFlare() {
     () => ({
       uOpacity: { value: 0 },
       uCrest: { value: 0 },
-      uColor: { value: new THREE.Color("#d6e6ff") },
+      uColor: { value: new THREE.Color("#bcd2ff") }, // cooler anamorphic smear (cold lens flare)
     }),
     []
   );
@@ -248,7 +252,7 @@ export function SunFlare() {
           <mesh key={i} position={[gst.d * 78, gst.d * 26, 0.2]} frustumCulled={false}>
             <circleGeometry args={[gst.s * 7.0, 32]} />
             <meshBasicMaterial
-              color="#cdddff"
+              color="#a9c6ff"
               transparent
               opacity={0}
               blending={THREE.AdditiveBlending}

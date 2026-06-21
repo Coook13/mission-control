@@ -12,6 +12,7 @@ import { Shockwave } from "./Shockwave"; // P2-B set-piece: concussive impact ri
 import { DebrisField } from "./DebrisField";
 import { SunFlare } from "./SunFlare"; // P2-B set-piece: distant additive sun pass
 import { PlanetLimb } from "./PlanetLimb"; // scale anchor: colossal lit limb at a mid beat
+import { MegaStructure } from "./MegaStructure"; // grandeur lever: frame-filling megastructure the camera threads past in the breathe gap
 import { Arrival } from "./Arrival"; // finale payload: the {O} returns, massive, dead-ahead
 import { Nebula } from "./Nebula";
 import { Effects } from "./Effects";
@@ -75,6 +76,7 @@ function Rig() {
      SunFlare    — a distant additive sun + streak pass for the escalation/climax
      DebrisField — instanced shards drifting past (reverse-safe like the stars)
      PlanetLimb  — colossal dark body's lit edge looming at a mid beat (scale anchor)
+     MegaStructure — monstrous frame-filling silhouette the camera threads PAST in the breathe gap
      BlackHole3D — the {O} ring the hero centres on; the camera punches through it
      WarpJump    — light-speed streaks driven by warpAt(p), zero outside its windows
      Shockwave   — concussive additive ring blasting out on the punch + climax (shockAt)
@@ -103,6 +105,8 @@ export default function Scene() {
         <DebrisField />
         {/* SCALE ANCHOR — colossal dark body's lit limb looms at a mid beat */}
         <PlanetLimb />
+        {/* GRANDEUR LEVER — monstrous megastructure; camera threads its gap in the breathe stretch (p~0.30–0.40) */}
+        <MegaStructure />
         {/* the {O} ring — hero centres on it, camera punches through on ENTER */}
         <BlackHole3D />
         {/* light-speed streaks — intensity is warpAt(p), exactly 0 between windows */}

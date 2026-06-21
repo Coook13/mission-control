@@ -1761,7 +1761,12 @@ body { color: #fff; }
 }
 .flowpanel {
   position: absolute;
-  top: 50%;
+  /* Anchored in the LOWER-MIDDLE (not 50%) so the colossal wordmark's first line
+     clears the fixed STORY / WORK / CONTACT nav even at the recede scale (~1.5),
+     where the title balloons upward. The whole title+copy block reads as one
+     composition centred just below mid-screen instead of a top-heavy title
+     punching into the header. */
+  top: 56%;
   left: 50%;
   width: min(46ch, 86vw);
   /* translate/scale/opacity are written by the rAF loop; transform-origin
@@ -1842,7 +1847,10 @@ body { color: #fff; }
 }
 
 .flowpanel__desc {
-  margin: clamp(12px, 1.8vh, 20px) 0 0;
+  /* tightened toward the title so the one-liner reads as part of the SAME
+     composition (was up to 20px); keeps title + copy from drifting apart and
+     pushing the work-list below the fold during the hold. */
+  margin: clamp(8px, 1.1vh, 14px) 0 0;
   font-family: var(--font-dot-var), monospace;
   font-size: clamp(0.84rem, 1.3vw, 1.05rem);
   letter-spacing: 0.04em;
@@ -1858,8 +1866,12 @@ body { color: #fff; }
    few feathered radial-gradient "stars" over a faint accent wash, consistent
    with the deep-space grade. Procedural only — never a photo wallpaper. */
 .flowpanel__slot {
-  margin: clamp(20px, 3vh, 34px) 0 0;
-  aspect-ratio: 16 / 10;
+  /* the depth-plate eats the most vertical room, which is what pushed the
+     work-list (AirfoilLearner/Solar, Systematic trading) below the fold during
+     the hold. Pulled its top margin in and shortened it (16/10 → 16/7) so the
+     title + one-liners + work-list read as ONE block above the fold. */
+  margin: clamp(12px, 1.6vh, 20px) 0 0;
+  aspect-ratio: 16 / 7;
   width: 100%;
   background:
     radial-gradient(1.4px 1.4px at 18% 32%, rgba(255, 255, 255, 0.5), transparent 60%),
@@ -1878,7 +1890,9 @@ body { color: #fff; }
 
 .flowpanel__work {
   list-style: none;
-  margin: clamp(18px, 2.6vh, 30px) 0 0;
+  /* pulled up (was up to 30px) so the work-list rides directly under the plate,
+     keeping the whole beat composition above the fold during the hold. */
+  margin: clamp(12px, 1.7vh, 20px) 0 0;
   padding: 0;
 }
 .flowpanel__work > li { margin: 0; }
@@ -2184,6 +2198,12 @@ body { color: #fff; }
   --bar: 0;
   position: absolute; inset: 0; z-index: 5; pointer-events: none;
 }
+/* Height ramp is a single linear function of --bar (= warpAt(p)+pulseAt). warpAt
+   now spikes in BOTH windows (0.205–0.285 AND 0.81–0.89) and each is a smooth
+   raised-cosine that starts/ends at exactly 0, so the bars breathe in and out
+   identically in BOTH warp windows with no on/off flicker at the edges. The two
+   bars (top/bottom) share the same ramp + the same accent inner edge, so the
+   letterbox reads the same in window 1 (first surge) and window 2 (climax). */
 .fly__bar {
   position: absolute; left: 0; right: 0;
   height: calc(var(--bar, 0) * 12vh);
@@ -2218,10 +2238,23 @@ body { color: #fff; }
     rgba(214, 230, 255, 0.6) 22%,
     rgba(169, 198, 255, 0.18) 46%,
     rgba(0, 0, 0, 0) 70%);
-  /* swell up as we arrive: starts tight, blooms to fill the frame */
-  transform: scale(calc(0.6 + var(--arrive, 0) * 0.55));
+  /* RECEDE-TO-BLACK envelope. --arrive is monotonic 0→1 over the arrival; the
+     bloom must crest mid-arrival then fall back to near-0 by p=1 so the last held
+     frame is the MOST composed (a bloomed jewel on deep black), not a blown-out
+     white field. 4·arrive·(1-arrive) is a parabola that peaks at arrive≈0.5
+     (≈p0.93, the climax flash) and returns to 0 at arrive=1 (p=1.0) — so the
+     bloom ramps UP at p~0.92–0.94 then DOWN to nothing by p=1, settling the
+     Arrival ring as a jewel on black. Pure in p → scrubs + reverses.
+     This opacity COMPOSES with (multiplies) the parent .fly__finale opacity
+     (= --arrive): effective = arrive · 4·arrive·(1-arrive), which is 0 at p=1
+     (bloom fully gone) while the WHITE line — driven by its own color crossfade,
+     not opacity — stays fully lit over the receded black. */
+  --bloom-env: calc(4 * var(--arrive, 0) * (1 - var(--arrive, 0)));
+  opacity: var(--bloom-env);
+  /* swell with the same envelope: tightest at the ends, fills the frame at crest */
+  transform: scale(calc(0.6 + var(--bloom-env) * 0.55));
   mix-blend-mode: screen;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 /* The finale line is the structural callback to the hero wordmark: a flex
    column whose LAST line re-forms "W{O}RK" with the same transparent {O} gap,
@@ -2234,18 +2267,20 @@ body { color: #fff; }
   font-family: var(--font-sans); font-weight: 700;
   text-transform: uppercase; line-height: 0.92; letter-spacing: -0.04em;
   font-size: clamp(2rem, 7.2vw, 5.4rem);
-  /* HARD LANDING — crossfade the ink with --arrive (written by Flythrough from
-     the same arrival ramp that brightens the bloom). EARLY (--arrive≈0) the bloom
-     is still dim/dark, so the line is WHITE; at PEAK (--arrive≈1) the bloom is a
-     vast bright field, so the line resolves to near-black ink → a clean logo
-     lockup at p=1, killing the grey-on-grey moment at p≈0.96. Pure in p via the
-     custom prop → reverses exactly. */
-  color: color-mix(in srgb, #0a0d14 calc(var(--arrive, 0) * 100%), #ffffff);
-  /* the halo inverts WITH the ink: a dark glow while the line is white over the
-     dark field, fading to a faint light glow as it lands on the bright bloom. */
+  /* HARD LANDING — FLIPPED so the last held frame lands WHITE on black. The bloom
+     now crests mid-arrival then RECEDES to deep black by p=1 (see
+     .fly__finale-bloom), so the composed final frame is a bloomed Arrival jewel
+     on black with white type — not dark ink on a blown-out field. EARLY
+     (--arrive≈0) the line is dark while the field is still black (it has not
+     resolved yet); at PEAK (--arrive≈1) it resolves to WHITE, glowing over the
+     settled black. Pure in p via the custom prop → reverses exactly. */
+  color: color-mix(in srgb, #ffffff calc(var(--arrive, 0) * 100%), #0a0d14);
+  /* halo tracks the WHITE landing: as the line resolves to white over black it
+     gains a soft white bloom; the early dark-on-dark state keeps a faint dark
+     edge for legibility while the bloom still washes the centre. */
   text-shadow:
-    0 2px 14px rgba(0, 0, 0, calc((1 - var(--arrive, 0)) * 0.78)),
-    0 0 32px rgba(255, 255, 255, calc(var(--arrive, 0) * 0.35));
+    0 2px 14px rgba(0, 0, 0, calc((1 - var(--arrive, 0)) * 0.55)),
+    0 0 38px rgba(214, 230, 255, calc(var(--arrive, 0) * 0.45));
   /* clickable only once arrived (--arrive saturates near 1); the rAF loop also
      guards this, but keep CSS honest so it never intercepts mid-journey. */
   pointer-events: var(--finale-hit, none);
@@ -2277,18 +2312,20 @@ body { color: #fff; }
   display: inline-block;
   width: 0.66em; height: 0.66em;
   border-radius: 50%;
-  /* ring tracks the same ink crossfade as the line so the {O} stays visible the
-     whole landing: light ring while the line is white over dark → dark ring as
-     it resolves on the bright bloom. */
-  border: 0.055em solid color-mix(in srgb, #0a0d14 calc(var(--arrive, 0) * 100%), #ffffff);
+  /* ring tracks the same FLIPPED ink crossfade as the line so the {O} gap stays
+     visible the whole landing and lands WHITE over the receded black field,
+     re-aligned dead-centre over the returned Arrival hole. */
+  border: 0.055em solid color-mix(in srgb, #ffffff calc(var(--arrive, 0) * 100%), #0a0d14);
   vertical-align: -0.04em; margin: 0 0.04em;
   box-sizing: border-box;
 }
 @media (hover: hover) {
-  .fly__finale-line:hover { color: #000; }
+  /* the landed line is white on black → hover lifts it to the cool accent, not
+     to #000 (which would vanish against the receded black field). */
+  .fly__finale-line:hover { color: #d6e6ff; }
 }
 .fly__finale-line:focus-visible {
-  outline: 2px solid #0a0d14; outline-offset: 0.18em; border-radius: 2px;
+  outline: 2px solid #d6e6ff; outline-offset: 0.18em; border-radius: 2px;
 }
 @media (prefers-reduced-motion: reduce) {
   .fly__finale-line { transform: none; filter: none; }

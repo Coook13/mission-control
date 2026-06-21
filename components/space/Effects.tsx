@@ -61,13 +61,17 @@ const WARP_CA = 0.0026;
    - BASE     the working intensity through the cruise/beats (the old 0.62).
    - DUCK     on the quiet HOLD windows (no warp, no flash) lean DOWN toward 0.50
      for Interstellar restraint — blacks deepen, the field calms.
-   - SPIKE    on flashAt(p) lift HARD toward ~1.25 for a frame or two of genuine
-     over-bright RELEASE on the punch + climax break.
+   - SPIKE    on flashAt(p) lift toward ~1.0 for a frame or two of genuine
+     over-bright RELEASE on the punch + climax break. Dropped from 1.25 so the
+     punch-into-light reads as over-bright RELEASE WITHOUT flooding the frame —
+     paired with the tamed warpAt crest (climax now caps at 0.9, crest 0.18), the
+     two together keep the climax a blinding CREST with the edges still visible
+     rather than a full white-out.
    The duck only applies where neither warp NOR flash is active, so it can never
    fight the spike. Pure fn of p → scrubs + reverses with everything else. */
 const BLOOM_BASE = 0.62;
 const BLOOM_DUCK = 0.5;
-const BLOOM_SPIKE = 1.25;
+const BLOOM_SPIKE = 1.0;
 function bloomOfP(p: number): number {
   const f = flashAt(p); // 0..1 tight blowout on the two impacts
   const w = warpAt(p); // 0..1 in the two warp windows (suppresses the duck)

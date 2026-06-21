@@ -102,7 +102,9 @@ const C_ARRIVE = D_HERO + D_ENTER + D_TRAVEL; // at start of ARRIVAL
                     lives here) — long, fast launch into the field   (large)
    seg 1 B0→B1    : ease back, settle onto beat 1                    (small/calm)
    seg 2 B1→B2    : escalation building — a moderate push            (medium)
-   seg 3 B2→B3    : breathe, ease onto beat 4                        (small/calm)
+   seg 3 B2→B3    : the held BREATHE — a long NEAR-STOP dwell; the camera
+                    almost freezes here so one vista breathes (the only
+                    sustained-awe beat)                           (tiny / near-stop)
    seg 4 B3→B4    : escalation rising further into the run-up        (medium-large)
    seg 5 B4→END   : the CLIMAX push — biggest surge of the flight; the
                     warp-2 window (0.800–0.870) straddles the end of this
@@ -110,10 +112,22 @@ const C_ARRIVE = D_HERO + D_ENTER + D_TRAVEL; // at start of ARRIVAL
                     speed peak together                              (largest)
 
    Beats themselves stay calm because each lands at a segment boundary where the
-   smoothstep slope is ~0 (decel in / accel out). */
+   smoothstep slope is ~0 (decel in / accel out). Seg 3 carries the LEAST distance
+   of any segment, so over its fixed 0.12-of-p span (B2 0.54 → B3 0.66) the camera
+   covers almost no ground — a genuine sustained hold, not a glide. The smoothstep
+   ends are slope-zero, so the dwell is widest exactly there. */
 const TRAVEL_ANCHORS: number[] = [TRAVEL_START, ...BEATS, TRAVEL_END];
 const TRAVEL_SEGS = TRAVEL_ANCHORS.length - 1; // 6
-const SEG_WEIGHTS: number[] = [1.55, 0.7, 1.0, 0.75, 1.35, 2.15];
+/* NOTE on the rebalance: the task's suggested array [1.5,0.65,0.95,1.7,1.15,2.05]
+   would make seg 3 the second-LARGEST distance → the FASTEST mid segment, the
+   opposite of a dwell (more world units over the same 0.12-of-p span = faster
+   camera). The binding instruction is "seg 3 becomes a long near-stop dwell," so
+   seg 3 takes the SMALLEST weight (0.3) — near-zero distance over its p-span =
+   the camera nearly stops. Crescendo shape preserved: seg 5 (climax) stays the
+   largest; the run-up (seg 4) rises into it; warp-1 launch (seg 0) stays large.
+   All weights > 0 → every segLen > 0 → dist() strictly increasing → camera-z
+   monotonic → fully reversible. */
+const SEG_WEIGHTS: number[] = [1.5, 0.65, 0.95, 0.3, 1.35, 2.15];
 const SEG_WEIGHT_SUM = SEG_WEIGHTS.reduce((a, b) => a + b, 0);
 // cumulative distance (world units) at the START of each travel segment
 const SEG_DIST: number[] = (() => {
@@ -256,10 +270,27 @@ export function warpAt(p: number): number {
   // This makes the final jump read as a "punch INTO light", qualitatively unlike
   // the first surge (which has no crest). It's a pure raised-cosine inside the
   // climax window, so it scrubs + reverses and stays 0 outside. The crest pushes
-  // the combined value above the escalation ceiling → the streaks blow white.
+  // the combined value toward the ceiling → the streaks blaze, but the frame
+  // EDGES stay discernible (no full white flood — see the 0.9 cap below).
   const crest = bump(p, 0.84, 0.875);
-  // climax punches a touch harder than the first surge; the crest adds the spike
-  return Math.min(1, escalation * 0.92 + climax * 1.0 + crest * 0.35);
+  // TAMED CREST + LOWERED CEILING: warp window 2 reads as a BLINDING crest, not a
+  // fully white screen. The climax surge peaks at ~0.85–0.90 of full (cap 0.9),
+  // the crest contribution is dialled WAY down (0.18, was 0.35), and the climax
+  // bump tops out a hair under full (0.88). Combined with Effects' reduced bloom
+  // spike, the punch reads as over-bright RELEASE with the edges still visible.
+  // Escalation (warp window 1) is left roughly as-is. Both windows stay
+  // raised-cosine, pure and reversible.
+  return Math.min(0.9, escalation * 0.92 + climax * 0.88 + crest * 0.18);
+}
+
+/* ENGULF intensity 0..1, pure in p — a TIGHT raised-cosine bump centred on the
+   ENTER punch-through (window [0.14,0.18], peak 0.16). Consumed by BlackHole3D
+   to BLAZE the photon ring past the frame edges at the exact instant the camera
+   tears through the {O} — the hole swallows the lens, the ring engulfs the
+   frame, then it's gone. 0 outside [0.14,0.18] (the ring sits at rest otherwise),
+   so it can early-out. Pure in p → scrubs + reverses exactly. */
+export function engulfAt(p: number): number {
+  return bump(p, 0.14, 0.18);
 }
 
 /* Mid-act PULSE 0..1, pure in p — a SMALL build in the calm TRADING/STRATEGY
