@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { projects } from "@/lib/site-data";
 import { Footer, Header } from "@/components/editorial";
 import { ParallaxImg } from "@/components/motion";
+import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -31,7 +32,8 @@ export default async function ProjectPage({
   const next = projects[(i + 1) % projects.length];
 
   return (
-    <>
+    <div className="page-dark">
+      <SpaceBackdrop />
       <Header />
       <main className="detail">
         <Link href="/work" className="detail__back" data-hover>
@@ -86,6 +88,6 @@ export default async function ProjectPage({
         </Link>
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

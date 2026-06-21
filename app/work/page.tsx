@@ -3,12 +3,14 @@ import { workIndex } from "@/lib/site-data";
 import { Footer, Header } from "@/components/editorial";
 import { WordReveal } from "@/components/motion";
 import { HoverIndex } from "@/components/HoverIndex";
+import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
 export const metadata: Metadata = { title: "Work | Micky Thanawarothon" };
 
 export default function WorkPage() {
   return (
-    <>
+    <div className="page-dark">
+      <SpaceBackdrop />
       <Header />
       <main>
         <section className="page-head">
@@ -32,6 +34,6 @@ export default function WorkPage() {
         </section>
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

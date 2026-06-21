@@ -6,12 +6,14 @@ import { Marquee } from "@/components/Marquee";
 import { PixelMicky } from "@/components/PixelMicky";
 import { StoryFX } from "@/components/StoryFX";
 import { SecLabel } from "@/components/SecLabel";
+import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
 export const metadata: Metadata = { title: "Story | Micky Thanawarothon" };
 
 export default function StoryPage() {
   return (
-    <>
+    <div className="page-dark">
+      <SpaceBackdrop />
       <Header />
       <StoryFX />
       <main>
@@ -87,6 +89,6 @@ export default function StoryPage() {
         <ContactSection />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

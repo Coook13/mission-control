@@ -1,9 +1,9 @@
 "use client";
 
-import { EffectComposer, Bloom, Vignette, Noise, ChromaticAberration } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
 import { BlendFunction, ChromaticAberrationEffect } from "postprocessing";
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import * as THREE from "three";
 import { flightState } from "./flightState";
 import { warpAt } from "./phase";
@@ -27,26 +27,46 @@ import { warpAt } from "./phase";
        resolves to faint cool/warm edges on the brightest streaks, never tints
        the blacks.
 
+       Built IMPERATIVELY (new ChromaticAberrationEffect + <primitive>) rather
+       than via the <ChromaticAberration> JSX wrapper. That wrapper (wrapEffect)
+       memoises on JSON.stringify(props) and re-pushes radialModulation/offset
+       onto the live instance through r3f's prop pipeline; under Next 16 +
+       React 19 that path stringifies an instance carrying r3f's circular
+       __r3f.parent/children state → "Converting circular structure to JSON" →
+       the Canvas loses its WebGL context. Constructing it ourselves sets every
+       define/uniform in the ctor, so r3f only ADOPTS the finished object and
+       never serialises or re-applies props. (Same pattern the lib uses for
+       ColorAverage / DepthOfField.) The blendFunction default for an Effect is
+       already NORMAL, but we set it explicitly to pin intent.
+
    Order: bloom → chromatic aberration → vignette → grain. */
 
 // peak per-axis colour offset at full warp (UV space — sub-pixel, tasteful)
 const WARP_CA = 0.0026;
 
 export function Effects() {
-  // hold the underlying effect so we can mutate its offset per-frame without
-  // rebuilding the React tree (allocation-free; the Vector2 is reused)
-  const ca = useRef<ChromaticAberrationEffect>(null);
+  // the chromatic-aberration effect, owned here so we can mutate its offset
+  // per-frame without rebuilding the React tree (allocation-free below)
+  const ca = useMemo(() => {
+    const e = new ChromaticAberrationEffect({
+      offset: new THREE.Vector2(0, 0),
+      radialModulation: true,
+      modulationOffset: 0.4,
+    });
+    e.blendMode.blendFunction = BlendFunction.NORMAL;
+    return e;
+  }, []);
+
+  // reused every frame; never reallocated
   const off = useMemo(() => new THREE.Vector2(0, 0), []);
 
   useFrame(() => {
-    const e = ca.current;
-    if (!e) return;
     // pure in p: progress = target (single source of truth, no 2nd lerp)
     const w = warpAt(flightState.progress); // 0..1, spikes only mid-warp
     // diagonal smear, scaled by warp; squared so it ramps in late & snaps off
     const m = WARP_CA * w * w;
     off.set(m, m * 0.6);
-    e.offset = off;
+    ca.offset = off;
   });
 
   return (
@@ -58,13 +78,7 @@ export function Effects() {
         intensity={0.62}
         radius={0.82}
       />
-      <ChromaticAberration
-        ref={ca}
-        blendFunction={BlendFunction.NORMAL}
-        offset={off}
-        radialModulation
-        modulationOffset={0.4}
-      />
+      <primitive object={ca} dispose={null} />
       <Vignette offset={0.3} darkness={0.62} eskil={false} />
       <Noise opacity={0.018} blendFunction={BlendFunction.OVERLAY} />
     </EffectComposer>

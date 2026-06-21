@@ -2234,3 +2234,146 @@ body { color: #fff; }
     height: calc(0.64em * var(--o-scale, 1));
   }
 }
+
+/* ============================================================================
+   P3-A — SHARED DARK BACKDROP + DARK EDITORIAL THEME (sub-pages)
+   The home page IS the fly-through (one WebGL <Canvas>). The sub-pages
+   (/story, /work, /work/[slug]) are light editorial by default — here they are
+   re-registered to the same monochrome deep-space register: white-on-black,
+   hairlines rgba(255,255,255,.16), one cool accent on glows only.
+
+   Two pieces:
+   1. .space-backdrop  — the fixed CHEAP Canvas-2D starfield (SpaceBackdrop.tsx),
+      painted behind everything. Distinct from the fly-through canvas.
+   2. .page-dark       — a wrapper that flips the editorial CSS variables to the
+      dark register and patches the few classes that hardcode light colours.
+   Scoped to .space-backdrop and .page-dark — never touches .fly* or .flowpanel*.
+   ============================================================================ */
+
+/* the fixed deep-space field behind the sub-pages */
+.space-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  background: #000;
+}
+
+/* the sub-page shell: re-point the editorial design tokens to the void register
+   so every editorial class (.section-ed, .story-page, .facts, .timeline,
+   .detail, .index-*, .contact-ed, .footer-ed, etc.) inherits white-on-black with
+   faint white hairlines, no per-class rewrite needed. */
+.page-dark {
+  --bg: #000;
+  --ink: #ffffff;
+  --dim: rgba(255, 255, 255, 0.6);
+  --line: rgba(255, 255, 255, 0.16);
+  --accent: #a9c6ff;
+  --accent-soft: #d6e6ff;
+  position: relative;
+  z-index: 0;
+  background: transparent;
+  color: #fff;
+}
+
+/* page heads + section labels sit straight on the void */
+.page-dark .page-head__title { color: #fff; }
+.page-dark .page-head__sub { color: rgba(255, 255, 255, 0.62); }
+.page-dark .sec-label { color: rgba(255, 255, 255, 0.55); }
+.page-dark .sec-label::after { background: rgba(255, 255, 255, 0.2); }
+
+/* a whisper of radial darkening behind the heaviest copy blocks so paragraphs
+   stay readable over the stars without a hard panel (mirrors the home body) */
+.page-dark .story-page,
+.page-dark .detail__grid,
+.page-dark .index-grid,
+.page-dark .facts,
+.page-dark .timeline {
+  position: relative;
+  isolation: isolate;
+}
+.page-dark .story-page::before,
+.page-dark .detail__grid::before,
+.page-dark .index-grid::before,
+.page-dark .facts::before,
+.page-dark .timeline::before {
+  content: "";
+  position: absolute;
+  inset: clamp(-28px, -4vw, -64px) clamp(-20px, -4vw, -56px);
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 30% 40%, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.46) 46%, transparent 80%);
+}
+
+/* body copy + headings */
+.page-dark .story-page__body p,
+.page-dark .detail__body p { color: rgba(255, 255, 255, 0.74); }
+.page-dark .story__head,
+.page-dark .story__head .serif,
+.page-dark .detail__title { color: #fff; }
+
+/* work index rows */
+.page-dark .index-row { border-bottom-color: rgba(255, 255, 255, 0.16); }
+.page-dark .index-row__title { color: #fff; }
+.page-dark .index-row__num,
+.page-dark .index-row__kicker,
+.page-dark .index-row__year { color: rgba(255, 255, 255, 0.6); }
+.page-dark a.index-row:hover { opacity: 0.7; }
+
+/* text links / underlines on black */
+.page-dark .textlink { color: #fff; border-bottom-color: rgba(255, 255, 255, 0.85); }
+.page-dark .textlink:hover { opacity: 0.65; }
+
+/* outline + solid marquee bands → white stroke / white fill on black */
+.page-dark .marquee { border-color: rgba(255, 255, 255, 0.16); }
+.page-dark .marquee__track span { color: #fff; }
+.page-dark .marquee--outline .marquee__track span {
+  color: transparent;
+  -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.85);
+}
+
+/* facts + timeline hairlines and the timeline spine */
+.page-dark .fact { border-top-color: rgba(255, 255, 255, 0.16); }
+.page-dark .fact__k { color: rgba(255, 255, 255, 0.6); }
+.page-dark .timeline__row { border-bottom-color: rgba(255, 255, 255, 0.16); }
+.page-dark .timeline__line { background: rgba(255, 255, 255, 0.5); }
+
+/* portrait placeholder frame: invert the light hatch to a faint white hatch on
+   a near-black panel so the pixel walker still reads */
+.page-dark .portrait__frame {
+  border-color: rgba(255, 255, 255, 0.22);
+  background:
+    repeating-linear-gradient(45deg, transparent 0 14px, rgba(255, 255, 255, 0.04) 14px 15px),
+    rgba(255, 255, 255, 0.015);
+}
+.page-dark .portrait__note,
+.page-dark .portrait figcaption,
+.page-dark .story__media figcaption { color: rgba(255, 255, 255, 0.55); }
+
+/* project-detail meta rows + tags + back/next */
+.page-dark .detail__back { color: rgba(255, 255, 255, 0.6); }
+.page-dark .detail__back:hover,
+.page-dark .detail__kicker { color: rgba(255, 255, 255, 0.78); }
+.page-dark .detail__kicker { color: rgba(255, 255, 255, 0.55); }
+.page-dark .detail__meta .row { border-bottom-color: rgba(255, 255, 255, 0.16); }
+.page-dark .detail__meta .row span:first-child { color: rgba(255, 255, 255, 0.55); }
+.page-dark .tag { color: rgba(255, 255, 255, 0.62); border-color: rgba(255, 255, 255, 0.16); }
+.page-dark .detail__next { border-top-color: rgba(255, 255, 255, 0.85); }
+.page-dark .detail__next .label { color: rgba(255, 255, 255, 0.55); }
+.page-dark .detail__next-title { color: #fff; }
+.page-dark .detail__next:hover .detail__next-title { color: var(--accent-soft); }
+
+/* the contact block already runs cream-over-image — its overlay/links are
+   already light, so it stays legible. Let the void breathe behind the media
+   frame only (the image keeps its own opaque cover). */
+.page-dark .contact-ed,
+.page-dark .section-ed { background: transparent; }
+.page-dark .contact-ed__media { position: relative; z-index: 0; }
+
+/* footer hairline register */
+.page-dark .footer-ed { color: rgba(255, 255, 255, 0.6); }
+.page-dark .footer-ed .footer-ed__credit a { color: rgba(255, 255, 255, 0.78); border-bottom: 1px solid rgba(255, 255, 255, 0.3); }
+.page-dark .footer-ed .footer-ed__credit a:hover { color: #fff; }
