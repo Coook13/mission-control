@@ -213,7 +213,7 @@ export function BlackHole3D() {
     // faint ring bleeding behind the letters. The e*13 / eng*34 growth terms are
     // UNCHANGED so the ENTER dive + engulf blaze still fill the lens exactly as
     // before. Pure in p → reverses exactly.
-    const s = (2.2 + e * 13 + eng * 34) * 0.85;
+    const s = (4.2 + e * 13 + eng * 34) * 0.85;
     g.scale.setScalar(s);
 
     // hide outright once faded so it can't catch the cruise (cheap + exact)

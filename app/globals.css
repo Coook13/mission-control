@@ -2689,9 +2689,9 @@ body { color: #fff; }
    the cap band (not floating low). --o-scale (written by Flythrough from enter(p))
    still opens it on the ENTER dive — pure in p, scrubs + reverses. */
 .fly__wm-o {
-  width: calc(0.74em * var(--o-scale, 1));
-  height: calc(0.74em * var(--o-scale, 1));
-  vertical-align: -0.06em;
+  width: calc(0.88em * var(--o-scale, 1));
+  height: calc(0.88em * var(--o-scale, 1));
+  vertical-align: -0.1em;
   margin: 0 0.05em;
 }
 
