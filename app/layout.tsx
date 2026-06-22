@@ -29,12 +29,37 @@ const dot = DotGothic16({
 });
 
 export const metadata: Metadata = {
-  title: "Micky Thanawarothon",
-  description: "Founder, engineer, strategist. I build things that work, with the right strategy.",
+  metadataBase: new URL("https://mickythana.com"),
+  title: {
+    default: "Micky Thanawarothon — I build things that work",
+    template: "%s | Micky Thanawarothon",
+  },
+  description:
+    "Founder, engineer, strategist. I build things that work, with the right strategy. Manchester / Bangkok.",
+  keywords: [
+    "Baramee Thanawarothon",
+    "Micky Thanawarothon",
+    "founder",
+    "engineer",
+    "strategist",
+    "Manchester",
+    "Bangkok",
+    "AirfoilLearner",
+  ],
+  authors: [{ name: "Baramee Thanawarothon" }],
+  creator: "Baramee Thanawarothon",
   openGraph: {
-    title: "Micky Thanawarothon",
-    description: "Founder, engineer, strategist. I build things that work.",
+    title: "Micky Thanawarothon — I build things that work",
+    description: "Founder, engineer, strategist. I build things that work, with the right strategy.",
+    url: "https://mickythana.com",
+    siteName: "Micky Thanawarothon",
+    locale: "en_GB",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Micky Thanawarothon — I build things that work",
+    description: "Founder, engineer, strategist. I build things that work, with the right strategy.",
   },
 };
 

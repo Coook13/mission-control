@@ -98,12 +98,13 @@ const coreFrag = /* glsl */ `
     // blazing core pushed hard >1 so it blooms HARD; at the CREST it over-bloows:
     // the core radius widens and its peak intensity spikes so the white blaze
     // flares OUTWARD past the frame edges as the camera draws level, then relaxes.
-    // Intensity dialled DOWN so the Strategy (beat 04) text stays readable while
-    // the sun still reads as a distant flare: core peak 5.2→3.0 (+7.0→+4.2 crest),
-    // halo 1.05→0.62. It blooms and looms, but no longer floods the frame white.
+    // Intensity dialled DOWN AGAIN so the Strategy (beat 04) WHITE text stays fully
+    // legible while the sun still reads as a restrained distant flare: core peak
+    // 3.0→1.8 (+4.2→+2.5 crest, ~-40%), halo 0.62→0.37 (~-40%). It blooms and
+    // looms faintly, but no longer competes with the beat text.
     float coreR = 0.20 + 0.18 * uCrest;       // blaze swells at the crest (tightened)
-    float core = exp(-pow(r / coreR, 2.0)) * (3.0 + 4.2 * uCrest);
-    float halo = exp(-pow(r / 0.66, 2.0)) * 0.62;
+    float core = exp(-pow(r / coreR, 2.0)) * (1.8 + 2.5 * uCrest);
+    float halo = exp(-pow(r / 0.66, 2.0)) * 0.37;
     // faint shimmering corona rays (cosmetic; uTime only — never touches p)
     float rays = (0.85 + 0.15 * sin(ang * 12.0 + uTime * 0.6)) ;
     float intensity = (core + halo * rays);
@@ -140,9 +141,9 @@ const streakFrag = /* glsl */ `
     float xWide = 0.85 + 0.8 * uCrest; // smear reaches farther at the crest
     float spine = exp(-pow(p.y / 0.045, 2.0)) * exp(-pow(p.x / xWide, 2.0));
     float wide  = exp(-pow(p.y / 0.11, 2.0)) * exp(-pow(p.x / (xWide * 0.74), 2.0));
-    // streak amplitude trimmed (spine 1.6→1.05, wide 0.7→0.46, crest gain 1.4→1.0)
-    // so the anamorphic smear reads as a lens flare, not a bar that washes the frame.
-    float bar = (spine * 1.05 + wide * 0.46) * (1.0 + 1.0 * uCrest);
+    // streak amplitude trimmed AGAIN (spine 1.05→0.68, wide 0.46→0.30, ~-35%)
+    // so the anamorphic smear reads as a faint lens flare, not a bar that washes the frame.
+    float bar = (spine * 0.68 + wide * 0.30) * (1.0 + 1.0 * uCrest);
     float a = bar * uOpacity;
     gl_FragColor = vec4(uColor * (1.0 + bar) * uOpacity, a);
   }

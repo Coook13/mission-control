@@ -16,7 +16,7 @@ export default function ContactPage() {
     <div className="page-dark page-dark--contact">
       <SpaceBackdrop />
       <Header />
-      <main>
+      <main className="contact-main">
         <ContactSection />
       </main>
       <Footer />
