@@ -23,6 +23,11 @@ export type Scene = {
   tint: string; // faint galaxy tint for this beat
   scale: number; // base display size of the planet object (vh)
   hotspots: Hotspot[];
+  /* OPTIONAL beat-slot photo. When set, FlowPanels renders a next/image (fill,
+     object-cover) inside the .flowpanel__slot instead of the procedural
+     star-wash empty state. Drop a path here (e.g. "/img/beats/trading.jpg") to
+     fill a single beat — leave undefined to keep the accepted empty look. */
+  slotImg?: string;
 };
 
 export const HERO_IMG = "/img/space/cine-deepfield.jpg";

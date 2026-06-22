@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -31,6 +33,14 @@ export default async function ProjectPage({
   const i = projects.findIndex((x) => x.slug === slug);
   const next = projects[(i + 1) % projects.length];
 
+  // The 6 slugged projects ship a real photo at public/img/work/<slug>.jpg.
+  // Resolve at build/request time: if the file is absent, render a tasteful
+  // procedural monochrome hero instead of a broken <img>. Seed varies the
+  // fallback look per project.
+  const heroSrc = `/img/work/${p.slug}.jpg`;
+  const hasHero = existsSync(join(process.cwd(), "public", "img", "work", `${p.slug}.jpg`));
+  const seed = (i % 4) as 0 | 1 | 2 | 3;
+
   return (
     <div className="page-dark">
       <SpaceBackdrop />
@@ -46,7 +56,13 @@ export default async function ProjectPage({
         <h1 className="detail__title">{p.title}</h1>
 
         <div className="detail__hero">
-          <ParallaxImg src={`/img/work/${p.slug}.jpg`} alt={p.title} strength={46} />
+          {hasHero ? (
+            <ParallaxImg src={heroSrc} alt={p.title} strength={46} />
+          ) : (
+            <div className="work-fallback work-fallback--hero" data-seed={seed} aria-hidden="true">
+              <span className="work-fallback__mark">✦</span>
+            </div>
+          )}
         </div>
 
         <div className="detail__grid">

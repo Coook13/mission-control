@@ -10,8 +10,14 @@ import type { IndexRow } from "@/lib/site-data";
 
 /* Work index: rows cascade in on scroll; a big image preview lag-follows the
    cursor on row hover and settles with a zoom. */
+/* Preview payload: a real photo (`src`) for slugged items that have a file, or
+   a procedural monochrome fallback (`src: null`) for the 4 entries with NO image
+   on disk (KMT, Shade Tree, ISSDC, UKROC). `seed` varies the fallback per row so
+   each reads distinct, never a broken <img>. */
+type Preview = { src: string | null; seed: number };
+
 export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: boolean }) {
-  const [img, setImg] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const touch = useRef(false);
@@ -24,7 +30,7 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
 
   // any scroll dismisses a stuck preview (was only clearing on row mouseleave)
   useLenis(() => {
-    setImg((prev) => (prev ? null : prev));
+    setPreview((prev) => (prev ? null : prev));
   });
 
   // cursor-chasing preview
@@ -72,7 +78,11 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
   );
 
   const Row = ({ row }: { row: IndexRow }) => {
-    const thumb = row.slug ? `/img/work/${row.slug}.jpg` : null;
+    // slugged rows have a real photo at /img/work/<slug>.jpg; the 4 slug-less
+    // rows (KMT, Shade Tree, ISSDC, UKROC) have NO file → procedural fallback.
+    const next: Preview = row.slug
+      ? { src: `/img/work/${row.slug}.jpg`, seed: Number(row.num) }
+      : { src: null, seed: Number(row.num) };
     const inner = (
       <>
         <span className="index-row__num">{row.num}</span>
@@ -83,14 +93,14 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
         <span className="index-row__year">{row.year}</span>
       </>
     );
-    const handlers = thumb
-      ? {
-          onMouseEnter: () => {
-            if (!touch.current) setImg(thumb);
-          },
-          onMouseLeave: () => setImg(null),
-        }
-      : {};
+    // every row gets a hover preview now — real photo or procedural fallback —
+    // so the imageless rows feel intentional, never dead.
+    const handlers = {
+      onMouseEnter: () => {
+        if (!touch.current) setPreview(next);
+      },
+      onMouseLeave: () => setPreview(null),
+    };
     return row.slug ? (
       <Link className="index-row" href={`/work/${row.slug}`} data-cursor="view" {...handlers}>
         {inner}
@@ -105,7 +115,7 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
   const half = Math.ceil(rows.length / 2);
   return (
     <>
-      <div ref={listRef} onMouseLeave={() => setImg(null)}>
+      <div ref={listRef} onMouseLeave={() => setPreview(null)}>
         {split ? (
           <div className="index-grid">
             <div>{rows.slice(0, half).map((r) => <Row key={r.num} row={r} />)}</div>
@@ -115,8 +125,22 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
           <div>{rows.map((r) => <Row key={r.num} row={r} />)}</div>
         )}
       </div>
-      <div ref={previewRef} className={`index-preview ${img ? "index-preview--on" : ""}`} aria-hidden="true">
-        {img && <img src={img} alt="" />}
+      <div ref={previewRef} className={`index-preview ${preview ? "index-preview--on" : ""}`} aria-hidden="true">
+        {preview &&
+          (preview.src ? (
+            <img src={preview.src} alt="" />
+          ) : (
+            // procedural monochrome fallback — NOT a broken <img>. Seeded hue of
+            // the cool accent so each imageless row reads distinct.
+            <span
+              className="work-fallback"
+              data-seed={preview.seed % 4}
+            >
+              <span className="work-fallback__mark" aria-hidden="true">
+                ✦
+              </span>
+            </span>
+          ))}
       </div>
     </>
   );

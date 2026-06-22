@@ -1,5 +1,6 @@
 import { Header } from "@/components/editorial";
 import { Flythrough } from "@/components/space/Flythrough";
+import { ScrollProgress } from "@/components/ScrollProgress";
 import { EasterEgg } from "@/components/EasterEgg";
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
       <main>
         <Flythrough />
       </main>
+      <ScrollProgress />
       <EasterEgg />
     </>
   );

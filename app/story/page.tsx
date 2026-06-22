@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { facts, profile, storyLong, timeline } from "@/lib/site-data";
 import { Footer, Header } from "@/components/editorial";
 import { Reveal, WordReveal } from "@/components/motion";
@@ -8,6 +9,11 @@ import { SecLabel } from "@/components/SecLabel";
 import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
 export const metadata: Metadata = { title: "Story | Micky Thanawarothon" };
+
+/* Portrait slot is next/image-ready: set a path (e.g. "/img/portrait.jpg") and
+   the frame renders a graded monochrome photo; leave undefined to keep the
+   accepted "MT" monogram empty state. One field flips it. */
+const portraitSrc: string | undefined = undefined;
 
 export default function StoryPage() {
   return (
@@ -31,7 +37,7 @@ export default function StoryPage() {
           </div>
         </section>
 
-        <section className="section-ed--tight section-ed">
+        <section className="section-ed--tight section-ed story-bio">
           <div className="shell">
             <div className="story-page">
               <Reveal className="story-page__body">
@@ -42,10 +48,23 @@ export default function StoryPage() {
               <Reveal delay={0.12}>
                 <figure className="portrait">
                   <div className="portrait__frame">
-                    <span className="portrait__mark serif" aria-hidden="true">
-                      MT
-                    </span>
-                    <span className="portrait__rule" aria-hidden="true" />
+                    {portraitSrc ? (
+                      <Image
+                        className="portrait__img"
+                        src={portraitSrc}
+                        alt={profile.name}
+                        fill
+                        sizes="(max-width: 720px) 90vw, 380px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <>
+                        <span className="portrait__mark serif" aria-hidden="true">
+                          MT
+                        </span>
+                        <span className="portrait__rule" aria-hidden="true" />
+                      </>
+                    )}
                   </div>
                   <figcaption data-speed={0.9}>{profile.name}</figcaption>
                 </figure>
@@ -56,7 +75,7 @@ export default function StoryPage() {
 
         <Marquee outline items={["NUMBERS", "THE NUMBERS", "NUMBERS", "THE NUMBERS"]} duration={24} />
 
-        <section className="section-ed--tight section-ed">
+        <section className="section-ed--tight section-ed story-numbers">
           <div className="shell">
             <SecLabel speed={1.2}>Facts</SecLabel>
             <div className="facts">
@@ -70,7 +89,7 @@ export default function StoryPage() {
           </div>
         </section>
 
-        <section className="section-ed--tight section-ed">
+        <section className="section-ed--tight section-ed story-timeline">
           <div className="shell">
             <SecLabel speed={1.2}>Timeline</SecLabel>
             <div className="timeline">

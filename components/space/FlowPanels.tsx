@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { flightState } from "./flightState";
 import { BEATS, beatLocal } from "./phase";
@@ -222,18 +223,29 @@ export function FlowPanels() {
 
           <p className="flowpanel__desc">{s.desc}</p>
 
-          {/* DEPTH PLATE — a procedural monochrome star-wash, parallaxed at its
-              own (slower) rate by the JS so it sits "deeper" than the type. No
-              border chrome, no placeholder tag: it reads as part of the deep-space
-              grade, not a half-built image frame. Procedural only (anti-pattern
-              #4). */}
+          {/* DEPTH PLATE — parallaxed at its own (slower) rate by the JS so it
+              sits "deeper" than the type. Two states, ONE field (scene.slotImg):
+              • slotImg SET → a next/image (fill, object-cover) graded into the
+                deep-space look via the .flowpanel__slot--img class.
+              • slotImg UNSET → the accepted procedural monochrome star-wash. The
+                empty look is unchanged: same element, same .flowpanel__slot. */}
           <div
-            className="flowpanel__slot"
+            className={`flowpanel__slot${s.slotImg ? " flowpanel__slot--img" : ""}`}
             ref={(el) => {
               slotRefs.current[i] = el;
             }}
             aria-hidden="true"
-          />
+          >
+            {s.slotImg && (
+              <Image
+                src={s.slotImg}
+                alt=""
+                fill
+                sizes="(max-width: 720px) 90vw, 40vw"
+                style={{ objectFit: "cover" }}
+              />
+            )}
+          </div>
 
           <ul className="flowpanel__work">
             {s.hotspots.map((h, j) => {
