@@ -8,7 +8,7 @@ import { flightState, resetFlight } from "./flightState";
 import { enter, warpAt, flashAt, pulseAt, FINALE_START } from "./phase";
 import { FlowPanels } from "./FlowPanels";
 import { SCENES } from "./scenes";
-import { profile } from "@/lib/site-data";
+import { facts, profile } from "@/lib/site-data";
 
 /* The ONE WebGL canvas (starfield + black-hole O + post FX + camera Rig) is
    loaded client-only — it relies on browser/GPU APIs, so we skip SSR. While the
@@ -18,6 +18,14 @@ const Scene = dynamic(() => import("./Scene"), {
   ssr: false,
   loading: () => <div className="fly__fallback" aria-hidden="true" />,
 });
+
+const heroIdentity = [
+  profile.nickname.toUpperCase(),
+  "BANGKOK -> MANCHESTER",
+  "FOUNDER / ENGINEER / STRATEGIST",
+];
+
+const heroProofs = [facts[0], facts[2], facts[4]];
 
 /* ============================================================================
    FLYTHROUGH — the sticky shell for the continuous, scroll-scrubbed fly-through.
@@ -236,6 +244,11 @@ function FlythroughFull() {
             className={`fly__hero${lit ? " is-online" : ""}`}
             ref={heroRef}
           >
+            <div className="fly__identity" aria-hidden="true">
+              {heroIdentity.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
             {/* Two natural lines — "I BUILD THINGS THAT" over "W{O}RK" — read as
                 confident type, not a spaced-out 4-word list. W{O}RK is alone on
                 the lower line so its {O} gap can sit at the exact viewport centre
@@ -260,6 +273,14 @@ function FlythroughFull() {
               </span>
             </h1>
             <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
+            <div className="fly__proofs" aria-hidden="true">
+              {heroProofs.map((fact) => (
+                <span className="fly__proof" key={fact.n}>
+                  <span className="fly__proof-n">{fact.n}</span>
+                  <span className="fly__proof-k">{fact.k}</span>
+                </span>
+              ))}
+            </div>
           </div>
           <div className="fly__cue" ref={cueRef}>
             <span>scroll</span>
@@ -327,6 +348,11 @@ function FlyStatic() {
     <section className="fly-static" aria-label="Intro">
       <div className="fly-static__inner">
         <div className="fly-static__hero">
+          <div className="fly__identity" aria-hidden="true">
+            {heroIdentity.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
           <h1 className="fly__wordmark" aria-label="I build things that work">
             <span className="fly__wm-half" aria-hidden="true">
               <span className="fly__wm-line">I BUILD THINGS THAT</span>
@@ -336,6 +362,14 @@ function FlyStatic() {
             </span>
           </h1>
           <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
+          <div className="fly__proofs" aria-hidden="true">
+            {heroProofs.map((fact) => (
+              <span className="fly__proof" key={fact.n}>
+                <span className="fly__proof-n">{fact.n}</span>
+                <span className="fly__proof-k">{fact.k}</span>
+              </span>
+            ))}
+          </div>
         </div>
         <ol className="fly-static__skills">
           {SCENES.map((s, i) => (

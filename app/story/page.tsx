@@ -14,8 +14,11 @@ export const metadata: Metadata = { title: "Story" };
    the frame renders a graded monochrome photo; leave undefined to keep the
    accepted "MT" monogram empty state. One field flips it. */
 const portraitSrc: string | undefined = "/img/portrait.jpg";
+const portraitPosition = "50% 38%";
 
 export default function StoryPage() {
+  const [storyLead, ...storyRest] = storyLong;
+
   return (
     <div className="page-dark">
       <SpaceBackdrop />
@@ -28,10 +31,9 @@ export default function StoryPage() {
               as="h1"
               className="page-head__title"
               delay={0.15}
-              speed={1.22}
               words={[{ t: "THE" }, { t: "story", serif: true }]}
             />
-            <p className="page-head__sub" data-speed={0.9}>
+            <p className="page-head__sub">
               Bangkok raised. Manchester trained. Founder shaped.
             </p>
           </div>
@@ -40,12 +42,15 @@ export default function StoryPage() {
         <section className="section-ed--tight section-ed story-bio">
           <div className="shell">
             <div className="story-page">
-              <Reveal className="story-page__body">
-                {storyLong.map((p, i) => (
+              <Reveal className="story-page__lead">
+                <p>{storyLead}</p>
+              </Reveal>
+              <Reveal className="story-page__body" delay={0.08}>
+                {storyRest.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
               </Reveal>
-              <Reveal delay={0.12}>
+              <Reveal className="story-page__visual" delay={0.12}>
                 <figure className="portrait">
                   <div className="portrait__frame">
                     {portraitSrc ? (
@@ -55,7 +60,7 @@ export default function StoryPage() {
                         alt={profile.name}
                         fill
                         sizes="(max-width: 720px) 90vw, 380px"
-                        style={{ objectFit: "cover" }}
+                        style={{ objectFit: "cover", objectPosition: portraitPosition }}
                       />
                     ) : (
                       <>
@@ -66,7 +71,7 @@ export default function StoryPage() {
                       </>
                     )}
                   </div>
-                  <figcaption data-speed={0.9}>{profile.name}</figcaption>
+                  <figcaption>{profile.name}</figcaption>
                 </figure>
               </Reveal>
             </div>
@@ -77,7 +82,7 @@ export default function StoryPage() {
 
         <section className="section-ed--tight section-ed story-numbers">
           <div className="shell">
-            <SecLabel speed={1.2}>Facts</SecLabel>
+            <SecLabel>Facts</SecLabel>
             <div className="facts">
               {facts.map((f, i) => (
                 <div key={i} className="fact">
@@ -91,7 +96,7 @@ export default function StoryPage() {
 
         <section className="section-ed--tight section-ed story-timeline">
           <div className="shell">
-            <SecLabel speed={1.2}>Timeline</SecLabel>
+            <SecLabel>Timeline</SecLabel>
             <div className="timeline">
               <span className="timeline__line" aria-hidden="true" />
               {timeline.map((t) => (

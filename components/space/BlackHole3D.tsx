@@ -89,9 +89,9 @@ const frag = /* glsl */ `
     // Resting ring is a touch BROADER (0.045→0.062) so at the hero it reads as a
     // solid luminous O the size of the surrounding cap-height letters, not a
     // hairline. The uEnter/uEngulf broadening is left intact for the blaze.
-    float rimW = 0.062 + uEnter * 0.05 + uEngulf * 0.16; // and broadens to a blaze
+    float rimW = 0.070 + uEnter * 0.05 + uEngulf * 0.16; // and broadens to a blaze
     float rim = exp(-pow((r - r0) / rimW, 2.0));
-    float photon = exp(-pow((r - (r0 - 0.07)) / (0.024 + uEngulf * 0.05), 2.0)) * (0.92 + uEnter * 0.7 + uEngulf * 2.2);
+    float photon = exp(-pow((r - (r0 - 0.07)) / (0.026 + uEngulf * 0.05), 2.0)) * (1.04 + uEnter * 0.7 + uEngulf * 2.2);
     float glow = exp(-pow((r - r0) / (0.22 + uEnter * 0.12 + uEngulf * 0.30), 2.0));
 
     float side = 0.5 + 0.5 * cos(ang - t * 2.0);
@@ -117,7 +117,7 @@ const frag = /* glsl */ `
     // top would blow it out. This small lift just guarantees the cap-height O reads
     // as a crisp luminous ring. The uEnter/uEngulf terms are LEFT INTACT so the
     // punch-through still BLAZES hard above this floor.
-    float flare = 0.95 + uEnter * 1.3 + uEngulf * 3.2; // engulf BLAZES the rim hard
+    float flare = 1.04 + uEnter * 1.3 + uEngulf * 3.2; // engulf BLAZES the rim hard
     float ringI = (rim * 1.55 + photon * 1.3) * dopp * shim;
     float glowI = glow * 0.42 * dopp;
     float intensity = (ringI + glowI) * core * flare;
@@ -213,7 +213,7 @@ export function BlackHole3D() {
     // faint ring bleeding behind the letters. The e*13 / eng*34 growth terms are
     // UNCHANGED so the ENTER dive + engulf blaze still fill the lens exactly as
     // before. Pure in p → reverses exactly.
-    const s = (4.2 + e * 13 + eng * 34) * 0.85;
+    const s = (4.45 + e * 13 + eng * 34) * 0.85;
     g.scale.setScalar(s);
 
     // hide outright once faded so it can't catch the cruise (cheap + exact)
