@@ -221,6 +221,8 @@ export function FlowPanels() {
             {s.label}
           </h2>
 
+          <p className="flowpanel__proofline">{s.proofLine}</p>
+
           <p className="flowpanel__desc">{s.desc}</p>
 
           {/* DEPTH PLATE — parallaxed at its own (slower) rate by the JS so it

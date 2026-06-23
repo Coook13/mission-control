@@ -25,7 +25,13 @@ const heroIdentity = [
   "FOUNDER / ENGINEER / STRATEGIST",
 ];
 
-const heroProofs = [facts[0], facts[2], facts[4]];
+const heroThesis = "Engineering student. Founder. Strategy operator.";
+const heroLanes = "Five proof lanes: technical depth, market thinking, ventures, strategy, research.";
+const heroProofs = [
+  { n: facts[0].n, k: "predicted First" },
+  { n: facts[2].n, k: "raised for AirfoilLearner" },
+  { n: facts[4].n, k: "CV model accuracy" },
+];
 
 /* ============================================================================
    FLYTHROUGH — the sticky shell for the continuous, scroll-scrubbed fly-through.
@@ -273,6 +279,10 @@ function FlythroughFull() {
               </span>
             </h1>
             <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
+            <div className="fly__brief">
+              <p className="fly__thesis">{heroThesis}</p>
+              <p className="fly__lanes">{heroLanes}</p>
+            </div>
             <div className="fly__proofs" aria-hidden="true">
               {heroProofs.map((fact) => (
                 <span className="fly__proof" key={fact.n}>
@@ -306,6 +316,13 @@ function FlythroughFull() {
             contact link, so the arrival lands on the actual CTA. */}
         <div className="fly__finale" ref={finaleRef} aria-hidden="true">
           <div className="fly__finale-bloom" />
+          <div className="fly__finale-recap">
+            {heroProofs.map((fact) => (
+              <span key={fact.n}>
+                {fact.n} {fact.k}
+              </span>
+            ))}
+          </div>
           <a className="fly__finale-line" href="/contact" aria-label="Let's make it work — get in touch">
             <span className="fly__finale-word">LET&rsquo;S MAKE IT</span>
             {/* same W{O}RK construction as the hero wordmark: equal-basis flanks
@@ -362,6 +379,10 @@ function FlyStatic() {
             </span>
           </h1>
           <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
+          <div className="fly__brief">
+            <p className="fly__thesis">{heroThesis}</p>
+            <p className="fly__lanes">{heroLanes}</p>
+          </div>
           <div className="fly__proofs" aria-hidden="true">
             {heroProofs.map((fact) => (
               <span className="fly__proof" key={fact.n}>
@@ -378,6 +399,7 @@ function FlyStatic() {
                 {String(i + 1).padStart(2, "0")} / 05
               </span>
               <h2 className="fly-static__skill-label">{s.label}</h2>
+              <p className="fly-static__skill-proof">{s.proofLine}</p>
               <p className="fly-static__skill-desc">{s.desc}</p>
             </li>
           ))}

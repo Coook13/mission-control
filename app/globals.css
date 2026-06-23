@@ -3199,3 +3199,196 @@ body { color: #fff; }
     max-width: 100%;
   }
 }
+
+/* ==== recruiter clarity: hero briefing + chapter map ===================== */
+.fly__brief {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(88vw, 760px);
+  transform: translate(
+    -50%,
+    calc(0.6 * var(--wm-fs, 5rem) + clamp(52px, 7.5vh, 92px))
+  );
+  text-align: center;
+  pointer-events: none;
+}
+
+.fly__thesis,
+.fly__lanes {
+  margin: 0;
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.88);
+}
+
+.fly__thesis {
+  font-family: var(--font-sans);
+  font-size: clamp(0.86rem, 1.24vw, 1.08rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.fly__lanes {
+  margin-top: 7px;
+  font-family: var(--font-dot-var), monospace;
+  font-size: clamp(0.56rem, 0.76vw, 0.68rem);
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.fly__proofs {
+  transform: translate(
+    -50%,
+    calc(0.6 * var(--wm-fs, 5rem) + clamp(122px, 16vh, 178px))
+  );
+}
+
+.fly__finale-recap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(10px, 1.8vw, 22px);
+  width: min(88vw, 820px);
+  transform: translate(-50%, calc(-1 * clamp(132px, 20vh, 210px)));
+  font-family: var(--font-dot-var), monospace;
+  font-size: clamp(0.58rem, 0.86vw, 0.74rem);
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.68);
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.75);
+  opacity: calc(6 * var(--arrive, 0) * (1 - var(--arrive, 0)) * (1 - var(--arrive, 0)));
+  pointer-events: none;
+}
+
+.fly__finale-recap span {
+  white-space: nowrap;
+}
+
+.flowpanel__proofline {
+  position: relative;
+  z-index: 1;
+  margin: clamp(8px, 1vh, 12px) 0 0;
+  font-family: var(--font-dot-var), monospace;
+  font-size: clamp(0.58rem, 0.78vw, 0.72rem);
+  letter-spacing: 0.24em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: rgba(214, 230, 255, 0.7);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.85);
+}
+
+.flowpanel__desc {
+  margin-top: clamp(7px, 0.9vh, 12px);
+}
+
+.scrollprog__ticks {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.scrollprog__tick {
+  position: absolute;
+  left: var(--x);
+  top: 50%;
+  width: 1px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 8px rgba(169, 198, 255, 0.12);
+  opacity: 0.72;
+}
+
+.scrollprog[data-active="0"] .scrollprog__tick[data-chapter="0"],
+.scrollprog[data-active="1"] .scrollprog__tick[data-chapter="1"],
+.scrollprog[data-active="2"] .scrollprog__tick[data-chapter="2"],
+.scrollprog[data-active="3"] .scrollprog__tick[data-chapter="3"],
+.scrollprog[data-active="4"] .scrollprog__tick[data-chapter="4"] {
+  height: 13px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 0 12px rgba(214, 230, 255, 0.38);
+  opacity: 1;
+}
+
+.scrollprog__chapter {
+  position: fixed;
+  right: clamp(16px, 4vw, 40px);
+  bottom: clamp(16px, 4vh, 36px);
+  font-family: var(--font-dot-var), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.46);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.86);
+}
+
+.fly-static__hero .fly__brief {
+  position: static;
+  transform: none;
+  width: min(100%, 760px);
+  margin-top: clamp(18px, 3vh, 32px);
+  text-align: left;
+}
+
+.fly-static__hero .fly__proofs {
+  transform: none;
+}
+
+.fly-static__skill-proof {
+  margin: 10px 0 0;
+  font-family: var(--font-dot-var), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: rgba(214, 230, 255, 0.66);
+}
+
+@media (max-width: 720px) {
+  .fly__brief {
+    width: min(82vw, 360px);
+    transform: translate(-50%, calc(0.72 * var(--wm-fs, 5rem) + 82px));
+  }
+
+  .fly__thesis {
+    font-size: 0.78rem;
+  }
+
+  .fly__lanes {
+    display: none;
+  }
+
+  .fly__proofs {
+    gap: 5px;
+    transform: translate(-50%, calc(0.72 * var(--wm-fs, 5rem) + 112px));
+  }
+
+  .fly__proof {
+    padding-block: 5px;
+  }
+
+  .fly__finale-recap {
+    transform: translate(-50%, -156px);
+    gap: 8px 14px;
+    font-size: 0.54rem;
+    letter-spacing: 0.12em;
+  }
+
+  .scrollprog__chapter {
+    right: 16px;
+    bottom: 14px;
+    max-width: calc(100vw - 32px);
+    font-size: 0.54rem;
+    letter-spacing: 0.18em;
+  }
+}
