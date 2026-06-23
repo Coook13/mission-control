@@ -8,7 +8,7 @@ import {
   VignetteEffect,
   NoiseEffect,
 } from "postprocessing";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { flightState } from "./flightState";
@@ -84,6 +84,9 @@ function bloomOfP(p: number): number {
 }
 
 export function Effects() {
+  const gl = useThree((state) => state.gl);
+  const canRunPost = gl.getContext().getContextAttributes() !== null;
+
   // the Bloom effect instance — owned in useMemo so we can mutate its intensity
   // per-frame (allocation-free) from the pure-in-p envelope above.
   const bloom = useMemo(
@@ -142,6 +145,8 @@ export function Effects() {
     // never re-renders the React tree (same pattern as the CA offset above).
     bloom.intensity = bloomOfP(p);
   });
+
+  if (!canRunPost) return null;
 
   return (
     <EffectComposer multisampling={0}>
