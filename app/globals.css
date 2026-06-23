@@ -1848,6 +1848,7 @@ body { color: #fff; }
    few feathered radial-gradient "stars" over a faint accent wash, consistent
    with the deep-space grade. Procedural only — never a photo wallpaper. */
 .flowpanel__slot {
+  position: relative;
   /* the depth-plate eats the most vertical room, which is what pushed the
      work-list (AirfoilLearner/Solar, Systematic trading) below the fold during
      the hold. Pulled its top margin in and shortened it (16/10 → 16/7) so the
@@ -1867,6 +1868,7 @@ body { color: #fff; }
   -webkit-mask-image: radial-gradient(120% 110% at 50% 50%, #000 55%, transparent 100%);
   mask-image: radial-gradient(120% 110% at 50% 50%, #000 55%, transparent 100%);
   opacity: 0.7;
+  isolation: isolate;
   will-change: transform;
 }
 
@@ -2770,6 +2772,128 @@ body { color: #fff; }
   background:
     radial-gradient(120% 130% at 40% 28%, rgba(169, 198, 255, 0.10), rgba(0, 0, 0, 0) 70%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.52) 100%);
+}
+
+/* --- BEAT SLOT evidence capsules -------------------------------------------
+   Real photos should read as recovered proof inside the flight, not as pasted
+   rectangles. Portrait assets get a full-slot atmospheric duplicate plus a
+   vertical capsule; wide assets keep the cinematic plate. */
+.flowpanel__slot--img {
+  background:
+    radial-gradient(120% 140% at 50% 48%, rgba(169, 198, 255, 0.08), rgba(0, 0, 0, 0) 70%),
+    rgba(2, 4, 9, 0.72);
+  -webkit-mask-image: radial-gradient(132% 132% at 50% 50%, #000 42%, rgba(0, 0, 0, 0.74) 64%, transparent 100%);
+  mask-image: radial-gradient(132% 132% at 50% 50%, #000 42%, rgba(0, 0, 0, 0.74) 64%, transparent 100%);
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0.92;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 0 42px rgba(0, 0, 0, 0.68),
+    0 0 44px rgba(169, 198, 255, 0.08);
+}
+
+.flowpanel__media,
+.flowpanel__slot--img .flowpanel__slot-bg {
+  position: absolute;
+  display: block;
+}
+
+.flowpanel__slot-bg {
+  inset: -9%;
+  z-index: 0;
+  filter: grayscale(1) saturate(0.2) brightness(0.46) contrast(1.22) blur(18px);
+  opacity: 0.42;
+  transform: scale(1.08);
+}
+
+.flowpanel__media {
+  z-index: 2;
+  overflow: hidden;
+  background: rgba(3, 5, 10, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 0 34px rgba(0, 0, 0, 0.64),
+    0 0 28px rgba(214, 230, 255, 0.11);
+}
+
+.flowpanel__slot--wide .flowpanel__media {
+  inset: 4% 3%;
+  -webkit-mask-image: radial-gradient(122% 124% at 50% 50%, #000 56%, rgba(0, 0, 0, 0.68) 74%, transparent 100%);
+  mask-image: radial-gradient(122% 124% at 50% 50%, #000 56%, rgba(0, 0, 0, 0.68) 74%, transparent 100%);
+}
+
+.flowpanel__slot--portrait .flowpanel__media {
+  top: 3%;
+  bottom: 3%;
+  left: 50%;
+  width: min(34%, 156px);
+  transform: translateX(-50%);
+  border-radius: 10px;
+  -webkit-mask-image: radial-gradient(95% 104% at 50% 48%, #000 58%, rgba(0, 0, 0, 0.72) 76%, transparent 100%);
+  mask-image: radial-gradient(95% 104% at 50% 48%, #000 58%, rgba(0, 0, 0, 0.72) 76%, transparent 100%);
+}
+
+.flowpanel__slot--img .flowpanel__slot-img {
+  z-index: 0;
+  filter: grayscale(0.88) saturate(0.24) brightness(0.72) contrast(1.18);
+  transform: scale(1.015);
+}
+
+.flowpanel__media::before,
+.flowpanel__slot--img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.flowpanel__media::before {
+  z-index: 2;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.055) 0,
+      rgba(255, 255, 255, 0.055) 1px,
+      rgba(0, 0, 0, 0) 3px,
+      rgba(0, 0, 0, 0) 7px
+    ),
+    radial-gradient(120% 100% at 45% 10%, rgba(214, 230, 255, 0.16), rgba(0, 0, 0, 0) 62%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.28));
+  mix-blend-mode: screen;
+  opacity: 0.55;
+}
+
+.flowpanel__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.46) 0 18px, transparent 18px calc(100% - 18px), rgba(255, 255, 255, 0.46) calc(100% - 18px) 100%) 0 0 / 100% 1px no-repeat,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.38) 0 14px, transparent 14px calc(100% - 14px), rgba(255, 255, 255, 0.38) calc(100% - 14px) 100%) 0 100% / 100% 1px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0 16px, transparent 16px calc(100% - 16px), rgba(255, 255, 255, 0.42) calc(100% - 16px) 100%) 0 0 / 1px 100% no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0 14px, transparent 14px calc(100% - 14px), rgba(255, 255, 255, 0.34) calc(100% - 14px) 100%) 100% 0 / 1px 100% no-repeat;
+  opacity: 0.42;
+}
+
+.flowpanel__slot--img::after {
+  z-index: 4;
+  background:
+    radial-gradient(1px 1px at 12% 22%, rgba(255, 255, 255, 0.36), transparent 62%),
+    radial-gradient(1.2px 1.2px at 72% 18%, rgba(214, 230, 255, 0.34), transparent 62%),
+    radial-gradient(0.9px 0.9px at 86% 66%, rgba(255, 255, 255, 0.28), transparent 62%),
+    radial-gradient(1.1px 1.1px at 24% 82%, rgba(169, 198, 255, 0.28), transparent 62%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.06)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.36));
+  mix-blend-mode: screen;
+}
+
+@media (max-width: 720px) {
+  .flowpanel__slot--portrait .flowpanel__media {
+    width: min(40%, 150px);
+  }
 }
 
 /* --- /story portrait image-ready slot (app/story/page.tsx) ------------------
