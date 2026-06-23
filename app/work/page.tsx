@@ -5,7 +5,7 @@ import { WordReveal } from "@/components/motion";
 import { HoverIndex } from "@/components/HoverIndex";
 import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
-export const metadata: Metadata = { title: "Work | Micky Thanawarothon" };
+export const metadata: Metadata = { title: "Work" };
 
 export default function WorkPage() {
   return (

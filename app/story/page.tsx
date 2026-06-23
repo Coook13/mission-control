@@ -8,7 +8,7 @@ import { StoryFX } from "@/components/StoryFX";
 import { SecLabel } from "@/components/SecLabel";
 import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
-export const metadata: Metadata = { title: "Story | Micky Thanawarothon" };
+export const metadata: Metadata = { title: "Story" };
 
 /* Portrait slot is next/image-ready: set a path (e.g. "/img/portrait.jpg") and
    the frame renders a graded monochrome photo; leave undefined to keep the

@@ -4,7 +4,7 @@ import { Footer, Header } from "@/components/editorial";
 import { Reveal, WordReveal } from "@/components/motion";
 import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
-export const metadata: Metadata = { title: "Lost in space | Micky Thanawarothon" };
+export const metadata: Metadata = { title: "Lost in space" };
 
 /* 404 — themed for the deep-space register. Reuses the cheap fixed SpaceBackdrop
    (no WebGL), the Header, and the Footer, exactly like the /story and /contact

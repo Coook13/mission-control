@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ContactSection, Footer, Header } from "@/components/editorial";
 import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
 
-export const metadata: Metadata = { title: "Contact | Micky Thanawarothon" };
+export const metadata: Metadata = { title: "Contact" };
 
 /* CONTACT — its own short, dedicated dark route (was the tail of /story).
    Reuses the deep-space register of the other sub-pages: the cheap fixed
