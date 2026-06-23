@@ -334,8 +334,10 @@ export function pulseAt(p: number): number {
    CONCUSSION, not a sustained glow. The climax spike punches harder. 0 elsewhere
    → Shockwave.tsx hides (visible=false) outside its two windows. Pure in p. */
 export function shockAt(p: number): number {
-  const punch = bump(p, 0.135, 0.185) * 0.85; // ENTER punch-through
-  const climax = bump(p, 0.825, 0.875) * 1.0; // the climactic break
+  const punch = bump(p, 0.135, 0.185) * 0.85; // ENTER punch-through (hero O — keep)
+  // climax HALVED (1.0→0.5): it peaks ON the Research beat (0.85) and was washing
+  // the beat title. User wants deep dark space — keep it a punch, not a white-out.
+  const climax = bump(p, 0.825, 0.875) * 0.5; // the climactic break
   return Math.min(1, punch + climax);
 }
 
@@ -347,7 +349,9 @@ export function shockAt(p: number): number {
    hair later than the shock peak (0.85) so the light blowout reads as the wave's
    wake. Pure in p → scrubs + reverses; exactly 0 outside the two windows. */
 export function flashAt(p: number): number {
-  const punch = bump(p, 0.14, 0.18) * 0.9; // ENTER punch blowout
-  const climax = bump(p, 0.835, 0.88) * 1.0; // climax punch-into-light blowout
+  const punch = bump(p, 0.14, 0.18) * 0.9; // ENTER punch blowout (hero O — keep)
+  // climax bloom-flash HALVED (1.0→0.5) to match the dimmed shock — no white-out
+  // over the Research beat; deep dark space, the punch reads without blinding.
+  const climax = bump(p, 0.835, 0.88) * 0.5; // climax punch-into-light blowout
   return Math.min(1, punch + climax);
 }

@@ -103,8 +103,11 @@ const coreFrag = /* glsl */ `
     // 3.0→1.8 (+4.2→+2.5 crest, ~-40%), halo 0.62→0.37 (~-40%). It blooms and
     // looms faintly, but no longer competes with the beat text.
     float coreR = 0.20 + 0.18 * uCrest;       // blaze swells at the crest (tightened)
-    float core = exp(-pow(r / coreR, 2.0)) * (1.8 + 2.5 * uCrest);
-    float halo = exp(-pow(r / 0.66, 2.0)) * 0.37;
+    // Intensity cut HARD again (core 1.8→0.55, crest 2.5→0.65; halo 0.37→0.14,
+    // ~-65%): user wants deep dark space, no bright sun in-frame. It now reads as
+    // a faint distant glow that never washes the Strategy/Venture transition.
+    float core = exp(-pow(r / coreR, 2.0)) * (0.55 + 0.65 * uCrest);
+    float halo = exp(-pow(r / 0.66, 2.0)) * 0.14;
     // faint shimmering corona rays (cosmetic; uTime only — never touches p)
     float rays = (0.85 + 0.15 * sin(ang * 12.0 + uTime * 0.6)) ;
     float intensity = (core + halo * rays);
@@ -143,7 +146,7 @@ const streakFrag = /* glsl */ `
     float wide  = exp(-pow(p.y / 0.11, 2.0)) * exp(-pow(p.x / (xWide * 0.74), 2.0));
     // streak amplitude trimmed AGAIN (spine 1.05→0.68, wide 0.46→0.30, ~-35%)
     // so the anamorphic smear reads as a faint lens flare, not a bar that washes the frame.
-    float bar = (spine * 0.68 + wide * 0.30) * (1.0 + 1.0 * uCrest);
+    float bar = (spine * 0.22 + wide * 0.10) * (1.0 + 0.6 * uCrest);
     float a = bar * uOpacity;
     gl_FragColor = vec4(uColor * (1.0 + bar) * uOpacity, a);
   }
@@ -177,9 +180,9 @@ export function SunFlare() {
   // the group's local plane. Offsets are static; opacity rides the master window.
   const ghosts = useMemo(
     () => [
-      { d: 0.45, s: 1.4, o: 0.5 },
-      { d: -0.7, s: 2.2, o: 0.35 },
-      { d: -1.5, s: 1.0, o: 0.45 },
+      { d: 0.45, s: 1.4, o: 0.18 },
+      { d: -0.7, s: 2.2, o: 0.12 },
+      { d: -1.5, s: 1.0, o: 0.16 },
     ],
     []
   );
