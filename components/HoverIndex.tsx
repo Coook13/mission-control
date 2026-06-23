@@ -80,7 +80,9 @@ export function HoverIndex({ rows, split = true }: { rows: IndexRow[]; split?: b
   const Row = ({ row }: { row: IndexRow }) => {
     // slugged rows have a real photo at /img/work/<slug>.jpg; the 4 slug-less
     // rows (KMT, Shade Tree, ISSDC, UKROC) have NO file → procedural fallback.
-    const next: Preview = row.slug
+    const next: Preview = row.img
+      ? { src: row.img, seed: Number(row.num) }
+      : row.slug
       ? { src: `/img/work/${row.slug}.jpg`, seed: Number(row.num) }
       : { src: null, seed: Number(row.num) };
     const inner = (

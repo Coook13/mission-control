@@ -28,6 +28,10 @@ export type Scene = {
      star-wash empty state. Drop a path here (e.g. "/img/beats/trading.jpg") to
      fill a single beat — leave undefined to keep the accepted empty look. */
   slotImg?: string;
+  /* OPTIONAL object-position for slotImg (these are tall phone photos dropped
+     into a wide 16/7 slot, so the default center-crop can cut the subject).
+     e.g. "50% 30%". Defaults to "center". */
+  slotPos?: string;
 };
 
 export const HERO_IMG = "/img/space/cine-deepfield.jpg";
@@ -36,6 +40,7 @@ export const SCENES: Scene[] = [
   {
     key: "engineering", idx: "01", label: "Engineering", desc: "AI · CFD · computer vision · robotics",
     img: "/img/space/cine-mars.webp", peak: 0.22, side: "left", tint: "#7a3f5e", scale: 86,
+    slotImg: "/img/beats/engineering.jpg",
     hotspots: [
       { title: "AirfoilLearner", oneLine: "AI for CFD optimisation · raised £5k", href: "/work/airfoillearner", x: 60, y: 40 },
       { title: "Solar Inspection", oneLine: "Computer vision · 97.2% accuracy", href: "/work/solar-cv", x: 52, y: 58 },
@@ -52,6 +57,7 @@ export const SCENES: Scene[] = [
   {
     key: "venture", idx: "03", label: "Venture", desc: "Founder — ventures built & shipped",
     img: "/img/space/cine-saturn.webp", peak: 0.54, side: "left", tint: "#6a5a2a", scale: 96,
+    slotImg: "/img/beats/venture.jpg",
     hotspots: [
       { title: "AirfoilLearner", oneLine: "Founded · raised £5k via Venture Builder", href: "/work/airfoillearner", x: 58, y: 42 },
       { title: "CreamCat Gelato", oneLine: "70% gross-margin venture", href: "/work/creamcat-gelato", x: 50, y: 56 },
@@ -60,6 +66,7 @@ export const SCENES: Scene[] = [
   {
     key: "strategy", idx: "04", label: "Strategy", desc: "Growth, go-to-market, positioning",
     img: "/img/space/cine-neptune.webp", peak: 0.70, side: "right", tint: "#2a4a8a", scale: 82,
+    slotImg: "/img/beats/strategy.jpg",
     hotspots: [
       { title: "Deliveroo Case", oneLine: "EMEA summit runner-up · unit economics", href: "/work/deliveroo-case", x: 46, y: 46 },
     ],
@@ -67,6 +74,7 @@ export const SCENES: Scene[] = [
   {
     key: "research", idx: "05", label: "Research", desc: "NECTEC graphene · ISSDC NASA finalist",
     img: "/img/space/cine-earth.webp", peak: 0.85, side: "left", tint: "#2a5a7a", scale: 88,
+    slotImg: "/img/beats/research.jpg",
     hotspots: [
       { title: "NECTEC", oneLine: "Graphene quantum-dot sensor R&D", href: "/work/nectec-research", x: 58, y: 48 },
     ],

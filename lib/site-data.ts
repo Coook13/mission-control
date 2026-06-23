@@ -18,6 +18,10 @@ export type IndexRow = {
   kicker: string;
   year: string;
   slug?: string;
+  /* OPTIONAL hover-preview photo for rows that have no detail page (no slug).
+     Slugged rows resolve /img/work/<slug>.jpg automatically; this lets a
+     slug-less row (e.g. ISSDC) still show a real photo instead of the fallback. */
+  img?: string;
 };
 
 export const profile = {
@@ -47,7 +51,7 @@ export const workIndex: IndexRow[] = [
   { num: "06", title: "CreamCat Gelato", kicker: "70% margin venture", year: "2025", slug: "creamcat-gelato" },
   { num: "07", title: "KMT Group", kicker: "Thai SME consultancy", year: "2025" },
   { num: "08", title: "Shade Tree Fund", kicker: "Won a £5k allocation", year: "2026" },
-  { num: "09", title: "ISSDC, NASA", kicker: "Global finalist", year: "2024" },
+  { num: "09", title: "ISSDC, NASA", kicker: "Global finalist", year: "2024", img: "/img/work/issdc.jpg" },
   { num: "10", title: "UKROC", kicker: "Robotics, regional 1st", year: "" },
 ];
 

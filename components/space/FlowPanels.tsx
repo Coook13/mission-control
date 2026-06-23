@@ -242,7 +242,7 @@ export function FlowPanels() {
                 alt=""
                 fill
                 sizes="(max-width: 720px) 90vw, 40vw"
-                style={{ objectFit: "cover" }}
+                style={{ objectFit: "cover", objectPosition: s.slotPos ?? "center" }}
               />
             )}
           </div>

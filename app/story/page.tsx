@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Story | Micky Thanawarothon" };
 /* Portrait slot is next/image-ready: set a path (e.g. "/img/portrait.jpg") and
    the frame renders a graded monochrome photo; leave undefined to keep the
    accepted "MT" monogram empty state. One field flips it. */
-const portraitSrc: string | undefined = undefined;
+const portraitSrc: string | undefined = "/img/portrait.jpg";
 
 export default function StoryPage() {
   return (
