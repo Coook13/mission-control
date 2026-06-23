@@ -52,7 +52,7 @@ export const workIndex: IndexRow[] = [
   { num: "07", title: "KMT Group", kicker: "Thai SME consultancy", year: "2025" },
   { num: "08", title: "Shade Tree Fund", kicker: "Won a £5k allocation", year: "2026", img: "/img/work/shade-tree.jpg" },
   { num: "09", title: "ISSDC, NASA", kicker: "Global finalist", year: "2024", img: "/img/work/issdc.jpg" },
-  { num: "10", title: "UKROC", kicker: "Robotics, regional 1st", year: "" },
+  { num: "10", title: "UKROC", kicker: "Robotics, regional 1st", year: "", img: "/img/work/ukroc.jpg" },
 ];
 
 export const projects: Project[] = [
