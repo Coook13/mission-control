@@ -50,7 +50,7 @@ export const workIndex: IndexRow[] = [
   { num: "05", title: "AccelerateMe", kicker: "ARM hackathon, 2nd place", year: "2025", slug: "accelerateme-arm" },
   { num: "06", title: "CreamCat Gelato", kicker: "70% margin venture", year: "2025", slug: "creamcat-gelato" },
   { num: "07", title: "KMT Group", kicker: "Thai SME consultancy", year: "2025" },
-  { num: "08", title: "Shade Tree Fund", kicker: "Won a £5k allocation", year: "2026" },
+  { num: "08", title: "Shade Tree Fund", kicker: "Won a £5k allocation", year: "2026", img: "/img/work/shade-tree.jpg" },
   { num: "09", title: "ISSDC, NASA", kicker: "Global finalist", year: "2024", img: "/img/work/issdc.jpg" },
   { num: "10", title: "UKROC", kicker: "Robotics, regional 1st", year: "" },
 ];

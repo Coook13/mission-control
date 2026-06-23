@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temp contact sheets
+/public/_map.jpg
+/public/_contact.jpg
+/public/_csA.jpg
+/public/_csB.jpg
