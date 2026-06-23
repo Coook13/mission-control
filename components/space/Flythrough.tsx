@@ -22,10 +22,10 @@ const Scene = dynamic(() => import("./Scene"), {
 const heroIdentity = [
   profile.nickname.toUpperCase(),
   "BANGKOK -> MANCHESTER",
-  "FOUNDER / ENGINEER / STRATEGIST",
 ];
 
-const heroThesis = "Engineering student. Founder. Strategy operator.";
+const heroRoles = ["FOUNDER", "STRATEGIST", "ENGINEER"];
+const heroThesis = "Technical builder with commercial judgment.";
 const heroLanes = "Five proof lanes: technical depth, market thinking, ventures, strategy, research.";
 const heroProofs = [
   { n: facts[0].n, k: "predicted First" },
@@ -278,8 +278,13 @@ function FlythroughFull() {
                 </span>
               </span>
             </h1>
-            <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
+            <p className="fly__kicker">{profile.name}</p>
             <div className="fly__brief">
+              <div className="fly__rolemark" aria-hidden="true">
+                {heroRoles.map((role) => (
+                  <span key={role}>{role}</span>
+                ))}
+              </div>
               <p className="fly__thesis">{heroThesis}</p>
               <p className="fly__lanes">{heroLanes}</p>
             </div>
@@ -378,8 +383,13 @@ function FlyStatic() {
               <span className="fly__wm-line">W&#x25EF;RK</span>
             </span>
           </h1>
-          <p className="fly__kicker">{profile.name} — founder · engineer · strategist</p>
+          <p className="fly__kicker">{profile.name}</p>
           <div className="fly__brief">
+            <div className="fly__rolemark" aria-hidden="true">
+              {heroRoles.map((role) => (
+                <span key={role}>{role}</span>
+              ))}
+            </div>
             <p className="fly__thesis">{heroThesis}</p>
             <p className="fly__lanes">{heroLanes}</p>
           </div>

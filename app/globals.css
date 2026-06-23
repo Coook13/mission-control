@@ -3205,13 +3205,44 @@ body { color: #fff; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(88vw, 760px);
+  width: min(90vw, 900px);
   transform: translate(
     -50%,
-    calc(0.6 * var(--wm-fs, 5rem) + clamp(52px, 7.5vh, 92px))
+    calc(0.6 * var(--wm-fs, 5rem) + clamp(48px, 7vh, 82px))
   );
   text-align: center;
   pointer-events: none;
+}
+
+.fly__rolemark {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.6vw, 20px);
+  font-family: var(--font-sans);
+  font-size: clamp(1.05rem, 2.4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow:
+    0 2px 18px rgba(0, 0, 0, 0.82),
+    0 0 36px rgba(214, 230, 255, 0.18);
+}
+
+.fly__rolemark span {
+  position: relative;
+  white-space: nowrap;
+}
+
+.fly__rolemark span + span::before {
+  content: "/";
+  position: absolute;
+  left: calc(clamp(8px, 1.6vw, 20px) * -0.7);
+  color: rgba(214, 230, 255, 0.48);
+  font-weight: 500;
 }
 
 .fly__thesis,
@@ -3221,11 +3252,13 @@ body { color: #fff; }
 }
 
 .fly__thesis {
+  margin-top: clamp(8px, 1.5vh, 14px);
   font-family: var(--font-sans);
-  font-size: clamp(0.86rem, 1.24vw, 1.08rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(0.76rem, 1vw, 0.95rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.64);
 }
 
 .fly__lanes {
@@ -3241,7 +3274,7 @@ body { color: #fff; }
 .fly__proofs {
   transform: translate(
     -50%,
-    calc(0.6 * var(--wm-fs, 5rem) + clamp(122px, 16vh, 178px))
+    calc(0.6 * var(--wm-fs, 5rem) + clamp(148px, 19vh, 218px))
   );
 }
 
@@ -3356,12 +3389,24 @@ body { color: #fff; }
 
 @media (max-width: 720px) {
   .fly__brief {
-    width: min(82vw, 360px);
-    transform: translate(-50%, calc(0.72 * var(--wm-fs, 5rem) + 82px));
+    width: min(86vw, 390px);
+    transform: translate(-50%, calc(0.72 * var(--wm-fs, 5rem) + 74px));
+  }
+
+  .fly__rolemark {
+    gap: 6px 13px;
+    font-size: clamp(0.96rem, 4.8vw, 1.22rem);
+    letter-spacing: 0.1em;
+  }
+
+  .fly__rolemark span + span::before {
+    left: -10px;
   }
 
   .fly__thesis {
-    font-size: 0.78rem;
+    margin-top: 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
   }
 
   .fly__lanes {
@@ -3370,7 +3415,7 @@ body { color: #fff; }
 
   .fly__proofs {
     gap: 5px;
-    transform: translate(-50%, calc(0.72 * var(--wm-fs, 5rem) + 112px));
+    transform: translate(-50%, calc(0.72 * var(--wm-fs, 5rem) + 132px));
   }
 
   .fly__proof {
