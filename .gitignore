@@ -45,3 +45,6 @@ next-env.d.ts
 /public/_contact.jpg
 /public/_csA.jpg
 /public/_csB.jpg
+
+# local raw source photos (kept out of public deploys)
+/private/img/_inbox/
