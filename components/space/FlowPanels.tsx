@@ -232,35 +232,21 @@ export function FlowPanels() {
               • slotImg UNSET → the accepted procedural monochrome star-wash. The
                 empty look is unchanged: same element, same .flowpanel__slot. */}
           <div
-            className={`flowpanel__slot${
-              s.slotImg ? ` flowpanel__slot--img flowpanel__slot--${s.slotMode ?? "wide"}` : ""
-            }`}
+            className={`flowpanel__slot${s.slotImg ? " flowpanel__slot--img" : ""}`}
             ref={(el) => {
               slotRefs.current[i] = el;
             }}
             aria-hidden="true"
           >
-            {s.slotImg && s.slotMode === "portrait" && (
+            {s.slotImg && (
               <Image
-                className="flowpanel__slot-bg"
+                className="flowpanel__slot-img"
                 src={s.slotImg}
                 alt=""
                 fill
                 sizes="(max-width: 720px) 90vw, 40vw"
                 style={{ objectFit: "cover", objectPosition: s.slotPos ?? "center" }}
               />
-            )}
-            {s.slotImg && (
-              <span className="flowpanel__media">
-                <Image
-                  className="flowpanel__slot-img"
-                  src={s.slotImg}
-                  alt=""
-                  fill
-                  sizes="(max-width: 720px) 82vw, 36vw"
-                  style={{ objectFit: "cover", objectPosition: s.slotPos ?? "center" }}
-                />
-              </span>
             )}
           </div>
 
