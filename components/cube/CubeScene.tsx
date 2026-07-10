@@ -60,7 +60,6 @@ type OrbitGesture = {
 export type CubeStageProps = {
   selectedFace: FaceId | null;
   previewFace: FaceId | null;
-  interactionMode: "rotate" | "twist";
   scrambleSignal: number;
   resetSignal: number;
   onSelectFace: (face: FaceId) => void;
@@ -167,7 +166,6 @@ function snapVector(vector: THREE.Vector3): Vector3Tuple {
 function CubeObject({
   selectedFace,
   previewFace,
-  interactionMode,
   scrambleSignal,
   resetSignal,
   onSelectFace,
@@ -331,10 +329,6 @@ function CubeObject({
       pointerId: event.pointerId,
       moved: false,
     };
-    if (interactionMode === "rotate") {
-      beginOrbit(event);
-      return;
-    }
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
   };
@@ -550,9 +544,17 @@ function ProductLights({ mobile }: { mobile: boolean }) {
       />
       <directionalLight position={[-5, 3, 4]} intensity={1.35} color="#b8c7e8" />
       <directionalLight position={[2, -3, -5]} intensity={0.82} color="#f0c6ae" />
-      <mesh position={[0, -1.88, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[18, 18]} />
-        <shadowMaterial transparent opacity={0.38} />
+      <mesh position={[0, -1.88, -3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[26, 34]} />
+        <meshBasicMaterial color="#171d25" toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -1.875, -3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[26, 34]} />
+        <shadowMaterial transparent opacity={0.52} />
+      </mesh>
+      <mesh position={[0, 2.8, -7]} receiveShadow>
+        <planeGeometry args={[30, 14]} />
+        <meshBasicMaterial color="#11171e" toneMapped={false} />
       </mesh>
     </>
   );
@@ -611,6 +613,8 @@ export function CubeStage(props: CubeStageProps) {
         gl.shadowMap.type = THREE.PCFSoftShadowMap;
       }}
     >
+      <color attach="background" args={["#0d1116"]} />
+      <fog attach="fog" args={["#0d1116", mobile ? 13 : 8, mobile ? 30 : 22]} />
       <StudioEnvironment />
       <ProductLights mobile={mobile} />
       <CubeObject {...props} reduceMotion={reduceMotion} />
