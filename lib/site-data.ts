@@ -1,160 +1,219 @@
-// ============================================================
-// SITE DATA. All copy is CV-verified. No invented numbers.
-// ============================================================
+export type FaceId =
+  | "engineering"
+  | "venture"
+  | "strategy"
+  | "finance"
+  | "research"
+  | "story";
+
+export type FaceProof = {
+  label: string;
+  result: string;
+  href?: string;
+};
+
+export type FaceContent = {
+  id: FaceId;
+  code: string;
+  label: string;
+  color: string;
+  thesis: string;
+  proofs: readonly FaceProof[];
+  action: { label: string; href: string; external?: boolean };
+};
 
 export type Project = {
   slug: string;
+  faceId: FaceId;
   title: string;
   kicker: string;
   oneLine: string;
-  summary: string[];
+  problem: string;
+  action: string;
+  result: string;
   meta: { role: string; period: string; place: string; outcome: string };
   tags: string[];
 };
 
-export type IndexRow = {
-  num: string;
-  title: string;
-  kicker: string;
-  year: string;
-  slug?: string;
-  /* OPTIONAL hover-preview photo for rows that have no detail page (no slug).
-     Slugged rows resolve /img/work/<slug>.jpg automatically; this lets a
-     slug-less row (e.g. ISSDC) still show a real photo instead of the fallback. */
-  img?: string;
-};
-
 export const profile = {
-  name: "Baramee Thanawarothon",
-  nickname: "Micky",
-  logotype: "mt.",
-  roles: ["Founder", "Engineer", "Strategist", "VC Intern, Incoming"],
-  headline: { line1: "I build things", line2: "that work." },
-  subline: "With the right strategy.",
-  caption: { left: "Baramee (Micky) Thanawarothon", right: "Manchester / Bangkok" },
-  storyHead: ["Engineer by training,", "founder by habit."],
-  story: [
-    "First-year Electronic Engineering at Manchester, predicted a First at 91%. I co-founded an AI tool for airfoil optimisation, ran a gelato business at a 70% gross margin, and built a consultancy for Thai SMEs.",
-    "I learn by shipping: hackathons, case competitions, research labs. Runner-up at the EMEA Strategy Consulting Summit in London, where I pitched Deliveroo's student-plan economics to executives. Next stop, TK Partners as a VC intern.",
-  ],
+  name: "Micky Thanawarothon",
+  fullName: "Baramee Thanawarothon",
+  thesis: "Engineer, founder, strategist, investor.",
   email: "micky.thana@gmail.com",
-  linkedin: { label: "baramee-thanawarothon", href: "https://linkedin.com/in/baramee-thanawarothon/" },
-  contactLead: { pre: "Let's build something that ", em: "works", post: "." },
-};
+  linkedin: "https://linkedin.com/in/baramee-thanawarothon/",
+  cv: "/Baramee-Thanawarothon-CV.pdf",
+} as const;
 
-export const workIndex: IndexRow[] = [
-  { num: "01", title: "AirfoilLearner", kicker: "AI for CFD optimisation", year: "2025", slug: "airfoillearner" },
-  { num: "02", title: "Deliveroo Case", kicker: "EMEA Summit, runner-up", year: "2026", slug: "deliveroo-case" },
-  { num: "03", title: "NECTEC", kicker: "Graphene R&D", year: "2024", slug: "nectec-research" },
-  { num: "04", title: "Solar Inspection", kicker: "Computer vision, 97.2%", year: "2024", slug: "solar-cv" },
-  { num: "05", title: "AccelerateMe", kicker: "ARM hackathon, 2nd place", year: "2025", slug: "accelerateme-arm" },
-  { num: "06", title: "CreamCat Gelato", kicker: "70% margin venture", year: "2025", slug: "creamcat-gelato" },
-  { num: "07", title: "KMT Group", kicker: "Thai SME consultancy", year: "2025" },
-  { num: "08", title: "Shade Tree Fund", kicker: "Won a £5k allocation", year: "2026", img: "/img/work/shade-tree.jpg" },
-  { num: "09", title: "ISSDC, NASA", kicker: "Global finalist", year: "2024", img: "/img/work/issdc.jpg" },
-  { num: "10", title: "UKROC", kicker: "Robotics, regional 1st", year: "", img: "/img/work/ukroc.jpg" },
+export const faceOrder: readonly FaceId[] = [
+  "engineering",
+  "venture",
+  "strategy",
+  "finance",
+  "research",
+  "story",
 ];
+
+export const faces: Record<FaceId, FaceContent> = {
+  engineering: {
+    id: "engineering",
+    code: "ENG",
+    label: "Engineering",
+    color: "#2457E6",
+    thesis: "I turn technical problems into working systems, from vision models to robotics and aerodynamic tools.",
+    proofs: [
+      { label: "Solar inspection", result: "97.2% computer-vision accuracy", href: "/work/solar-cv" },
+      { label: "AccelerateMe / ARM", result: "2nd place, inverse kinematics", href: "/work/accelerateme-arm" },
+      { label: "AirfoilLearner", result: "AI for CFD optimisation", href: "/work/airfoillearner" },
+    ],
+    action: { label: "View technical work", href: "/work/solar-cv" },
+  },
+  venture: {
+    id: "venture",
+    code: "VEN",
+    label: "Venture",
+    color: "#E4473A",
+    thesis: "I test demand, build the economics, and ship ventures far enough for the market to answer back.",
+    proofs: [
+      { label: "AirfoilLearner", result: "Co-founded, \u00A35k raised", href: "/work/airfoillearner" },
+      { label: "CreamCat Gelato", result: "Founded, 70% gross margin", href: "/work/creamcat-gelato" },
+      { label: "KMT Group", result: "Consultancy for Thai SMEs" },
+    ],
+    action: { label: "View AirfoilLearner", href: "/work/airfoillearner" },
+  },
+  strategy: {
+    id: "strategy",
+    code: "STR",
+    label: "Strategy",
+    color: "#F2C94C",
+    thesis: "I connect customer evidence, unit economics, and execution into decisions people can act on.",
+    proofs: [
+      { label: "Deliveroo student plan", result: "EMEA strategy runner-up", href: "/work/deliveroo-case" },
+      { label: "AirfoilLearner", result: "50+ customer interviews", href: "/work/airfoillearner" },
+      { label: "KMT Group", result: "Commercial work for Thai SMEs" },
+    ],
+    action: { label: "Read the Deliveroo case", href: "/work/deliveroo-case" },
+  },
+  finance: {
+    id: "finance",
+    code: "FIN",
+    label: "Finance",
+    color: "#2F9E5B",
+    thesis: "I use markets and capital allocation as disciplines for making clearer decisions under uncertainty.",
+    proofs: [
+      { label: "Shade Tree Fund", result: "Won a \u00A35k investment allocation" },
+      { label: "TK Partners", result: "Incoming venture-capital intern" },
+      { label: "Systematic trading", result: "FX and quantitative strategies" },
+    ],
+    action: { label: "Discuss markets", href: `mailto:${profile.email}` },
+  },
+  research: {
+    id: "research",
+    code: "R&D",
+    label: "Research",
+    color: "#F28A2E",
+    thesis: "I am comfortable working where the answer is not obvious yet: labs, prototypes, and first-principles investigation.",
+    proofs: [
+      { label: "NECTEC sensor", result: "Graphene quantum-dot R&D", href: "/work/nectec-research" },
+      { label: "Supercapacitor", result: "Engineered and tested 20 electrodes", href: "/work/nectec-research" },
+      { label: "ISSDC", result: "NASA global finalist" },
+    ],
+    action: { label: "View NECTEC research", href: "/work/nectec-research" },
+  },
+  story: {
+    id: "story",
+    code: "MICKY",
+    label: "Story",
+    color: "#ECEDEF",
+    thesis: "Bangkok raised, Manchester trained. I am at my best where engineering meets a P&L.",
+    proofs: [
+      { label: "University of Manchester", result: "91% first-year average, predicted First" },
+      { label: "Bangkok to Manchester", result: "Technical training with a commercial lens" },
+      { label: "Founder", result: "Three companies built" },
+    ],
+    action: { label: "Open CV", href: profile.cv, external: true },
+  },
+};
 
 export const projects: Project[] = [
   {
     slug: "airfoillearner",
+    faceId: "venture",
     title: "AirfoilLearner",
-    kicker: "Venture",
-    oneLine: "AI tool for airfoil and CFD optimisation. Raised £5k via Manchester's Venture Builder.",
-    summary: [
-      "Co-founded AirfoilLearner, an AI product targeting the slow, expensive loop of airfoil and CFD optimisation. Led early research on fluid-dynamics workflows to pinpoint the real pain points and define the initial product scope.",
-      "Interviewed 50+ engineers and students to test demand and prioritise features and pricing, cutting projected churn by around 20%. Raised £5k through Manchester's Venture Builder; the product is in active development.",
-    ],
-    meta: { role: "Co-Founder", period: "Sep 2025 to present", place: "Manchester, UK", outcome: "£5k raised, in development" },
+    kicker: "Venture / AI / CFD",
+    oneLine: "An AI product for a slow and expensive aerodynamic optimisation loop.",
+    problem: "Airfoil and CFD optimisation is iterative, specialist, and costly. The early product needed to solve a real workflow problem rather than simply place AI beside an engineering process.",
+    action: "I co-founded the venture, interviewed more than 50 engineers and students, mapped the workflow bottlenecks, and used that evidence to define the first product scope, feature priorities, and pricing direction.",
+    result: "We raised \u00A35k through Manchester's Venture Builder. The research also identified changes expected to reduce projected churn by around 20%, and the product remains in active development.",
+    meta: { role: "Co-Founder", period: "Sep 2025 to present", place: "Manchester, UK", outcome: "\u00A35k raised" },
     tags: ["founder", "AI", "CFD"],
   },
   {
     slug: "deliveroo-case",
+    faceId: "strategy",
     title: "Deliveroo Student Plan",
-    kicker: "Consulting",
-    oneLine: "Runner-up at the EMEA Strategy Consulting Summit. Pitched the unit economics to executives.",
-    summary: [
-      "At the EMEA Strategy Consulting Summit in London, quantified the unit economics of Deliveroo's student plan, linking pricing, contribution margin, and acquisition cost to a clear path to profitability.",
-      "Designed the rollout from a campus beta to a Freshers launch, wiring in verification, referral loops, and term-time retention. Pitched the recommendation to executives and placed runner-up.",
-    ],
-    meta: { role: "Runner-up (2nd)", period: "Feb 2026", place: "London, UK", outcome: "Runner-up, pitched to execs" },
-    tags: ["strategy", "unit economics", "2nd place"],
+    kicker: "Strategy / Unit economics",
+    oneLine: "A commercially grounded student proposition pitched to executives in London.",
+    problem: "The case required a student plan that could acquire users without hiding weak economics behind growth. Pricing, contribution margin, acquisition cost, verification, and retention had to work as one system.",
+    action: "I quantified the unit economics and designed a rollout from campus beta to Freshers launch, including verification, referral loops, and term-time retention mechanics.",
+    result: "The recommendation placed runner-up at the EMEA Strategy Consulting Summit and was pitched directly to executives.",
+    meta: { role: "Runner-up", period: "Feb 2026", place: "London, UK", outcome: "2nd place" },
+    tags: ["strategy", "unit economics", "go-to-market"],
   },
   {
     slug: "nectec-research",
+    faceId: "research",
     title: "NECTEC R&D",
-    kicker: "Research",
-    oneLine: "Graphene quantum-dot sensor and supercapacitor, built as a NECTEC research trainee.",
-    summary: [
-      "As a research trainee at NECTEC, Thailand's National Electronics and Computer Technology Center, manufactured a graphene quantum-dot sensor that met accuracy and unit-cost targets for the commercial agricultural industry.",
-      "Engineered 20 electrodes for a graphene supercapacitor using electrochemical impedance and recommended an electrolyte redesign. Built a comparative cost and pricing model showing a cost-of-goods advantage versus peer designs.",
-    ],
-    meta: { role: "Research Trainee", period: "Jul to Aug 2024", place: "Pathum Thani, Thailand", outcome: "Met accuracy and cost targets" },
-    tags: ["hardware", "graphene", "sensors"],
+    kicker: "Research / Materials",
+    oneLine: "Graphene sensor and supercapacitor work inside Thailand's national electronics research centre.",
+    problem: "The research brief combined technical performance with commercial constraints: sensing accuracy, manufacturability, electrode behaviour, and unit cost all mattered.",
+    action: "I manufactured a graphene quantum-dot sensor, engineered 20 supercapacitor electrodes, ran electrochemical impedance work, and built a comparative cost and pricing model.",
+    result: "The sensor met its accuracy and unit-cost targets. I recommended an electrolyte redesign and demonstrated a cost-of-goods advantage against peer designs.",
+    meta: { role: "Research Trainee", period: "Jul to Aug 2024", place: "Pathum Thani, Thailand", outcome: "Accuracy and cost targets met" },
+    tags: ["graphene", "sensors", "hardware"],
   },
   {
     slug: "solar-cv",
+    faceId: "engineering",
     title: "Solar-Panel Inspection",
-    kicker: "Computer Vision",
-    oneLine: "Computer-vision models for solar-panel defect inspection at 97.2% accuracy.",
-    summary: [
-      "Built a convolutional model to detect hotspots on solar panels at 97.2% validation accuracy, then adapted it to drone footage for utility-scale PV inspections, projecting savings of about £360k per year per 100 MW.",
-      "Benchmarked activation functions and built a five-year ROI and pricing model for drone-based inspection, forecasting about £200k ARR with defined price-to-win bands.",
-    ],
-    meta: { role: "Engineering Intern", period: "Sep 2023 to Jun 2024", place: "Remote", outcome: "97.2% accuracy, £360k/yr modelled" },
+    kicker: "Engineering / Computer vision",
+    oneLine: "A defect-inspection model designed for utility-scale solar operations.",
+    problem: "Manual inspection does not scale cleanly across large solar farms. The technical problem was hotspot detection; the commercial question was whether drone inspection could produce a credible operating return.",
+    action: "I built and benchmarked a convolutional model, adapted the workflow to drone footage, and developed a five-year ROI and pricing model for deployment.",
+    result: "The model reached 97.2% validation accuracy. The operating model projected roughly \u00A3360k in annual savings per 100 MW and about \u00A3200k in potential ARR.",
+    meta: { role: "Engineering Intern", period: "Sep 2023 to Jun 2024", place: "Remote", outcome: "97.2% accuracy" },
     tags: ["computer vision", "energy", "modelling"],
   },
   {
     slug: "accelerateme-arm",
+    faceId: "engineering",
     title: "AccelerateMe / ARM",
-    kicker: "Hackathon",
-    oneLine: "2nd place. Coded the inverse kinematics for the ARM robotics challenge.",
-    summary: [
-      "Placed 2nd at the AccelerateMe Hackathon's ARM robotics challenge by coding the inverse kinematics that drove the arm's motion under a tight build window.",
-      "A fast, pressure-tested build. The same ship-it-now problem solving shows up in NASA's ISSDC, where the team reached the global final, and in UKROC, a regional 1st in robotics.",
-    ],
-    meta: { role: "2nd place", period: "Hackathon", place: "UK", outcome: "2nd, inverse kinematics" },
-    tags: ["robotics", "inverse kinematics", "fast build"],
+    kicker: "Engineering / Robotics",
+    oneLine: "A pressure-tested robotics build completed inside a hackathon window.",
+    problem: "The ARM challenge needed reliable robot-arm motion under a tight build deadline, leaving little room for slow iteration or fragile control logic.",
+    action: "I coded the inverse kinematics that drove the arm's movement and integrated it into the team's working prototype.",
+    result: "The project placed second at the AccelerateMe Hackathon's ARM robotics challenge.",
+    meta: { role: "Robotics Engineer", period: "2025", place: "UK", outcome: "2nd place" },
+    tags: ["robotics", "inverse kinematics", "rapid build"],
   },
   {
     slug: "creamcat-gelato",
+    faceId: "venture",
     title: "CreamCat Gelato",
-    kicker: "Venture",
-    oneLine: "Founded a high-protein gelato business operating at a 70% gross margin.",
-    summary: [
-      "Founded CreamCat Gelato, a high-protein gelato startup targeting gym channels, and ran it at a 70% gross profit margin.",
-      "Built a three-route channel P&L and selected a partner-led model after factoring in gym commission, then secured a launch partnership on a capital-light plan.",
-    ],
+    kicker: "Venture / Operations",
+    oneLine: "A high-protein gelato business built around capital-light distribution.",
+    problem: "The venture needed a route into gym channels that could preserve margin after commissions while avoiding a capital-heavy retail footprint.",
+    action: "I founded the business, built a three-route channel P&L, selected a partner-led model, and secured a launch partnership.",
+    result: "CreamCat operated at a 70% gross profit margin with a capital-light route to market.",
     meta: { role: "Founder", period: "Jul to Nov 2025", place: "Bangkok, Thailand", outcome: "70% gross margin" },
-    tags: ["founder", "ops", "go-to-market"],
+    tags: ["founder", "operations", "go-to-market"],
   },
 ];
 
-export const nav = [
-  { label: "Story", href: "/story" },
-  { label: "Work", href: "/work" },
-  { label: "Contact", href: "/contact" },
-];
+export function isFaceId(value: unknown): value is FaceId {
+  return typeof value === "string" && faceOrder.includes(value as FaceId);
+}
 
-export const facts = [
-  { n: "91%", k: "first-year average, predicted First" },
-  { n: "x3", k: "companies founded" },
-  { n: "£5k", k: "raised for AirfoilLearner" },
-  { n: "£5k", k: "investment allocation won" },
-  { n: "97.2%", k: "computer-vision accuracy" },
-  { n: "2nd", k: "EMEA Strategy Summit, London" },
-];
-
-export const timeline = [
-  { year: "2023", what: "Computer-vision models for solar inspection. 97.2% accuracy." },
-  { year: "2024", what: "NECTEC research trainee: graphene quantum-dot sensor and supercapacitor. ISSDC NASA global finalist." },
-  { year: "2025", what: "Moved to Manchester. Co-founded AirfoilLearner, founded CreamCat Gelato and KMT Group. 2nd at the AccelerateMe ARM hackathon." },
-  { year: "2026", what: "Runner-up, EMEA Strategy Consulting Summit. Won a £5k allocation at Shade Tree Fund. TK Partners VC internship incoming." },
-];
-
-export const storyLong = [
-  "I grew up in Bangkok and study Electronic Engineering at Manchester, predicted a First at 91%. The degree is the training. The habit is building.",
-  "By nineteen I had built computer-vision models for solar farms, manufactured graphene sensors in a national lab, and reached NASA's ISSDC global final. Then I started founding things: an AI tool for airfoil optimisation that raised £5k, a gelato brand that ran at 70% gross margin, a consultancy for Thai SMEs.",
-  "Strategy is the other half. I placed 2nd at the EMEA Strategy Consulting Summit pitching Deliveroo's student-plan economics to executives, won a £5k investment allocation at Shade Tree Fund, and join TK Partners this summer as a VC intern.",
-  "Manchester taught me to ship fast. Bangkok keeps me hungry. I am at my best where engineering meets a P&L.",
-];
+export function parseFaceQuery(value: string | string[] | undefined): FaceId | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return isFaceId(candidate) ? candidate : null;
+}

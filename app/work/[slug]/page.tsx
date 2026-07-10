@@ -1,109 +1,91 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { projects } from "@/lib/site-data";
-import { Footer, Header } from "@/components/editorial";
-import { ParallaxImg } from "@/components/motion";
-import { SpaceBackdrop } from "@/components/space/SpaceBackdrop";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { profile, projects } from "@/lib/site-data";
 
 export function generateStaticParams() {
-  return projects.map((p) => ({ slug: p.slug }));
+  return projects.map((project) => ({ slug: project.slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const p = projects.find((x) => x.slug === slug);
-  return { title: p ? p.title : "Work" };
+  const project = projects.find((item) => item.slug === slug);
+  return {
+    title: project?.title ?? "Work",
+    description: project?.oneLine,
+  };
 }
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const p = projects.find((x) => x.slug === slug);
-  if (!p) notFound();
-  const i = projects.findIndex((x) => x.slug === slug);
-  const next = projects[(i + 1) % projects.length];
-
-  // The 6 slugged projects ship a real photo at public/img/work/<slug>.jpg.
-  // Resolve at build/request time: if the file is absent, render a tasteful
-  // procedural monochrome hero instead of a broken <img>. Seed varies the
-  // fallback look per project.
-  const heroSrc = `/img/work/${p.slug}.jpg`;
-  const hasHero = existsSync(join(process.cwd(), "public", "img", "work", `${p.slug}.jpg`));
-  const seed = (i % 4) as 0 | 1 | 2 | 3;
+  const project = projects.find((item) => item.slug === slug);
+  if (!project) notFound();
+  const projectIndex = projects.findIndex((item) => item.slug === slug);
+  const next = projects[(projectIndex + 1) % projects.length];
+  const imageSrc = `/img/work/${project.slug}.jpg`;
+  const hasImage = existsSync(join(process.cwd(), "public", "img", "work", `${project.slug}.jpg`));
 
   return (
-    <div className="page-dark">
-      <SpaceBackdrop />
-      <Header />
-      <main className="detail">
-        <Link href="/work" className="detail__back" data-hover>
-          Back to work
+    <main className="case-page">
+      <header className="case-header">
+        <Link href={`/?face=${project.faceId}`} className="case-back">
+          <ArrowLeft aria-hidden="true" /> Back to {project.faceId}
         </Link>
+        <nav aria-label="Quick links">
+          <a href={profile.cv} target="_blank" rel="noopener noreferrer">CV</a>
+          <a href={profile.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href={`mailto:${profile.email}`}>Email</a>
+        </nav>
+      </header>
 
-        <span className="detail__kicker">
-          {String(i + 1).padStart(2, "0")} / {p.kicker}
-        </span>
-        <h1 className="detail__title">{p.title}</h1>
+      <article className="case-article">
+        <div className="case-intro">
+          <span className="case-kicker">{String(projectIndex + 1).padStart(2, "0")} / {project.kicker}</span>
+          <h1>{project.title}</h1>
+          <p>{project.oneLine}</p>
+        </div>
 
-        <div className="detail__hero">
-          {hasHero ? (
-            <ParallaxImg src={heroSrc} alt={p.title} strength={46} />
+        <div className={`case-hero${hasImage ? "" : " case-hero--fallback"}`}>
+          {hasImage ? (
+            <Image src={imageSrc} alt={project.title} fill priority sizes="(max-width: 800px) 100vw, 88vw" />
           ) : (
-            <div className="work-fallback work-fallback--hero" data-seed={seed} aria-hidden="true">
-              <span className="work-fallback__mark">✦</span>
-            </div>
+            <span>{project.title}</span>
           )}
         </div>
 
-        <div className="detail__grid">
-          <div className="detail__body">
-            {p.summary.map((s, i) => (
-              <p key={i}>{s}</p>
+        <div className="case-body">
+          {[
+            ["Problem", project.problem],
+            ["Action", project.action],
+            ["Result", project.result],
+          ].map(([label, copy]) => (
+            <section key={label}>
+              <h2>{label}</h2>
+              <p>{copy}</p>
+            </section>
+          ))}
+          <aside className="case-meta" aria-label="Project details">
+            {Object.entries(project.meta).map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
             ))}
-            <div className="tags">
-              {p.tags.map((t) => (
-                <span className="tag" key={t}>
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="detail__meta">
-            <div className="row">
-              <span>Role</span>
-              <span>{p.meta.role}</span>
-            </div>
-            <div className="row">
-              <span>Period</span>
-              <span>{p.meta.period}</span>
-            </div>
-            <div className="row">
-              <span>Place</span>
-              <span>{p.meta.place}</span>
-            </div>
-            <div className="row">
-              <span>Outcome</span>
-              <span>{p.meta.outcome}</span>
-            </div>
+          </aside>
+          <div className="case-tags" aria-label="Project tags">
+            {project.tags.map((tag) => <span key={tag}>{tag}</span>)}
           </div>
         </div>
 
-        <Link href={`/work/${next.slug}`} className="detail__next" data-hover>
-          <span className="label">Next project</span>
-          <span className="detail__next-title">{next.title} →</span>
+        <Link href={`/work/${next.slug}`} className="case-next">
+          <span>Next case study</span>
+          <strong>{next.title}<ArrowUpRight aria-hidden="true" /></strong>
         </Link>
-      </main>
-      <Footer />
-    </div>
+      </article>
+    </main>
   );
 }

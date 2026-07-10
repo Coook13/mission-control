@@ -1,17 +1,11 @@
-import { Header } from "@/components/editorial";
-import { Flythrough } from "@/components/space/Flythrough";
-import { ScrollProgress } from "@/components/ScrollProgress";
-import { EasterEgg } from "@/components/EasterEgg";
+import { CubePortfolio } from "@/components/cube/CubePortfolio";
+import { parseFaceQuery } from "@/lib/site-data";
 
-export default function Home() {
-  return (
-    <>
-      <Header />
-      <main>
-        <Flythrough />
-      </main>
-      <ScrollProgress />
-      <EasterEgg />
-    </>
-  );
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ face?: string | string[] }>;
+}) {
+  const { face } = await searchParams;
+  return <CubePortfolio initialFace={parseFaceQuery(face)} />;
 }
