@@ -3,10 +3,12 @@
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { faceOrder, faces, type FaceId } from "@/lib/site-data";
 import {
   FACE_NORMALS,
+  moveToTurn,
   rotateTuple,
   swipeToTurn,
   validateMoveSequence,
@@ -31,7 +33,7 @@ type Cubie = {
 
 type ActiveMove = {
   turn: QuarterTurn;
-  startedAt: number;
+  elapsed: number;
   affected: Array<{
     cubie: Cubie;
     position: THREE.Vector3;
@@ -58,6 +60,8 @@ type OrbitGesture = {
 export type CubeStageProps = {
   selectedFace: FaceId | null;
   previewFace: FaceId | null;
+  interactionMode: "rotate" | "twist";
+  scrambleSignal: number;
   resetSignal: number;
   onSelectFace: (face: FaceId) => void;
   onScrambleChange: (scrambled: boolean) => void;
@@ -96,8 +100,11 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 
 const MOVE_DURATION = 0.25;
 const CUBIE_STEP = 1.02;
-const SWIPE_THRESHOLD = 16;
+const SWIPE_THRESHOLD = 11;
 const TAP_THRESHOLD = 7;
+const SCRAMBLE_MOVES: readonly CubeMove[] = [
+  "R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "U'",
+];
 
 function createSolvedCubies(): Cubie[] {
   const cubies: Cubie[] = [];
@@ -132,19 +139,19 @@ function stickerRotation(normal: Vector3Tuple) {
 
 function makeLabelTexture(code: string, dark: boolean) {
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
+  canvas.width = 1024;
+  canvas.height = 1024;
   const context = canvas.getContext("2d");
   if (!context) return null;
-  context.clearRect(0, 0, 512, 512);
+  context.clearRect(0, 0, 1024, 1024);
   context.fillStyle = dark ? "#121212" : "#ffffff";
-  context.font = `${code.length > 3 ? 700 : 800} ${code.length > 3 ? 92 : 126}px Arial, sans-serif`;
+  context.font = `${code.length > 3 ? 700 : 800} ${code.length > 3 ? 184 : 252}px Arial, sans-serif`;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(code, 256, 264);
+  context.fillText(code, 512, 528);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  texture.anisotropy = 8;
   texture.needsUpdate = true;
   return texture;
 }
@@ -157,28 +164,52 @@ function snapVector(vector: THREE.Vector3): Vector3Tuple {
   return result;
 }
 
-function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onScrambleChange, reduceMotion }: CubeObjectProps) {
+function CubeObject({
+  selectedFace,
+  previewFace,
+  interactionMode,
+  scrambleSignal,
+  resetSignal,
+  onSelectFace,
+  onScrambleChange,
+  reduceMotion,
+}: CubeObjectProps) {
   const rootRef = useRef<THREE.Group>(null);
   const cubieRefs = useRef(new Map<string, THREE.Group>());
   const cubies = useMemo(() => createSolvedCubies(), []);
   const cubiesRef = useRef(cubies);
   const activeMove = useRef<ActiveMove | null>(null);
+  const queuedMoves = useRef<QuarterTurn[]>([]);
+  const lastScrambleSignal = useRef(scrambleSignal);
   const moveHistory = useRef<CubeMove[]>([]);
   const gesture = useRef<Gesture | null>(null);
   const orbitGesture = useRef<OrbitGesture | null>(null);
   const targetQuaternion = useRef((selectedFace ? FACE_QUATERNIONS[selectedFace] : OPENING_QUATERNION).clone());
-  const introStart = useRef<number | null>(null);
+  const introStarted = useRef(false);
+  const introElapsed = useRef(0);
   const introDone = useRef(false);
   const { invalidate } = useThree();
 
-  const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 3, 0.105), []);
-  const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 3, 0.075), []);
+  const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 5, 0.095), []);
+  const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
   const labelGeometry = useMemo(() => new THREE.PlaneGeometry(0.6, 0.6), []);
-  const bodyMaterial = useMemo(() => new THREE.MeshStandardMaterial({ color: "#121212", roughness: 0.42, metalness: 0.16 }), []);
+  const bodyMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: "#060708",
+    roughness: 0.2,
+    metalness: 0.36,
+    clearcoat: 0.72,
+    clearcoatRoughness: 0.16,
+  }), []);
   const stickerMaterials = useMemo(() => Object.fromEntries(faceOrder.map((faceId) => [
     faceId,
-    new THREE.MeshStandardMaterial({ color: faces[faceId].color, roughness: 0.28, metalness: 0.04 }),
-  ])) as Record<FaceId, THREE.MeshStandardMaterial>, []);
+    new THREE.MeshPhysicalMaterial({
+      color: faces[faceId].color,
+      roughness: 0.22,
+      metalness: 0.02,
+      clearcoat: 0.62,
+      clearcoatRoughness: 0.14,
+    }),
+  ])) as Record<FaceId, THREE.MeshPhysicalMaterial>, []);
   const labelMaterials = useMemo(() => Object.fromEntries(faceOrder.map((faceId) => {
     const dark = faceId === "strategy" || faceId === "story";
     return [faceId, new THREE.MeshBasicMaterial({ map: makeLabelTexture(faces[faceId].code, dark), transparent: true, toneMapped: false })];
@@ -194,6 +225,7 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
   useEffect(() => {
     if (resetSignal === 0) return;
     activeMove.current = null;
+    queuedMoves.current = [];
     gesture.current = null;
     moveHistory.current = [];
     const solved = createSolvedCubies();
@@ -211,7 +243,7 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
     invalidate();
   }, [invalidate, onScrambleChange, resetSignal]);
 
-  const startTurn = (turn: QuarterTurn) => {
+  const startTurn = (turn: QuarterTurn, notify = true) => {
     if (activeMove.current) return;
     const axisIndex = turn.axis === "x" ? 0 : turn.axis === "y" ? 1 : 2;
     const affected = cubiesRef.current
@@ -221,9 +253,9 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
         position: new THREE.Vector3(...cubie.position).multiplyScalar(CUBIE_STEP),
         quaternion: cubie.quaternion.clone(),
       }));
-    activeMove.current = { turn, startedAt: performance.now() / 1000, affected };
+    activeMove.current = { turn, elapsed: 0, affected };
     moveHistory.current.push(turn.notation);
-    onScrambleChange(true);
+    if (notify) onScrambleChange(true);
     void validateMoveSequence(moveHistory.current).catch((error) => {
       console.error("Cube move validation failed", error);
     });
@@ -257,10 +289,40 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
     return best?.turn ?? null;
   };
 
-  const onStickerDown = (event: ThreeEvent<PointerEvent>, cubie: Cubie, sticker: Sticker) => {
-    if (activeMove.current) return;
+  const beginOrbit = (event: ThreeEvent<PointerEvent>) => {
+    if (activeMove.current || queuedMoves.current.length) return;
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
+    orbitGesture.current = {
+      x: event.nativeEvent.clientX,
+      y: event.nativeEvent.clientY,
+      pointerId: event.pointerId,
+      start: targetQuaternion.current.clone(),
+    };
+  };
+
+  const updateOrbit = (event: ThreeEvent<PointerEvent>) => {
+    const current = orbitGesture.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    const dx = event.nativeEvent.clientX - current.x;
+    const dy = event.nativeEvent.clientY - current.y;
+    if (gesture.current && Math.hypot(dx, dy) > TAP_THRESHOLD) gesture.current.moved = true;
+    const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.007);
+    const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.007);
+    targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
+    invalidate();
+  };
+
+  const finishOrbit = (event: ThreeEvent<PointerEvent>) => {
+    const current = orbitGesture.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    event.stopPropagation();
+    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+    orbitGesture.current = null;
+  };
+
+  const onStickerDown = (event: ThreeEvent<PointerEvent>, cubie: Cubie, sticker: Sticker) => {
+    if (activeMove.current || queuedMoves.current.length) return;
     gesture.current = {
       cubieId: cubie.id,
       sticker,
@@ -269,9 +331,19 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
       pointerId: event.pointerId,
       moved: false,
     };
+    if (interactionMode === "rotate") {
+      beginOrbit(event);
+      return;
+    }
+    event.stopPropagation();
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
   };
 
   const onStickerMove = (event: ThreeEvent<PointerEvent>) => {
+    if (orbitGesture.current) {
+      updateOrbit(event);
+      return;
+    }
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId || current.moved || activeMove.current) return;
     const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
@@ -283,6 +355,12 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
   const onStickerUp = (event: ThreeEvent<PointerEvent>) => {
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
+    if (orbitGesture.current) {
+      if (!current.moved && current.sticker.center) onSelectFace(current.sticker.faceId);
+      gesture.current = null;
+      finishOrbit(event);
+      return;
+    }
     event.stopPropagation();
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
     if (!current.moved && distance <= TAP_THRESHOLD && current.sticker.center) {
@@ -292,45 +370,24 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
     gesture.current = null;
   };
 
-  const onOrbitDown = (event: ThreeEvent<PointerEvent>) => {
-    if (activeMove.current) return;
-    event.stopPropagation();
-    (event.target as HTMLElement).setPointerCapture(event.pointerId);
-    orbitGesture.current = {
-      x: event.nativeEvent.clientX,
-      y: event.nativeEvent.clientY,
-      pointerId: event.pointerId,
-      start: targetQuaternion.current.clone(),
-    };
-  };
-
-  const onOrbitMove = (event: ThreeEvent<PointerEvent>) => {
-    const current = orbitGesture.current;
-    if (!current || current.pointerId !== event.pointerId) return;
-    const dx = event.nativeEvent.clientX - current.x;
-    const dy = event.nativeEvent.clientY - current.y;
-    const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.007);
-    const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.007);
-    targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
-    invalidate();
-  };
-
-  const onOrbitUp = (event: ThreeEvent<PointerEvent>) => {
-    const current = orbitGesture.current;
-    if (!current || current.pointerId !== event.pointerId) return;
-    event.stopPropagation();
-    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
-    orbitGesture.current = null;
-  };
-
   useFrame((state, delta) => {
     const root = rootRef.current;
     if (!root) return;
-    const now = performance.now() / 1000;
     let animating = false;
 
-    if (introStart.current === null) {
-      introStart.current = now;
+    if (scrambleSignal !== lastScrambleSignal.current) {
+      lastScrambleSignal.current = scrambleSignal;
+      queuedMoves.current = SCRAMBLE_MOVES.map(moveToTurn);
+    }
+
+    if (!activeMove.current && queuedMoves.current.length) {
+      const nextTurn = queuedMoves.current.shift();
+      if (nextTurn) startTurn(nextTurn, false);
+      animating = true;
+    }
+
+    if (!introStarted.current) {
+      introStarted.current = true;
       if (reduceMotion) {
         root.quaternion.copy(targetQuaternion.current);
         root.scale.setScalar(1);
@@ -341,7 +398,8 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
       }
     }
     if (!introDone.current) {
-      const progress = Math.min((now - introStart.current) / 0.65, 1);
+      introElapsed.current += delta;
+      const progress = Math.min(introElapsed.current / 0.65, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       root.quaternion.slerp(targetQuaternion.current, 0.12 + eased * 0.12);
       root.scale.setScalar(0.82 + eased * 0.18);
@@ -359,7 +417,8 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
 
     const move = activeMove.current;
     if (move) {
-      const progress = Math.min((now - move.startedAt) / (reduceMotion ? 0.01 : MOVE_DURATION), 1);
+      move.elapsed += delta;
+      const progress = Math.min(move.elapsed / (reduceMotion ? 0.01 : MOVE_DURATION), 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       const turnQuaternion = new THREE.Quaternion().setFromAxisAngle(
         AXIS_VECTORS[move.turn.axis],
@@ -393,7 +452,7 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
       }
     }
 
-    if (animating || orbitGesture.current) state.invalidate();
+    if (animating || orbitGesture.current || queuedMoves.current.length) state.invalidate();
   });
 
   return (
@@ -434,10 +493,10 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
 
       <mesh
         position={[0, 0, -3.2]}
-        onPointerDown={onOrbitDown}
-        onPointerMove={onOrbitMove}
-        onPointerUp={onOrbitUp}
-        onPointerCancel={onOrbitUp}
+        onPointerDown={beginOrbit}
+        onPointerMove={updateOrbit}
+        onPointerUp={finishOrbit}
+        onPointerCancel={finishOrbit}
       >
         <planeGeometry args={[30, 22]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
@@ -446,30 +505,55 @@ function CubeObject({ selectedFace, previewFace, resetSignal, onSelectFace, onSc
   );
 }
 
+function StudioEnvironment() {
+  const { gl, scene } = useThree();
+
+  useEffect(() => {
+    const previous = scene.environment;
+    const previousIntensity = scene.environmentIntensity;
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const target = pmrem.fromScene(new RoomEnvironment(), 0.035);
+    // Three.js owns this imperative renderer state outside React's render model.
+    // eslint-disable-next-line react-hooks/immutability
+    scene.environment = target.texture;
+    scene.environmentIntensity = 0.64;
+    return () => {
+      scene.environment = previous;
+      scene.environmentIntensity = previousIntensity;
+      target.dispose();
+      pmrem.dispose();
+    };
+  }, [gl, scene]);
+
+  return null;
+}
+
 function ProductLights({ mobile }: { mobile: boolean }) {
   return (
     <>
-      <ambientLight intensity={1.65} />
+      <hemisphereLight color="#eef2f8" groundColor="#08090b" intensity={0.82} />
       <directionalLight
-        castShadow={!mobile}
-        position={[4.5, 6.5, 8]}
-        intensity={3.8}
+        castShadow
+        position={[5.5, 7.5, 8]}
+        intensity={3.25}
+        color="#ffffff"
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
+        shadow-bias={-0.00015}
+        shadow-normalBias={0.025}
+        shadow-radius={mobile ? 2 : 4}
         shadow-camera-far={20}
         shadow-camera-left={-5}
         shadow-camera-right={5}
         shadow-camera-top={5}
         shadow-camera-bottom={-5}
       />
-      <directionalLight position={[-5, 2, 5]} intensity={1.5} color="#dfe7ff" />
-      <directionalLight position={[0, -4, 3]} intensity={0.75} color="#ffffff" />
-      {!mobile && (
-        <mesh position={[0, -1.88, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[12, 12]} />
-          <shadowMaterial transparent opacity={0.14} />
-        </mesh>
-      )}
+      <directionalLight position={[-5, 3, 4]} intensity={1.35} color="#b8c7e8" />
+      <directionalLight position={[2, -3, -5]} intensity={0.82} color="#f0c6ae" />
+      <mesh position={[0, -1.88, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[18, 18]} />
+        <shadowMaterial transparent opacity={0.38} />
+      </mesh>
     </>
   );
 }
@@ -514,19 +598,20 @@ export function CubeStage(props: CubeStageProps) {
   return (
     <Canvas
       aria-label="Interactive portfolio cube"
-      camera={{ position: [0, 0, mobile ? 11.8 : 7.4], fov: mobile ? 42 : 38, near: 0.1, far: 50 }}
-      dpr={mobile ? [1, 1.25] : [1, 1.5]}
+      camera={{ position: [0, 0, mobile ? 13.4 : 8.15], fov: mobile ? 42 : 38, near: 0.1, far: 50 }}
+      dpr={mobile ? [1, 1.5] : [1, 1.75]}
       frameloop="demand"
-      shadows={!mobile}
+      shadows
       fallback={<CubeFallback onSelectFace={props.onSelectFace} />}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.08;
+        gl.toneMappingExposure = 0.94;
         gl.shadowMap.type = THREE.PCFSoftShadowMap;
       }}
     >
+      <StudioEnvironment />
       <ProductLights mobile={mobile} />
       <CubeObject {...props} reduceMotion={reduceMotion} />
     </Canvas>

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { ExternalLink, Mail, RefreshCw, X } from "lucide-react";
+import { ExternalLink, Mail, RefreshCw, Shuffle, X } from "lucide-react";
 import { faceOrder, faces, profile, type FaceId } from "@/lib/site-data";
 import { CubeFallback } from "./CubeScene";
 
@@ -22,7 +22,9 @@ function replaceFaceQuery(face: FaceId | null) {
 export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   const [selectedFace, setSelectedFace] = useState<FaceId | null>(initialFace);
   const [previewFace, setPreviewFace] = useState<FaceId | null>(null);
+  const [interactionMode, setInteractionMode] = useState<"rotate" | "twist">("rotate");
   const [scrambled, setScrambled] = useState(false);
+  const [scrambleSignal, setScrambleSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
   const activeContent = selectedFace ? faces[selectedFace] : null;
 
@@ -41,9 +43,16 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   const resetCube = useCallback(() => {
     setSelectedFace(null);
     setPreviewFace(null);
+    setInteractionMode("rotate");
     setScrambled(false);
     setResetSignal((value) => value + 1);
     replaceFaceQuery(null);
+  }, []);
+
+  const scrambleCube = useCallback(() => {
+    setInteractionMode("twist");
+    setScrambled(true);
+    setScrambleSignal((value) => value + 1);
   }, []);
 
   const moveKeyboardFace = useCallback((direction: -1 | 1) => {
@@ -108,17 +117,42 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         <CubeStage
           selectedFace={selectedFace}
           previewFace={previewFace}
+          interactionMode={interactionMode}
+          scrambleSignal={scrambleSignal}
           resetSignal={resetSignal}
           onSelectFace={selectFace}
           onScrambleChange={setScrambled}
         />
       </section>
 
-      {scrambled && (
-        <button className="cube-reset" type="button" onClick={resetCube} aria-label="Reset cube" title="Reset cube">
-          <RefreshCw aria-hidden="true" />
+      <div className="cube-controls" aria-label="Cube controls">
+        <div className="cube-mode" role="group" aria-label="Cube interaction mode">
+          <button
+            type="button"
+            className={interactionMode === "rotate" ? "is-active" : ""}
+            aria-pressed={interactionMode === "rotate"}
+            onClick={() => setInteractionMode("rotate")}
+          >
+            Rotate
+          </button>
+          <button
+            type="button"
+            className={interactionMode === "twist" ? "is-active" : ""}
+            aria-pressed={interactionMode === "twist"}
+            onClick={() => setInteractionMode("twist")}
+          >
+            Twist
+          </button>
+        </div>
+        <button className="cube-control-icon" type="button" onClick={scrambleCube} aria-label="Scramble cube" title="Scramble cube">
+          <Shuffle aria-hidden="true" />
         </button>
-      )}
+        {scrambled && (
+          <button className="cube-control-icon" type="button" onClick={resetCube} aria-label="Reset cube" title="Reset cube">
+            <RefreshCw aria-hidden="true" />
+          </button>
+        )}
+      </div>
 
       <div className="cube-face-access" aria-label="Portfolio sections">
         {faceOrder.map((faceId) => (
