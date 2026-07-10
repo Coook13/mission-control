@@ -29,6 +29,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+dev-*.out.log
+dev-*.err.log
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -48,3 +50,5 @@ next-env.d.ts
 
 # local raw source photos (kept out of public deploys)
 /private/img/_inbox/
+
+.vercel

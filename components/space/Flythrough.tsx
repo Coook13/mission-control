@@ -32,6 +32,7 @@ const heroProofs = [
   { n: facts[2].n, k: "raised for AirfoilLearner" },
   { n: facts[4].n, k: "CV model accuracy" },
 ];
+const CV_URL = "/Baramee-Thanawarothon-CV.pdf";
 
 /* ============================================================================
    FLYTHROUGH — the sticky shell for the continuous, scroll-scrubbed fly-through.
@@ -296,6 +297,16 @@ function FlythroughFull() {
                 </span>
               ))}
             </div>
+            <a
+              className="fly__cv-link"
+              href={CV_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Baramee Thanawarothon's CV PDF"
+            >
+              <span className="fly__cv-label">Open CV</span>
+              <span className="fly__cv-meta">proof passport / PDF</span>
+            </a>
           </div>
           <div className="fly__cue" ref={cueRef}>
             <span>scroll</span>
@@ -401,6 +412,16 @@ function FlyStatic() {
               </span>
             ))}
           </div>
+          <a
+            className="fly__cv-link"
+            href={CV_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Baramee Thanawarothon's CV PDF"
+          >
+            <span className="fly__cv-label">Open CV</span>
+            <span className="fly__cv-meta">proof passport / PDF</span>
+          </a>
         </div>
         <ol className="fly-static__skills">
           {SCENES.map((s, i) => (
