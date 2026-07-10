@@ -22,8 +22,11 @@ for (const x of [-1, 0, 1]) {
 }
 
 describe("cube move model", () => {
-  it("maps all legal outer moves in both directions", () => {
-    const moves: CubeMove[] = ["R", "R'", "L", "L'", "U", "U'", "D", "D'", "F", "F'", "B", "B'"];
+  it("maps all legal outer and slice moves in both directions", () => {
+    const moves: CubeMove[] = [
+      "R", "R'", "L", "L'", "U", "U'", "D", "D'", "F", "F'", "B", "B'",
+      "M", "M'", "E", "E'", "S", "S'",
+    ];
     for (const move of moves) {
       const turn = moveToTurn(move);
       expect(turnToMove(turn.axis, turn.layer, turn.direction)).toBe(move);
@@ -55,8 +58,15 @@ describe("cube move model", () => {
     expect(swipeToTurn([0, 0, 1], [1, 0, 0], [0, 1, 1])?.notation).toBe("U'");
   });
 
-  it("rejects swipes that would turn a middle slice", () => {
-    expect(swipeToTurn([0, 0, 1], [0, 1, 0], [0, 1, 1])).toBeNull();
+  it("maps swipes across each middle slice", () => {
+    expect(swipeToTurn([0, 0, 1], [0, 1, 0], [0, 1, 1])?.notation).toBe("M'");
+    expect(swipeToTurn([0, 0, 1], [1, 0, 0], [0, 0, 1])?.notation).toBe("E");
+    expect(swipeToTurn([1, 0, 0], [0, 1, 0], [1, 0, 0])?.notation).toBe("S'");
+  });
+
+  it("returns a middle slice to solved after a move and its inverse", () => {
+    const moved = applyTurnToPositions(solved, moveToTurn("M"));
+    expect(applyTurnToPositions(moved, moveToTurn("M'"))).toEqual(solved);
   });
 
   it("accepts only known face query values", () => {
@@ -68,6 +78,11 @@ describe("cube move model", () => {
   it("validates a 20-move scramble with cubing KPuzzle", async () => {
     const scramble: CubeMove[] = ["R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "F", "U'", "L", "B", "D'", "R'", "F'"];
     const transformation = await validateMoveSequence(scramble);
+    expect(transformation.isIdentityTransformation()).toBe(false);
+  });
+
+  it("validates middle-slice notation with cubing KPuzzle", async () => {
+    const transformation = await validateMoveSequence(["M", "E'", "S"]);
     expect(transformation.isIdentityTransformation()).toBe(false);
   });
 });

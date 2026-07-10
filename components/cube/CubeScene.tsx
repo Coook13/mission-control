@@ -183,6 +183,10 @@ function CubeObject({
   const gesture = useRef<Gesture | null>(null);
   const orbitGesture = useRef<OrbitGesture | null>(null);
   const targetQuaternion = useRef((selectedFace ? FACE_QUATERNIONS[selectedFace] : OPENING_QUATERNION).clone());
+  const displayQuaternion = useRef(new THREE.Quaternion());
+  const idleQuaternion = useRef(new THREE.Quaternion());
+  const idleEuler = useRef(new THREE.Euler());
+  const idleElapsed = useRef(0);
   const introStarted = useRef(false);
   const introElapsed = useRef(0);
   const introDone = useRef(false);
@@ -398,14 +402,34 @@ function CubeObject({
       root.quaternion.slerp(targetQuaternion.current, 0.12 + eased * 0.12);
       root.scale.setScalar(0.82 + eased * 0.18);
       introDone.current = progress >= 1;
-      animating = !introDone.current;
+      animating = !introDone.current || !reduceMotion;
     } else {
-      const angle = root.quaternion.angleTo(targetQuaternion.current);
-      if (angle > 0.001) {
-        root.quaternion.slerp(targetQuaternion.current, 1 - Math.exp(-delta * 11));
+      const idleActive = !reduceMotion
+        && !selectedFace
+        && !orbitGesture.current
+        && !gesture.current
+        && !activeMove.current
+        && queuedMoves.current.length === 0;
+      const displayTarget = displayQuaternion.current.copy(targetQuaternion.current);
+      if (idleActive) {
+        idleElapsed.current += delta;
+        idleEuler.current.set(
+          Math.sin(idleElapsed.current * 0.58) * 0.03,
+          Math.sin(idleElapsed.current * 0.42) * 0.085,
+          Math.sin(idleElapsed.current * 0.35) * 0.012,
+        );
+        displayTarget.multiply(idleQuaternion.current.setFromEuler(idleEuler.current));
+        root.position.y = Math.sin(idleElapsed.current * 0.72) * 0.045;
         animating = true;
       } else {
-        root.quaternion.copy(targetQuaternion.current);
+        root.position.y *= Math.exp(-delta * 8);
+      }
+      const angle = root.quaternion.angleTo(displayTarget);
+      if (angle > 0.001) {
+        root.quaternion.slerp(displayTarget, 1 - Math.exp(-delta * 11));
+        animating = true;
+      } else {
+        root.quaternion.copy(displayTarget);
       }
     }
 

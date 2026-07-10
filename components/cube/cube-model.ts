@@ -2,12 +2,13 @@ import type { FaceId } from "@/lib/site-data";
 
 export type Axis = "x" | "y" | "z";
 export type Vector3Tuple = [number, number, number];
-export type Layer = -1 | 1;
+export type Layer = -1 | 0 | 1;
 export type Direction = -1 | 1;
 export type CubeMove =
   | "R" | "R'" | "L" | "L'"
   | "U" | "U'" | "D" | "D'"
-  | "F" | "F'" | "B" | "B'";
+  | "F" | "F'" | "B" | "B'"
+  | "M" | "M'" | "E" | "E'" | "S" | "S'";
 
 export type QuarterTurn = {
   axis: Axis;
@@ -28,6 +29,11 @@ export const FACE_NORMALS: Record<FaceId, Vector3Tuple> = {
 const AXIS_INDEX: Record<Axis, 0 | 1 | 2> = { x: 0, y: 1, z: 2 };
 
 export function turnToMove(axis: Axis, layer: Layer, direction: Direction): CubeMove {
+  if (layer === 0) {
+    const base = axis === "x" ? "M" : axis === "y" ? "E" : "S";
+    const naturalDirection = axis === "z" ? -1 : 1;
+    return `${base}${direction === naturalDirection ? "" : "'"}` as CubeMove;
+  }
   const base = axis === "x" ? (layer === 1 ? "R" : "L")
     : axis === "y" ? (layer === 1 ? "U" : "D")
       : layer === 1 ? "F" : "B";
@@ -38,9 +44,12 @@ export function turnToMove(axis: Axis, layer: Layer, direction: Direction): Cube
 export function moveToTurn(move: CubeMove): QuarterTurn {
   const base = move[0];
   const prime = move.endsWith("'");
-  const axis: Axis = base === "R" || base === "L" ? "x" : base === "U" || base === "D" ? "y" : "z";
-  const layer: Layer = base === "R" || base === "U" || base === "F" ? 1 : -1;
-  const direction = (prime ? layer : -layer) as Direction;
+  const axis: Axis = base === "R" || base === "L" || base === "M" ? "x"
+    : base === "U" || base === "D" || base === "E" ? "y" : "z";
+  const layer: Layer = base === "M" || base === "E" || base === "S" ? 0
+    : base === "R" || base === "U" || base === "F" ? 1 : -1;
+  const naturalDirection = layer === 0 ? (axis === "z" ? -1 : 1) : -layer;
+  const direction = (prime ? -naturalDirection : naturalDirection) as Direction;
   return { axis, layer, direction, notation: move };
 }
 
@@ -80,7 +89,7 @@ export function swipeToTurn(
   const axisIndex = values.findIndex((value) => value !== 0);
   if (axisIndex < 0) return null;
   const layer = cubiePosition[axisIndex];
-  if (Math.abs(layer) !== 1) return null;
+  if (Math.abs(layer) > 1) return null;
   const axis = (["x", "y", "z"] as const)[axisIndex];
   const direction = values[axisIndex] as Direction;
   return { axis, layer: layer as Layer, direction, notation: turnToMove(axis, layer as Layer, direction) };
