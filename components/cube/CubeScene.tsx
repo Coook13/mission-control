@@ -100,7 +100,10 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 const MOVE_DURATION = 0.25;
 const CUBIE_STEP = 1.02;
 const SWIPE_THRESHOLD = 11;
+const SWIPE_AXIS_THRESHOLD = 0.72;
+const SWIPE_CARDINAL_THRESHOLD = 0.88;
 const TAP_THRESHOLD = 7;
+const CUBE_BASE_Y = 0.14;
 const SCRAMBLE_MOVES: readonly CubeMove[] = [
   "R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "U'",
 ];
@@ -190,7 +193,7 @@ function CubeObject({
   const introStarted = useRef(false);
   const introElapsed = useRef(0);
   const introDone = useRef(false);
-  const { invalidate } = useThree();
+  const { gl, invalidate } = useThree();
 
   const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 5, 0.095), []);
   const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
@@ -273,7 +276,7 @@ function CubeObject({
 
     const normal = new THREE.Vector3(...currentGesture.sticker.normal).applyQuaternion(cubie.quaternion);
     const snappedNormal = snapVector(normal);
-    let best: { score: number; tangent: Vector3Tuple; turn: QuarterTurn } | null = null;
+    let best: { score: number; turn: QuarterTurn } | null = null;
     for (const axis of PRIMARY_AXES) {
       if (Math.abs(axis.dot(normal)) > 0.1) continue;
       const projected = axis.clone().applyQuaternion(rootRef.current.quaternion);
@@ -286,9 +289,9 @@ function CubeObject({
       const turn = swipeToTurn(snappedNormal, tangentTuple, cubie.position);
       if (!turn) continue;
       const score = Math.abs(dot);
-      if (!best || score > best.score) best = { score, tangent: tangentTuple, turn };
+      if (!best || score > best.score) best = { score, turn };
     }
-    return best?.turn ?? null;
+    return best;
   };
 
   const beginOrbit = (event: ThreeEvent<PointerEvent>) => {
@@ -344,10 +347,25 @@ function CubeObject({
     }
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId || current.moved || activeMove.current) return;
-    const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
-    if (!turn) return;
+    const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
+    if (distance < SWIPE_THRESHOLD) return;
+    const resolved = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
+    const cardinalScore = Math.max(
+      Math.abs(event.nativeEvent.clientX - current.x),
+      Math.abs(event.nativeEvent.clientY - current.y),
+    ) / distance;
     current.moved = true;
-    startTurn(turn);
+    if (resolved && resolved.score >= SWIPE_AXIS_THRESHOLD && cardinalScore >= SWIPE_CARDINAL_THRESHOLD) {
+      startTurn(resolved.turn);
+      return;
+    }
+    orbitGesture.current = {
+      x: current.x,
+      y: current.y,
+      pointerId: event.pointerId,
+      start: targetQuaternion.current.clone(),
+    };
+    updateOrbit(event);
   };
 
   const onStickerUp = (event: ThreeEvent<PointerEvent>) => {
@@ -389,10 +407,12 @@ function CubeObject({
       if (reduceMotion) {
         root.quaternion.copy(targetQuaternion.current);
         root.scale.setScalar(1);
+        root.position.y = CUBE_BASE_Y;
         introDone.current = true;
       } else {
         root.quaternion.copy(OPENING_QUATERNION).multiply(ENTRANCE_OFFSET);
         root.scale.setScalar(0.82);
+        root.position.y = CUBE_BASE_Y;
       }
     }
     if (!introDone.current) {
@@ -419,10 +439,10 @@ function CubeObject({
           Math.sin(idleElapsed.current * 0.35) * 0.012,
         );
         displayTarget.multiply(idleQuaternion.current.setFromEuler(idleEuler.current));
-        root.position.y = Math.sin(idleElapsed.current * 0.72) * 0.045;
+        root.position.y = CUBE_BASE_Y + Math.sin(idleElapsed.current * 0.72) * 0.035;
         animating = true;
       } else {
-        root.position.y *= Math.exp(-delta * 8);
+        root.position.y += (CUBE_BASE_Y - root.position.y) * (1 - Math.exp(-delta * 8));
       }
       const angle = root.quaternion.angleTo(displayTarget);
       if (angle > 0.001) {
@@ -494,6 +514,12 @@ function CubeObject({
                     geometry={stickerGeometry}
                     material={stickerMaterials[sticker.faceId]}
                     castShadow
+                    onPointerOver={() => {
+                      gl.domElement.style.cursor = "crosshair";
+                    }}
+                    onPointerOut={() => {
+                      gl.domElement.style.cursor = "grab";
+                    }}
                     onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
                     onPointerMove={onStickerMove}
                     onPointerUp={onStickerUp}
@@ -568,18 +594,20 @@ function ProductLights({ mobile }: { mobile: boolean }) {
       />
       <directionalLight position={[-5, 3, 4]} intensity={1.35} color="#b8c7e8" />
       <directionalLight position={[2, -3, -5]} intensity={0.82} color="#f0c6ae" />
-      <mesh position={[0, -1.88, -3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[26, 34]} />
-        <meshBasicMaterial color="#171d25" toneMapped={false} />
+      <mesh position={[0, -2.12, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[11, 11]} />
+        <shadowMaterial transparent opacity={0.46} />
       </mesh>
-      <mesh position={[0, -1.875, -3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[26, 34]} />
-        <shadowMaterial transparent opacity={0.52} />
-      </mesh>
-      <mesh position={[0, 2.8, -7]} receiveShadow>
+      <mesh position={[0, 2.8, -7]}>
         <planeGeometry args={[30, 14]} />
-        <meshBasicMaterial color="#11171e" toneMapped={false} />
+        <meshBasicMaterial color="#0f141b" toneMapped={false} />
       </mesh>
+      {[-5.2, 0, 5.2].map((x, index) => (
+        <mesh key={x} position={[x, 2.8, -6.98]}>
+          <planeGeometry args={[5, 13.4]} />
+          <meshBasicMaterial color={index === 1 ? "#111923" : "#121a22"} toneMapped={false} />
+        </mesh>
+      ))}
     </>
   );
 }
@@ -624,7 +652,7 @@ export function CubeStage(props: CubeStageProps) {
   return (
     <Canvas
       aria-label="Interactive portfolio cube"
-      camera={{ position: [0, 0, mobile ? 13.4 : 8.15], fov: mobile ? 42 : 38, near: 0.1, far: 50 }}
+      camera={{ position: [0, 0, mobile ? 14.2 : 8.65], fov: mobile ? 42 : 38, near: 0.1, far: 50 }}
       dpr={mobile ? [1, 1.5] : [1, 1.75]}
       frameloop="demand"
       shadows

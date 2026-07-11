@@ -132,13 +132,24 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         )}
       </div>
 
-      <div className="cube-face-access" aria-label="Portfolio sections">
+      <nav className="cube-face-access" aria-label="Portfolio sections">
         {faceOrder.map((faceId) => (
-          <button key={faceId} type="button" onClick={() => selectFace(faceId)}>
-            Open {faces[faceId].label}
+          <button
+            key={faceId}
+            type="button"
+            aria-label={`Open ${faces[faceId].label}`}
+            aria-pressed={selectedFace === faceId}
+            title={faces[faceId].label}
+            style={{
+              "--face-color": faces[faceId].color,
+              "--face-ink": faceId === "strategy" || faceId === "story" ? "#121212" : "#ffffff",
+            } as React.CSSProperties}
+            onClick={() => selectFace(faceId)}
+          >
+            <span aria-hidden="true">{faces[faceId].code}</span>
           </button>
         ))}
-      </div>
+      </nav>
 
       <aside
         className={`proof-panel${activeContent ? " proof-panel--open" : ""}`}

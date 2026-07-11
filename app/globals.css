@@ -215,31 +215,47 @@ a:focus-visible,
 }
 
 .cube-face-access {
-  position: absolute;
-  z-index: 50;
+  position: fixed;
+  bottom: 30px;
+  left: 32px;
+  z-index: 25;
+  display: flex;
+  gap: 5px;
+  transition: opacity 180ms ease, transform 240ms ease;
 }
 
 .cube-face-access button {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  width: 1px;
-  height: 1px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
   padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-  background: var(--ink);
-  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: var(--face-color);
+  color: var(--face-ink);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease;
 }
 
-.cube-face-access button:focus {
-  width: auto;
-  height: auto;
-  padding: 10px 13px;
-  overflow: visible;
-  clip: auto;
-  border-radius: 4px;
+.cube-face-access button:hover,
+.cube-face-access button[aria-pressed="true"] {
+  border-color: var(--ink);
+  transform: translateY(-2px);
+}
+
+.cube-face-access span {
+  max-width: 100%;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.cube-home--selected .cube-face-access {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 .proof-panel {
@@ -726,7 +742,19 @@ a:focus-visible,
   }
 
   .cube-controls {
+    right: 18px;
     bottom: 18px;
+    left: auto;
+    transform: none;
+  }
+
+  .cube-home--selected .cube-controls {
+    transform: translateY(10px);
+  }
+
+  .cube-face-access {
+    bottom: 18px;
+    left: 18px;
   }
 
   .proof-panel {
@@ -736,6 +764,10 @@ a:focus-visible,
     min-width: 0;
     max-width: none;
     height: 48svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     border-top: 1px solid var(--line);
     border-left: 0;
     transform: translateY(100%);
@@ -746,6 +778,8 @@ a:focus-visible,
   }
 
   .proof-panel__inner {
+    height: auto;
+    min-height: 100%;
     padding: 18px 20px 20px;
   }
 
