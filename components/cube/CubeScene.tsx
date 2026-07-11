@@ -60,6 +60,7 @@ type OrbitGesture = {
 export type CubeStageProps = {
   selectedFace: FaceId | null;
   previewFace: FaceId | null;
+  zoom: number;
   scrambleSignal: number;
   resetSignal: number;
   onSelectFace: (face: FaceId) => void;
@@ -597,6 +598,27 @@ function ProductLights({ mobile }: { mobile: boolean }) {
   );
 }
 
+function CameraZoom({ mobile, zoom }: { mobile: boolean; zoom: number }) {
+  const { camera, invalidate } = useThree();
+  const targetZ = (mobile ? 14.2 : 8.65) / zoom;
+
+  useEffect(() => {
+    invalidate();
+  }, [invalidate, targetZ]);
+
+  useFrame((state, delta) => {
+    const distance = Math.abs(camera.position.z - targetZ);
+    if (distance < 0.002) return;
+    const nextZ = distance < 0.01 ? targetZ : THREE.MathUtils.damp(camera.position.z, targetZ, 11, delta);
+    // The R3F camera is imperative Three.js renderer state.
+    // eslint-disable-next-line react-hooks/immutability
+    camera.position.z = nextZ;
+    if (nextZ !== targetZ) state.invalidate();
+  });
+
+  return null;
+}
+
 function CubeCanvasFallback() {
   return (
     <div className="cube-loading-object" aria-hidden="true">
@@ -644,6 +666,7 @@ export function CubeStage(props: CubeStageProps) {
       <fog attach="fog" args={["#0d1116", mobile ? 13 : 8, mobile ? 30 : 22]} />
       <StudioEnvironment />
       <ProductLights mobile={mobile} />
+      <CameraZoom mobile={mobile} zoom={props.zoom} />
       <CubeObject {...props} reduceMotion={reduceMotion} />
     </Canvas>
   );

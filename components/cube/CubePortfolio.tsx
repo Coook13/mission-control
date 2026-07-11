@@ -32,6 +32,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   const [scrambled, setScrambled] = useState(false);
   const [scrambleSignal, setScrambleSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const activeContent = selectedFace ? faces[selectedFace] : null;
 
   const selectFace = useCallback((face: FaceId) => {
@@ -50,6 +51,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
     setSelectedFace(null);
     setPreviewFace(null);
     setScrambled(false);
+    setZoom(1);
     setResetSignal((value) => value + 1);
     replaceFaceQuery(null);
   }, []);
@@ -69,7 +71,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   }, [previewFace, selectedFace]);
 
   const keyboardDescription = useMemo(
-    () => "Use arrow keys to rotate between faces, Enter to open the focused face, R to reset, and Escape to close a panel.",
+    () => "Use arrow keys to rotate between faces, Enter to open the focused face, plus and minus to zoom, R to reset, and Escape to close a panel.",
     [],
   );
 
@@ -99,6 +101,11 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         role="application"
         aria-label="Interactive Rubik's cube portfolio"
         aria-describedby="cube-keyboard-description"
+        onWheel={(event) => {
+          const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+          const delta = event.deltaY * multiplier;
+          setZoom((current) => Math.min(1.35, Math.max(0.72, current * Math.exp(-delta * 0.0012))));
+        }}
         onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowDown") {
             event.preventDefault();
@@ -112,6 +119,12 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           } else if (event.key.toLowerCase() === "r") {
             event.preventDefault();
             resetCube();
+          } else if (event.key === "+" || event.key === "=") {
+            event.preventDefault();
+            setZoom((current) => Math.min(1.35, current + 0.1));
+          } else if (event.key === "-" || event.key === "_") {
+            event.preventDefault();
+            setZoom((current) => Math.max(0.72, current - 0.1));
           } else if (event.key === "Escape") {
             closePanel();
           }
@@ -121,6 +134,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         <CubeStage
           selectedFace={selectedFace}
           previewFace={previewFace}
+          zoom={zoom}
           scrambleSignal={scrambleSignal}
           resetSignal={resetSignal}
           onSelectFace={selectFace}
@@ -138,25 +152,6 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           </button>
         )}
       </div>
-
-      <nav className="cube-face-access" aria-label="Portfolio sections">
-        {faceOrder.map((faceId) => (
-          <button
-            key={faceId}
-            type="button"
-            aria-label={`Open ${faces[faceId].label}`}
-            aria-pressed={selectedFace === faceId}
-            title={faces[faceId].label}
-            style={{
-              "--face-color": faces[faceId].color,
-              "--face-ink": faceId === "strategy" || faceId === "story" ? "#121212" : "#ffffff",
-            } as React.CSSProperties}
-            onClick={() => selectFace(faceId)}
-          >
-            <span aria-hidden="true">{faces[faceId].code}</span>
-          </button>
-        ))}
-      </nav>
 
       <aside
         className={`proof-panel${activeContent ? " proof-panel--open" : ""}`}

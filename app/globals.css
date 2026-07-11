@@ -239,50 +239,6 @@ a:focus-visible,
   stroke-width: 1.7;
 }
 
-.cube-face-access {
-  position: fixed;
-  bottom: 30px;
-  left: 32px;
-  z-index: 25;
-  display: flex;
-  gap: 5px;
-  transition: opacity 180ms ease, transform 240ms ease;
-}
-
-.cube-face-access button {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  background: var(--face-color);
-  color: var(--face-ink);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  cursor: pointer;
-  transition: border-color 160ms ease, transform 160ms ease;
-}
-
-.cube-face-access button:hover,
-.cube-face-access button[aria-pressed="true"] {
-  border-color: var(--ink);
-  transform: translateY(-2px);
-}
-
-.cube-face-access span {
-  max-width: 100%;
-  font-size: 7px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.cube-home--selected .cube-face-access {
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(10px);
-}
-
 .proof-panel {
   position: fixed;
   top: 0;
@@ -741,11 +697,6 @@ a:focus-visible,
 
   .cube-home--selected .cube-controls {
     transform: translateY(10px);
-  }
-
-  .cube-face-access {
-    bottom: 18px;
-    left: 18px;
   }
 
   .proof-panel {
