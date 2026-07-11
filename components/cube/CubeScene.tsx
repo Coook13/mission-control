@@ -46,6 +46,7 @@ type Gesture = {
   sticker: Sticker;
   x: number;
   y: number;
+  startedAt: number;
   pointerId: number;
   moved: boolean;
 };
@@ -101,6 +102,8 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 const MOVE_DURATION = 0.25;
 const CUBIE_STEP = 1.02;
 const SWIPE_THRESHOLD = 11;
+const FLICK_THRESHOLD = 6;
+const FLICK_DURATION = 220;
 const CUBE_BASE_Y = 0.14;
 const SCRAMBLE_MOVES: readonly CubeMove[] = [
   "R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "U'",
@@ -181,6 +184,7 @@ function CubeObject({
   const queuedMoves = useRef<QuarterTurn[]>([]);
   const lastScrambleSignal = useRef(scrambleSignal);
   const moveHistory = useRef<CubeMove[]>([]);
+  const selectionFromCenter = useRef<FaceId | null>(null);
   const gesture = useRef<Gesture | null>(null);
   const orbitGesture = useRef<OrbitGesture | null>(null);
   const targetQuaternion = useRef((selectedFace ? FACE_QUATERNIONS[selectedFace] : OPENING_QUATERNION).clone());
@@ -219,6 +223,12 @@ function CubeObject({
   })) as Record<FaceId, THREE.MeshBasicMaterial>, []);
 
   useEffect(() => {
+    if (selectedFace && selectionFromCenter.current === selectedFace) {
+      selectionFromCenter.current = null;
+      invalidate();
+      return;
+    }
+    selectionFromCenter.current = null;
     const target = selectedFace ? FACE_QUATERNIONS[selectedFace] : previewFace ? FACE_QUATERNIONS[previewFace] : OPENING_QUATERNION;
     targetQuaternion.current.copy(target);
     if (reduceMotion && rootRef.current) rootRef.current.quaternion.copy(target);
@@ -242,6 +252,7 @@ function CubeObject({
       }
     });
     targetQuaternion.current.copy(OPENING_QUATERNION);
+    selectionFromCenter.current = null;
     onScrambleChange(false);
     invalidate();
   }, [invalidate, onScrambleChange, resetSignal]);
@@ -265,11 +276,16 @@ function CubeObject({
     invalidate();
   };
 
-  const resolveSwipe = (currentGesture: Gesture, clientX: number, clientY: number) => {
+  const resolveSwipe = (
+    currentGesture: Gesture,
+    clientX: number,
+    clientY: number,
+    minimumDistance = SWIPE_THRESHOLD,
+  ) => {
     const cubie = cubiesRef.current.find((item) => item.id === currentGesture.cubieId);
     if (!cubie || !rootRef.current) return null;
     const swipe = new THREE.Vector2(clientX - currentGesture.x, -(clientY - currentGesture.y));
-    if (swipe.length() < SWIPE_THRESHOLD) return null;
+    if (swipe.length() < minimumDistance) return null;
     swipe.normalize();
 
     const normal = new THREE.Vector3(...currentGesture.sticker.normal).applyQuaternion(cubie.quaternion);
@@ -304,6 +320,23 @@ function CubeObject({
     };
   };
 
+  const selectCenter = (currentGesture: Gesture) => {
+    const root = rootRef.current;
+    const cubie = cubiesRef.current.find((item) => item.id === currentGesture.cubieId);
+    if (root && cubie) {
+      const worldNormal = new THREE.Vector3(...currentGesture.sticker.normal)
+        .applyQuaternion(cubie.quaternion)
+        .applyQuaternion(root.quaternion)
+        .normalize();
+      const focusRotation = new THREE.Quaternion().setFromUnitVectors(worldNormal, AXIS_VECTORS.z);
+      targetQuaternion.current.copy(focusRotation.multiply(root.quaternion)).normalize();
+      if (reduceMotion) root.quaternion.copy(targetQuaternion.current);
+    }
+    selectionFromCenter.current = currentGesture.sticker.faceId;
+    onSelectFace(currentGesture.sticker.faceId);
+    invalidate();
+  };
+
   const updateOrbit = (event: ThreeEvent<PointerEvent>) => {
     const current = orbitGesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
@@ -330,6 +363,7 @@ function CubeObject({
       sticker,
       x: event.nativeEvent.clientX,
       y: event.nativeEvent.clientY,
+      startedAt: event.nativeEvent.timeStamp,
       pointerId: event.pointerId,
       moved: false,
     };
@@ -355,14 +389,24 @@ function CubeObject({
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
     if (orbitGesture.current) {
-      if (!current.moved && current.sticker.center) onSelectFace(current.sticker.faceId);
+      if (!current.moved && current.sticker.center) selectCenter(current);
       gesture.current = null;
       finishOrbit(event);
       return;
     }
     event.stopPropagation();
+    const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
+    const duration = event.nativeEvent.timeStamp - current.startedAt;
+    const isFlick = distance >= FLICK_THRESHOLD && (distance >= SWIPE_THRESHOLD || duration <= FLICK_DURATION);
+    if (!current.moved && isFlick) {
+      const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY, FLICK_THRESHOLD);
+      if (turn) {
+        current.moved = true;
+        startTurn(turn);
+      }
+    }
     if (!current.moved && current.sticker.center) {
-      onSelectFace(current.sticker.faceId);
+      selectCenter(current);
     }
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
     gesture.current = null;
