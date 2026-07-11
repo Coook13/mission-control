@@ -60,6 +60,7 @@ type OrbitGesture = {
 export type CubeStageProps = {
   selectedFace: FaceId | null;
   previewFace: FaceId | null;
+  interactionMode: "orbit" | "twist";
   scrambleSignal: number;
   resetSignal: number;
   onSelectFace: (face: FaceId) => void;
@@ -100,8 +101,6 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 const MOVE_DURATION = 0.25;
 const CUBIE_STEP = 1.02;
 const SWIPE_THRESHOLD = 11;
-const SWIPE_AXIS_THRESHOLD = 0.72;
-const SWIPE_CARDINAL_THRESHOLD = 0.88;
 const TAP_THRESHOLD = 7;
 const CUBE_BASE_Y = 0.14;
 const SCRAMBLE_MOVES: readonly CubeMove[] = [
@@ -169,6 +168,7 @@ function snapVector(vector: THREE.Vector3): Vector3Tuple {
 function CubeObject({
   selectedFace,
   previewFace,
+  interactionMode,
   scrambleSignal,
   resetSignal,
   onSelectFace,
@@ -193,7 +193,7 @@ function CubeObject({
   const introStarted = useRef(false);
   const introElapsed = useRef(0);
   const introDone = useRef(false);
-  const { gl, invalidate } = useThree();
+  const { invalidate } = useThree();
 
   const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 5, 0.095), []);
   const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
@@ -219,6 +219,12 @@ function CubeObject({
     const dark = faceId === "strategy" || faceId === "story";
     return [faceId, new THREE.MeshBasicMaterial({ map: makeLabelTexture(faces[faceId].code, dark), transparent: true, toneMapped: false })];
   })) as Record<FaceId, THREE.MeshBasicMaterial>, []);
+
+  useEffect(() => {
+    gesture.current = null;
+    orbitGesture.current = null;
+    invalidate();
+  }, [interactionMode, invalidate]);
 
   useEffect(() => {
     const target = selectedFace ? FACE_QUATERNIONS[selectedFace] : previewFace ? FACE_QUATERNIONS[previewFace] : OPENING_QUATERNION;
@@ -291,11 +297,11 @@ function CubeObject({
       const score = Math.abs(dot);
       if (!best || score > best.score) best = { score, turn };
     }
-    return best;
+    return best?.turn ?? null;
   };
 
   const beginOrbit = (event: ThreeEvent<PointerEvent>) => {
-    if (activeMove.current || queuedMoves.current.length) return;
+    if (interactionMode !== "orbit" || activeMove.current || queuedMoves.current.length) return;
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
     orbitGesture.current = {
@@ -336,6 +342,10 @@ function CubeObject({
       pointerId: event.pointerId,
       moved: false,
     };
+    if (interactionMode === "orbit") {
+      beginOrbit(event);
+      return;
+    }
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
   };
@@ -349,23 +359,9 @@ function CubeObject({
     if (!current || current.pointerId !== event.pointerId || current.moved || activeMove.current) return;
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
     if (distance < SWIPE_THRESHOLD) return;
-    const resolved = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
-    const cardinalScore = Math.max(
-      Math.abs(event.nativeEvent.clientX - current.x),
-      Math.abs(event.nativeEvent.clientY - current.y),
-    ) / distance;
+    const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
     current.moved = true;
-    if (resolved && resolved.score >= SWIPE_AXIS_THRESHOLD && cardinalScore >= SWIPE_CARDINAL_THRESHOLD) {
-      startTurn(resolved.turn);
-      return;
-    }
-    orbitGesture.current = {
-      x: current.x,
-      y: current.y,
-      pointerId: event.pointerId,
-      start: targetQuaternion.current.clone(),
-    };
-    updateOrbit(event);
+    if (turn) startTurn(turn);
   };
 
   const onStickerUp = (event: ThreeEvent<PointerEvent>) => {
@@ -514,12 +510,6 @@ function CubeObject({
                     geometry={stickerGeometry}
                     material={stickerMaterials[sticker.faceId]}
                     castShadow
-                    onPointerOver={() => {
-                      gl.domElement.style.cursor = "crosshair";
-                    }}
-                    onPointerOut={() => {
-                      gl.domElement.style.cursor = "grab";
-                    }}
                     onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
                     onPointerMove={onStickerMove}
                     onPointerUp={onStickerUp}
@@ -656,6 +646,7 @@ export function CubeStage(props: CubeStageProps) {
       dpr={mobile ? [1, 1.5] : [1, 1.75]}
       frameloop="demand"
       shadows
+      style={{ cursor: props.interactionMode === "orbit" ? "grab" : "crosshair" }}
       fallback={<CubeFallback onSelectFace={props.onSelectFace} />}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {

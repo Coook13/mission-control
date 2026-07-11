@@ -214,6 +214,42 @@ a:focus-visible,
   stroke-width: 1.7;
 }
 
+.cube-interaction-lock {
+  display: flex;
+  gap: 2px;
+  padding-right: 6px;
+  border-right: 1px solid var(--line);
+}
+
+.cube-interaction-lock button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.cube-interaction-lock button:hover {
+  color: var(--ink);
+}
+
+.cube-interaction-lock button.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.cube-interaction-lock svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.7;
+}
+
 .cube-face-access {
   position: fixed;
   bottom: 30px;
@@ -743,7 +779,7 @@ a:focus-visible,
 
   .cube-controls {
     right: 18px;
-    bottom: 18px;
+    bottom: 66px;
     left: auto;
     transform: none;
   }
