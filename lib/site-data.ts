@@ -16,6 +16,7 @@ export type FaceContent = {
   id: FaceId;
   code: string;
   label: string;
+  navDescription: string;
   color: string;
   thesis: string;
   proofs: readonly FaceProof[];
@@ -58,6 +59,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "engineering",
     code: "ENG",
     label: "Engineering",
+    navDescription: "Systems & robotics",
     color: "#2457E6",
     thesis: "I turn technical problems into working systems, from vision models to robotics and aerodynamic tools.",
     proofs: [
@@ -71,6 +73,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "venture",
     code: "VEN",
     label: "Venture",
+    navDescription: "Companies & growth",
     color: "#E4473A",
     thesis: "I test demand, build the economics, and ship ventures far enough for the market to answer back.",
     proofs: [
@@ -84,6 +87,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "strategy",
     code: "STR",
     label: "Strategy",
+    navDescription: "Markets & execution",
     color: "#F2C94C",
     thesis: "I connect customer evidence, unit economics, and execution into decisions people can act on.",
     proofs: [
@@ -97,6 +101,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "finance",
     code: "FIN",
     label: "Finance",
+    navDescription: "Capital & quantitative",
     color: "#2F9E5B",
     thesis: "I use markets and capital allocation as disciplines for making clearer decisions under uncertainty.",
     proofs: [
@@ -110,6 +115,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "research",
     code: "R&D",
     label: "Research",
+    navDescription: "Sensors & materials",
     color: "#F28A2E",
     thesis: "I am comfortable working where the answer is not obvious yet: labs, prototypes, and first-principles investigation.",
     proofs: [
@@ -123,6 +129,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "story",
     code: "MICKY",
     label: "Story",
+    navDescription: "Background & CV",
     color: "#ECEDEF",
     thesis: "Bangkok raised, Manchester trained. I am at my best where engineering meets a P&L.",
     proofs: [

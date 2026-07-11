@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
@@ -10,13 +10,13 @@ import {
   FACE_NORMALS,
   moveToTurn,
   rotateTuple,
-  swipeToTurn,
   validateMoveSequence,
   type Axis,
   type CubeMove,
   type QuarterTurn,
   type Vector3Tuple,
 } from "./cube-model";
+import { classifyGestureIntent, selectProjectedTurn, TAP_SLOP, type GestureIntent } from "./cube-interaction";
 
 type Sticker = {
   faceId: FaceId;
@@ -48,8 +48,7 @@ type Gesture = {
   y: number;
   startedAt: number;
   pointerId: number;
-  moved: boolean;
-  pendingTurn: QuarterTurn | null;
+  intent: GestureIntent;
 };
 
 type OrbitGesture = {
@@ -57,16 +56,22 @@ type OrbitGesture = {
   y: number;
   pointerId: number;
   start: THREE.Quaternion;
+  moved: boolean;
 };
+
+export type FaceFocusRequest = { faceId: FaceId; requestId: number };
 
 export type CubeStageProps = {
   selectedFace: FaceId | null;
   previewFace: FaceId | null;
   zoom: number;
+  focusRequest: FaceFocusRequest | null;
+  playIntro: boolean;
   scrambleSignal: number;
   resetSignal: number;
   onSelectFace: (face: FaceId) => void;
   onScrambleChange: (scrambled: boolean) => void;
+  onOrbitStart: () => void;
 };
 
 type CubeObjectProps = CubeStageProps & { reduceMotion: boolean };
@@ -77,18 +82,8 @@ const AXIS_VECTORS: Record<Axis, THREE.Vector3> = {
   z: new THREE.Vector3(0, 0, 1),
 };
 
-const PRIMARY_AXES = [
-  new THREE.Vector3(1, 0, 0),
-  new THREE.Vector3(0, 1, 0),
-  new THREE.Vector3(0, 0, 1),
-];
-
 const OPENING_QUATERNION = new THREE.Quaternion().setFromEuler(
   new THREE.Euler(THREE.MathUtils.degToRad(25), THREE.MathUtils.degToRad(-35), 0, "XYZ"),
-);
-
-const ENTRANCE_OFFSET = new THREE.Quaternion().setFromEuler(
-  new THREE.Euler(THREE.MathUtils.degToRad(-12), THREE.MathUtils.degToRad(28), THREE.MathUtils.degToRad(-7)),
 );
 
 const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
@@ -101,10 +96,8 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 };
 
 const MOVE_DURATION = 0.34;
+const INTRO_DURATION = 2.1;
 const CUBIE_STEP = 1.02;
-const SWIPE_THRESHOLD = 11;
-const FLICK_THRESHOLD = 6;
-const FLICK_DURATION = 220;
 const CUBE_BASE_Y = 0.14;
 const DESKTOP_CAMERA_Z = 9.35;
 const MOBILE_CAMERA_Z = 15.2;
@@ -173,10 +166,13 @@ function snapVector(vector: THREE.Vector3): Vector3Tuple {
 function CubeObject({
   selectedFace,
   previewFace,
+  focusRequest,
+  playIntro,
   scrambleSignal,
   resetSignal,
   onSelectFace,
   onScrambleChange,
+  onOrbitStart,
   reduceMotion,
 }: CubeObjectProps) {
   const rootRef = useRef<THREE.Group>(null);
@@ -187,6 +183,7 @@ function CubeObject({
   const queuedMoves = useRef<QuarterTurn[]>([]);
   const lastScrambleSignal = useRef(scrambleSignal);
   const moveHistory = useRef<CubeMove[]>([]);
+  const pendingFocus = useRef<FaceId | null>(null);
   const selectionFromCenter = useRef<FaceId | null>(null);
   const gesture = useRef<Gesture | null>(null);
   const orbitGesture = useRef<OrbitGesture | null>(null);
@@ -198,7 +195,11 @@ function CubeObject({
   const introStarted = useRef(false);
   const introElapsed = useRef(0);
   const introDone = useRef(false);
-  const { gl, invalidate } = useThree();
+  const introBaseQuaternion = useRef(OPENING_QUATERNION.clone());
+  const introYaw = useRef(new THREE.Quaternion());
+  const introPitch = useRef(new THREE.Quaternion());
+  const lastFocusRequest = useRef(focusRequest?.requestId ?? -1);
+  const { camera, gl, invalidate } = useThree();
 
   const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 5, 0.095), []);
   const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
@@ -225,6 +226,38 @@ function CubeObject({
     return [faceId, new THREE.MeshBasicMaterial({ map: makeLabelTexture(faces[faceId].code, dark), transparent: true, toneMapped: false })];
   })) as Record<FaceId, THREE.MeshBasicMaterial>, []);
 
+  const focusFace = useCallback((faceId: FaceId, notify: boolean) => {
+    const root = rootRef.current;
+    if (root && !introDone.current) {
+      introDone.current = true;
+      root.scale.setScalar(1);
+    }
+    const cubie = cubiesRef.current.find((item) => item.stickers.some((sticker) => sticker.center && sticker.faceId === faceId));
+    const sticker = cubie?.stickers.find((item) => item.center && item.faceId === faceId);
+    if (root && cubie && sticker) {
+      const worldNormal = new THREE.Vector3(...sticker.normal)
+        .applyQuaternion(cubie.quaternion)
+        .applyQuaternion(root.quaternion)
+        .normalize();
+      const worldUp = new THREE.Vector3(0, 1, 0)
+        .applyEuler(stickerRotation(sticker.normal))
+        .applyQuaternion(cubie.quaternion)
+        .applyQuaternion(root.quaternion)
+        .normalize();
+      const focusRotation = new THREE.Quaternion().setFromUnitVectors(worldNormal, AXIS_VECTORS.z);
+      const focusedUp = worldUp.applyQuaternion(focusRotation);
+      const roll = new THREE.Quaternion().setFromAxisAngle(
+        AXIS_VECTORS.z,
+        Math.atan2(focusedUp.x, focusedUp.y),
+      );
+      targetQuaternion.current.copy(roll.multiply(focusRotation).multiply(root.quaternion)).normalize();
+      if (reduceMotion) root.quaternion.copy(targetQuaternion.current);
+    }
+    selectionFromCenter.current = faceId;
+    if (notify) onSelectFace(faceId);
+    invalidate();
+  }, [invalidate, onSelectFace, reduceMotion]);
+
   useEffect(() => {
     if (selectedFace && selectionFromCenter.current === selectedFace) {
       selectionFromCenter.current = null;
@@ -239,10 +272,32 @@ function CubeObject({
   }, [invalidate, previewFace, reduceMotion, selectedFace]);
 
   useEffect(() => {
+    if (!focusRequest || focusRequest.requestId === lastFocusRequest.current) return;
+    lastFocusRequest.current = focusRequest.requestId;
+    if (activeMove.current || queuedMoves.current.length) {
+      queuedMoves.current = [];
+      pendingFocus.current = focusRequest.faceId;
+      invalidate();
+    } else {
+      focusFace(focusRequest.faceId, false);
+    }
+  }, [focusFace, focusRequest, invalidate]);
+
+  useEffect(() => {
+    if (!playIntro) return;
+    introStarted.current = false;
+    introElapsed.current = 0;
+    introDone.current = false;
+    invalidate();
+  }, [invalidate, playIntro]);
+
+  useEffect(() => {
     if (resetSignal === 0) return;
     activeMove.current = null;
     queuedMoves.current = [];
     gesture.current = null;
+    orbitGesture.current = null;
+    pendingFocus.current = null;
     moveHistory.current = [];
     const solved = createSolvedCubies();
     cubiesRef.current.forEach((cubie, index) => {
@@ -279,40 +334,38 @@ function CubeObject({
     invalidate();
   };
 
-  const resolveSwipe = (
-    currentGesture: Gesture,
-    clientX: number,
-    clientY: number,
-    minimumDistance = SWIPE_THRESHOLD,
-  ) => {
+  const resolveSwipe = (currentGesture: Gesture, clientX: number, clientY: number) => {
     const cubie = cubiesRef.current.find((item) => item.id === currentGesture.cubieId);
-    if (!cubie || !rootRef.current) return null;
-    const swipe = new THREE.Vector2(clientX - currentGesture.x, -(clientY - currentGesture.y));
-    if (swipe.length() < minimumDistance) return null;
-    swipe.normalize();
-
+    const root = rootRef.current;
+    if (!cubie || !root) return null;
     const normal = new THREE.Vector3(...currentGesture.sticker.normal).applyQuaternion(cubie.quaternion);
     const snappedNormal = snapVector(normal);
-    let best: { score: number; turn: QuarterTurn } | null = null;
-    for (const axis of PRIMARY_AXES) {
-      if (Math.abs(axis.dot(normal)) > 0.1) continue;
-      const projected = axis.clone().applyQuaternion(rootRef.current.quaternion);
-      const screen = new THREE.Vector2(projected.x, projected.y);
-      if (screen.lengthSq() < 0.0001) continue;
-      screen.normalize();
-      const dot = screen.dot(swipe);
-      const tangent = axis.clone().multiplyScalar(dot >= 0 ? 1 : -1);
-      const tangentTuple = snapVector(tangent);
-      const turn = swipeToTurn(snappedNormal, tangentTuple, cubie.position);
-      if (!turn) continue;
-      const score = Math.abs(dot);
-      if (!best || score > best.score) best = { score, turn };
-    }
-    return best?.turn ?? null;
+    return selectProjectedTurn({
+      cubiePosition: cubie.position,
+      stickerNormal: snappedNormal,
+      swipe: [clientX - currentGesture.x, -(clientY - currentGesture.y)],
+      project: (point) => {
+        const projected = new THREE.Vector3(...point)
+          .multiplyScalar(CUBIE_STEP * root.scale.x)
+          .applyQuaternion(root.quaternion)
+          .add(root.position)
+          .project(camera);
+        return [projected.x, projected.y];
+      },
+    });
+  };
+
+  const cancelIntro = () => {
+    const root = rootRef.current;
+    if (!root || introDone.current) return;
+    introDone.current = true;
+    targetQuaternion.current.copy(root.quaternion);
+    root.scale.setScalar(1);
   };
 
   const beginOrbit = (event: ThreeEvent<PointerEvent>) => {
     if (activeMove.current || queuedMoves.current.length) return;
+    cancelIntro();
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
     orbitGesture.current = {
@@ -320,24 +373,8 @@ function CubeObject({
       y: event.nativeEvent.clientY,
       pointerId: event.pointerId,
       start: targetQuaternion.current.clone(),
+      moved: false,
     };
-  };
-
-  const selectCenter = (currentGesture: Gesture) => {
-    const root = rootRef.current;
-    const cubie = cubiesRef.current.find((item) => item.id === currentGesture.cubieId);
-    if (root && cubie) {
-      const worldNormal = new THREE.Vector3(...currentGesture.sticker.normal)
-        .applyQuaternion(cubie.quaternion)
-        .applyQuaternion(root.quaternion)
-        .normalize();
-      const focusRotation = new THREE.Quaternion().setFromUnitVectors(worldNormal, AXIS_VECTORS.z);
-      targetQuaternion.current.copy(focusRotation.multiply(root.quaternion)).normalize();
-      if (reduceMotion) root.quaternion.copy(targetQuaternion.current);
-    }
-    selectionFromCenter.current = currentGesture.sticker.faceId;
-    onSelectFace(currentGesture.sticker.faceId);
-    invalidate();
   };
 
   const updateOrbit = (event: ThreeEvent<PointerEvent>) => {
@@ -345,6 +382,10 @@ function CubeObject({
     if (!current || current.pointerId !== event.pointerId) return;
     const dx = event.nativeEvent.clientX - current.x;
     const dy = event.nativeEvent.clientY - current.y;
+    if (!current.moved && Math.hypot(dx, dy) > TAP_SLOP) {
+      current.moved = true;
+      onOrbitStart();
+    }
     const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.007);
     const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.007);
     targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
@@ -359,8 +400,21 @@ function CubeObject({
     orbitGesture.current = null;
   };
 
+  const beginStickerOrbit = (current: Gesture) => {
+    cancelIntro();
+    current.intent = "orbit";
+    orbitGesture.current = {
+      x: current.x,
+      y: current.y,
+      pointerId: current.pointerId,
+      start: targetQuaternion.current.clone(),
+      moved: false,
+    };
+  };
+
   const onStickerDown = (event: ThreeEvent<PointerEvent>, cubie: Cubie, sticker: Sticker) => {
     if (activeMove.current || queuedMoves.current.length) return;
+    cancelIntro();
     gesture.current = {
       cubieId: cubie.id,
       sticker,
@@ -368,8 +422,7 @@ function CubeObject({
       y: event.nativeEvent.clientY,
       startedAt: event.nativeEvent.timeStamp,
       pointerId: event.pointerId,
-      moved: false,
-      pendingTurn: null,
+      intent: "pending",
     };
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
@@ -381,13 +434,13 @@ function CubeObject({
       return;
     }
     const current = gesture.current;
-    if (!current || current.pointerId !== event.pointerId || current.moved || activeMove.current) return;
+    if (!current || current.pointerId !== event.pointerId || activeMove.current) return;
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    if (distance < SWIPE_THRESHOLD) return;
-    const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
-    if (turn) {
-      current.moved = true;
-      current.pendingTurn = turn;
+    const duration = event.nativeEvent.timeStamp - current.startedAt;
+    const intent = classifyGestureIntent({ distance, duration, released: false });
+    if (intent === "orbit") {
+      beginStickerOrbit(current);
+      updateOrbit(event);
     }
   };
 
@@ -395,7 +448,7 @@ function CubeObject({
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
     if (orbitGesture.current) {
-      if (!current.moved && current.sticker.center) selectCenter(current);
+      updateOrbit(event);
       gesture.current = null;
       finishOrbit(event);
       return;
@@ -403,20 +456,27 @@ function CubeObject({
     event.stopPropagation();
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
     const duration = event.nativeEvent.timeStamp - current.startedAt;
-    const isFlick = distance >= FLICK_THRESHOLD && (distance >= SWIPE_THRESHOLD || duration <= FLICK_DURATION);
-    if (!current.moved && isFlick) {
-      const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY, FLICK_THRESHOLD);
-      if (turn) {
-        current.moved = true;
-        current.pendingTurn = turn;
-      }
-    }
-    if (current.pendingTurn) startTurn(current.pendingTurn);
-    if (!current.moved && current.sticker.center) {
-      selectCenter(current);
+    const intent = classifyGestureIntent({ distance, duration, released: true });
+    if (intent === "flick") {
+      const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
+      if (turn) startTurn(turn);
+    } else if (intent === "tap" && current.sticker.center) {
+      focusFace(current.sticker.faceId, true);
+    } else if (intent === "orbit") {
+      beginStickerOrbit(current);
+      updateOrbit(event);
+      orbitGesture.current = null;
     }
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
     gesture.current = null;
+  };
+
+  const onStickerCancel = (event: ThreeEvent<PointerEvent>) => {
+    if (gesture.current?.pointerId !== event.pointerId) return;
+    event.stopPropagation();
+    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+    gesture.current = null;
+    orbitGesture.current = null;
   };
 
   useFrame((state, delta) => {
@@ -435,27 +495,38 @@ function CubeObject({
       animating = true;
     }
 
+    if (!activeMove.current && queuedMoves.current.length === 0 && pendingFocus.current) {
+      const face = pendingFocus.current;
+      pendingFocus.current = null;
+      focusFace(face, false);
+      animating = true;
+    }
+
     if (!introStarted.current) {
       introStarted.current = true;
-      if (reduceMotion) {
+      if (reduceMotion || !playIntro) {
         root.quaternion.copy(targetQuaternion.current);
         root.scale.setScalar(1);
         root.position.y = CUBE_BASE_Y;
         introDone.current = true;
       } else {
-        root.quaternion.copy(OPENING_QUATERNION).multiply(ENTRANCE_OFFSET);
-        root.scale.setScalar(0.82);
+        introBaseQuaternion.current.copy(targetQuaternion.current);
+        root.quaternion.copy(introBaseQuaternion.current);
+        root.scale.setScalar(0.9);
         root.position.y = CUBE_BASE_Y;
       }
     }
     if (!introDone.current) {
-      introElapsed.current += delta;
-      const progress = Math.min(introElapsed.current / 0.65, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      root.quaternion.slerp(targetQuaternion.current, 0.12 + eased * 0.12);
-      root.scale.setScalar(0.82 + eased * 0.18);
+      introElapsed.current += Math.min(delta, 1 / 30);
+      const progress = Math.min(introElapsed.current / INTRO_DURATION, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      introYaw.current.setFromAxisAngle(AXIS_VECTORS.y, eased * Math.PI * 2);
+      introPitch.current.setFromAxisAngle(AXIS_VECTORS.x, Math.sin(eased * Math.PI * 2) * 0.48);
+      root.quaternion.copy(introYaw.current).multiply(introPitch.current).multiply(introBaseQuaternion.current);
+      root.scale.setScalar(0.9 + Math.min(progress / 0.22, 1) * 0.1);
       introDone.current = progress >= 1;
-      animating = !introDone.current || !reduceMotion;
+      if (introDone.current) root.quaternion.copy(targetQuaternion.current);
+      animating = !introDone.current;
     } else {
       const idleActive = !reduceMotion
         && !selectedFace
@@ -525,7 +596,7 @@ function CubeObject({
       }
     }
 
-    if (animating || orbitGesture.current || queuedMoves.current.length) state.invalidate();
+    if (animating || orbitGesture.current || queuedMoves.current.length || pendingFocus.current) state.invalidate();
   });
 
   return (
@@ -557,7 +628,7 @@ function CubeObject({
                   onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
                   onPointerMove={onStickerMove}
                   onPointerUp={onStickerUp}
-                  onPointerCancel={onStickerUp}
+                  onPointerCancel={onStickerCancel}
                 >
                   <mesh
                     geometry={stickerGeometry}

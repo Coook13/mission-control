@@ -11,6 +11,7 @@ import {
   type CubeMove,
   type Vector3Tuple,
 } from "./cube-model";
+import { classifyGestureIntent, selectProjectedTurn } from "./cube-interaction";
 
 const solved: Vector3Tuple[] = [];
 for (const x of [-1, 0, 1]) {
@@ -84,5 +85,49 @@ describe("cube move model", () => {
   it("validates middle-slice notation with cubing KPuzzle", async () => {
     const transformation = await validateMoveSequence(["M", "E'", "S"]);
     expect(transformation.isIdentityTransformation()).toBe(false);
+  });
+});
+
+describe("cube interaction", () => {
+  it("separates taps, flicks, and continuous drags", () => {
+    expect(classifyGestureIntent({ distance: 4, duration: 90, released: true })).toBe("tap");
+    expect(classifyGestureIntent({ distance: 28, duration: 90, released: true })).toBe("flick");
+    expect(classifyGestureIntent({ distance: 28, duration: 340, released: false })).toBe("orbit");
+    expect(classifyGestureIntent({ distance: 20, duration: 240, released: true })).toBe("orbit");
+  });
+
+  it("moves the finger-following outer slice instead of the projected axis", () => {
+    const turn = selectProjectedTurn({
+      cubiePosition: [1, 0, 1],
+      stickerNormal: [1, 0, 0],
+      swipe: [0, 1],
+      project: ([x, y]) => [x, y],
+    });
+    expect(turn?.axis).toBe("z");
+    expect(turn?.layer).toBe(1);
+  });
+
+  it("selects a middle slice only when that finger-following band is central", () => {
+    const turn = selectProjectedTurn({
+      cubiePosition: [1, 0, 1],
+      stickerNormal: [0, 0, 1],
+      swipe: [1, 0],
+      project: ([x, y]) => [x, y],
+    });
+    expect(turn?.axis).toBe("y");
+    expect(turn?.layer).toBe(0);
+  });
+
+  it("always chooses a layer containing the touched cubie", () => {
+    const position: Vector3Tuple = [-1, 1, 0];
+    const turn = selectProjectedTurn({
+      cubiePosition: position,
+      stickerNormal: [0, 1, 0],
+      swipe: [-0.8, 0.2],
+      project: ([x, y, z]) => [x * 0.8 + z * 0.5, y],
+    });
+    const axisIndex = turn?.axis === "x" ? 0 : turn?.axis === "y" ? 1 : 2;
+    expect(turn).not.toBeNull();
+    expect(position[axisIndex]).toBe(turn?.layer);
   });
 });
