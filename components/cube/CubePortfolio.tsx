@@ -3,13 +3,20 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { ExternalLink, Layers3, Mail, Orbit, RefreshCw, Shuffle, X } from "lucide-react";
+import { ExternalLink, Mail, RefreshCw, Shuffle, X } from "lucide-react";
 import { faceOrder, faces, profile, type FaceId } from "@/lib/site-data";
-import { CubeFallback } from "./CubeScene";
+
+function CubeLoading() {
+  return (
+    <div className="cube-loading-object" aria-hidden="true">
+      {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
+    </div>
+  );
+}
 
 const CubeStage = dynamic(() => import("./CubeScene").then((module) => module.CubeStage), {
   ssr: false,
-  loading: () => <CubeFallback onSelectFace={() => undefined} />,
+  loading: () => <CubeLoading />,
 });
 
 type CubePortfolioProps = { initialFace: FaceId | null };
@@ -25,7 +32,6 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   const [scrambled, setScrambled] = useState(false);
   const [scrambleSignal, setScrambleSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
-  const [interactionMode, setInteractionMode] = useState<"orbit" | "twist">("orbit");
   const activeContent = selectedFace ? faces[selectedFace] : null;
 
   const selectFace = useCallback((face: FaceId) => {
@@ -115,7 +121,6 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         <CubeStage
           selectedFace={selectedFace}
           previewFace={previewFace}
-          interactionMode={interactionMode}
           scrambleSignal={scrambleSignal}
           resetSignal={resetSignal}
           onSelectFace={selectFace}
@@ -124,28 +129,6 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
       </section>
 
       <div className="cube-controls" aria-label="Cube controls">
-        <div className="cube-interaction-lock" role="group" aria-label="Cube interaction">
-          <button
-            className={interactionMode === "orbit" ? "is-active" : undefined}
-            type="button"
-            onClick={() => setInteractionMode("orbit")}
-            aria-label="Rotate cube"
-            aria-pressed={interactionMode === "orbit"}
-            title="Rotate cube"
-          >
-            <Orbit aria-hidden="true" />
-          </button>
-          <button
-            className={interactionMode === "twist" ? "is-active" : undefined}
-            type="button"
-            onClick={() => setInteractionMode("twist")}
-            aria-label="Twist layers"
-            aria-pressed={interactionMode === "twist"}
-            title="Twist layers"
-          >
-            <Layers3 aria-hidden="true" />
-          </button>
-        </div>
         <button className="cube-control-icon" type="button" onClick={scrambleCube} aria-label="Scramble cube" title="Scramble cube">
           <Shuffle aria-hidden="true" />
         </button>

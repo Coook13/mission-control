@@ -60,7 +60,6 @@ type OrbitGesture = {
 export type CubeStageProps = {
   selectedFace: FaceId | null;
   previewFace: FaceId | null;
-  interactionMode: "orbit" | "twist";
   scrambleSignal: number;
   resetSignal: number;
   onSelectFace: (face: FaceId) => void;
@@ -168,7 +167,6 @@ function snapVector(vector: THREE.Vector3): Vector3Tuple {
 function CubeObject({
   selectedFace,
   previewFace,
-  interactionMode,
   scrambleSignal,
   resetSignal,
   onSelectFace,
@@ -193,7 +191,7 @@ function CubeObject({
   const introStarted = useRef(false);
   const introElapsed = useRef(0);
   const introDone = useRef(false);
-  const { invalidate } = useThree();
+  const { gl, invalidate } = useThree();
 
   const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 5, 0.095), []);
   const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
@@ -219,12 +217,6 @@ function CubeObject({
     const dark = faceId === "strategy" || faceId === "story";
     return [faceId, new THREE.MeshBasicMaterial({ map: makeLabelTexture(faces[faceId].code, dark), transparent: true, toneMapped: false })];
   })) as Record<FaceId, THREE.MeshBasicMaterial>, []);
-
-  useEffect(() => {
-    gesture.current = null;
-    orbitGesture.current = null;
-    invalidate();
-  }, [interactionMode, invalidate]);
 
   useEffect(() => {
     const target = selectedFace ? FACE_QUATERNIONS[selectedFace] : previewFace ? FACE_QUATERNIONS[previewFace] : OPENING_QUATERNION;
@@ -301,7 +293,7 @@ function CubeObject({
   };
 
   const beginOrbit = (event: ThreeEvent<PointerEvent>) => {
-    if (interactionMode !== "orbit" || activeMove.current || queuedMoves.current.length) return;
+    if (activeMove.current || queuedMoves.current.length) return;
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
     orbitGesture.current = {
@@ -342,10 +334,6 @@ function CubeObject({
       pointerId: event.pointerId,
       moved: false,
     };
-    if (interactionMode === "orbit") {
-      beginOrbit(event);
-      return;
-    }
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
   };
@@ -510,6 +498,12 @@ function CubeObject({
                     geometry={stickerGeometry}
                     material={stickerMaterials[sticker.faceId]}
                     castShadow
+                    onPointerOver={() => {
+                      gl.domElement.style.cursor = "crosshair";
+                    }}
+                    onPointerOut={() => {
+                      gl.domElement.style.cursor = "grab";
+                    }}
                     onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
                     onPointerMove={onStickerMove}
                     onPointerUp={onStickerUp}
@@ -602,20 +596,10 @@ function ProductLights({ mobile }: { mobile: boolean }) {
   );
 }
 
-export function CubeFallback({ onSelectFace }: Pick<CubeStageProps, "onSelectFace">) {
+function CubeCanvasFallback() {
   return (
-    <div className="cube-fallback" aria-label="Portfolio sections">
-      {faceOrder.map((faceId) => (
-        <button
-          key={faceId}
-          type="button"
-          style={{ "--face-color": faces[faceId].color } as React.CSSProperties}
-          onClick={() => onSelectFace(faceId)}
-        >
-          <span>{faces[faceId].code}</span>
-          <small>{faces[faceId].label}</small>
-        </button>
-      ))}
+    <div className="cube-loading-object" aria-hidden="true">
+      {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
     </div>
   );
 }
@@ -646,8 +630,7 @@ export function CubeStage(props: CubeStageProps) {
       dpr={mobile ? [1, 1.5] : [1, 1.75]}
       frameloop="demand"
       shadows
-      style={{ cursor: props.interactionMode === "orbit" ? "grab" : "crosshair" }}
-      fallback={<CubeFallback onSelectFace={props.onSelectFace} />}
+      fallback={<CubeCanvasFallback />}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.outputColorSpace = THREE.SRGBColorSpace;

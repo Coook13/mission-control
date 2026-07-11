@@ -161,6 +161,31 @@ a:focus-visible,
   transform: translateX(-18vw) scale(0.9);
 }
 
+.cube-loading-object {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: clamp(150px, 24vw, 220px);
+  aspect-ratio: 1;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #2d3138;
+  border-radius: 8px;
+  background: #07090c;
+  box-shadow: 26px 32px 45px rgba(0, 0, 0, 0.32);
+  opacity: 0.94;
+  transform: translate(-50%, -50%) rotate(-5deg);
+}
+
+.cube-loading-object span {
+  min-width: 0;
+  border-radius: 4px;
+  background: #2457e6;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
 .cube-control-icon,
 .proof-panel__topline button {
   display: inline-grid;
@@ -211,42 +236,6 @@ a:focus-visible,
 .cube-control-icon svg {
   width: 17px;
   height: 17px;
-  stroke-width: 1.7;
-}
-
-.cube-interaction-lock {
-  display: flex;
-  gap: 2px;
-  padding-right: 6px;
-  border-right: 1px solid var(--line);
-}
-
-.cube-interaction-lock button {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease;
-}
-
-.cube-interaction-lock button:hover {
-  color: var(--ink);
-}
-
-.cube-interaction-lock button.is-active {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.cube-interaction-lock svg {
-  width: 18px;
-  height: 18px;
   stroke-width: 1.7;
 }
 
@@ -438,40 +427,6 @@ a:focus-visible,
 
 .proof-panel__action:hover span {
   transform: translate(3px, -3px);
-}
-
-.cube-fallback {
-  position: absolute;
-  inset: 20% 24%;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  align-content: center;
-}
-
-.cube-fallback button {
-  min-height: 120px;
-  padding: 16px;
-  border: 8px solid var(--ink);
-  border-radius: 4px;
-  background: var(--face-color);
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.cube-fallback button span,
-.cube-fallback button small {
-  display: block;
-}
-
-.cube-fallback button span {
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.cube-fallback button small {
-  margin-top: 8px;
-  font-size: 11px;
 }
 
 /* Case studies */
@@ -779,7 +734,7 @@ a:focus-visible,
 
   .cube-controls {
     right: 18px;
-    bottom: 66px;
+    bottom: 18px;
     left: auto;
     transform: none;
   }
@@ -867,16 +822,6 @@ a:focus-visible,
     margin-top: 12px;
     padding: 9px 0 6px;
     font-size: 12px;
-  }
-
-  .cube-fallback {
-    inset: 23% 12% 12%;
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .cube-fallback button {
-    min-height: 78px;
-    border-width: 5px;
   }
 
   .case-header {
