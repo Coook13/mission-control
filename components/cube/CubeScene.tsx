@@ -49,6 +49,7 @@ type Gesture = {
   startedAt: number;
   pointerId: number;
   moved: boolean;
+  pendingTurn: QuarterTurn | null;
 };
 
 type OrbitGesture = {
@@ -99,12 +100,14 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
   story: new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, -Math.PI / 2),
 };
 
-const MOVE_DURATION = 0.25;
+const MOVE_DURATION = 0.34;
 const CUBIE_STEP = 1.02;
 const SWIPE_THRESHOLD = 11;
 const FLICK_THRESHOLD = 6;
 const FLICK_DURATION = 220;
 const CUBE_BASE_Y = 0.14;
+const DESKTOP_CAMERA_Z = 9.35;
+const MOBILE_CAMERA_Z = 15.2;
 const SCRAMBLE_MOVES: readonly CubeMove[] = [
   "R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "U'",
 ];
@@ -366,6 +369,7 @@ function CubeObject({
       startedAt: event.nativeEvent.timeStamp,
       pointerId: event.pointerId,
       moved: false,
+      pendingTurn: null,
     };
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
@@ -381,8 +385,10 @@ function CubeObject({
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
     if (distance < SWIPE_THRESHOLD) return;
     const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
-    current.moved = true;
-    if (turn) startTurn(turn);
+    if (turn) {
+      current.moved = true;
+      current.pendingTurn = turn;
+    }
   };
 
   const onStickerUp = (event: ThreeEvent<PointerEvent>) => {
@@ -402,9 +408,10 @@ function CubeObject({
       const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY, FLICK_THRESHOLD);
       if (turn) {
         current.moved = true;
-        startTurn(turn);
+        current.pendingTurn = turn;
       }
     }
+    if (current.pendingTurn) startTurn(current.pendingTurn);
     if (!current.moved && current.sticker.center) {
       selectCenter(current);
     }
@@ -481,9 +488,11 @@ function CubeObject({
 
     const move = activeMove.current;
     if (move) {
-      move.elapsed += delta;
+      move.elapsed += Math.min(delta, 1 / 30);
       const progress = Math.min(move.elapsed / (reduceMotion ? 0.01 : MOVE_DURATION), 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       const turnQuaternion = new THREE.Quaternion().setFromAxisAngle(
         AXIS_VECTORS[move.turn.axis],
         move.turn.direction * Math.PI * 0.5 * eased,
@@ -644,7 +653,7 @@ function ProductLights({ mobile }: { mobile: boolean }) {
 
 function CameraZoom({ mobile, zoom }: { mobile: boolean; zoom: number }) {
   const { camera, invalidate } = useThree();
-  const targetZ = (mobile ? 14.2 : 8.65) / zoom;
+  const targetZ = (mobile ? MOBILE_CAMERA_Z : DESKTOP_CAMERA_Z) / zoom;
 
   useEffect(() => {
     invalidate();
@@ -693,7 +702,7 @@ export function CubeStage(props: CubeStageProps) {
   return (
     <Canvas
       aria-label="Interactive portfolio cube"
-      camera={{ position: [0, 0, mobile ? 14.2 : 8.65], fov: mobile ? 42 : 38, near: 0.1, far: 50 }}
+      camera={{ position: [0, 0, mobile ? MOBILE_CAMERA_Z : DESKTOP_CAMERA_Z], fov: mobile ? 42 : 38, near: 0.1, far: 50 }}
       dpr={mobile ? [1, 1.5] : [1, 1.75]}
       frameloop="demand"
       shadows
