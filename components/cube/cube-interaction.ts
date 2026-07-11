@@ -2,9 +2,9 @@ import { turnToMove, type Axis, type Direction, type QuarterTurn, type Vector3Tu
 
 export const TAP_SLOP = 10;
 export const FLICK_MIN_DISTANCE = 12;
-export const FLICK_MAX_DURATION = 190;
-export const FLICK_MIN_VELOCITY = 0.46;
-export const ORBIT_COMMIT_DISTANCE = 52;
+export const FLICK_MAX_DURATION = 280;
+export const FLICK_MIN_VELOCITY = 0.18;
+export const ORBIT_COMMIT_DISTANCE = 44;
 
 export type GestureIntent = "pending" | "tap" | "orbit" | "flick";
 
