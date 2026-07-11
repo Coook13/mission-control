@@ -97,7 +97,7 @@ describe("cube interaction", () => {
     expect(classifyGestureIntent({ distance: 60, duration: 45, released: false })).toBe("orbit");
     expect(classifyGestureIntent({ distance: 60, duration: 45, released: true })).toBe("orbit");
     expect(classifyGestureIntent({ distance: 28, duration: 340, released: false })).toBe("orbit");
-    expect(classifyGestureIntent({ distance: 20, duration: 240, released: true })).toBe("orbit");
+    expect(classifyGestureIntent({ distance: 20, duration: 340, released: true })).toBe("orbit");
   });
 
   it("moves the finger-following outer slice instead of the projected axis", () => {

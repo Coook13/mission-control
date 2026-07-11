@@ -2,9 +2,9 @@ import { turnToMove, type Axis, type Direction, type QuarterTurn, type Vector3Tu
 
 export const TAP_SLOP = 10;
 export const FLICK_MIN_DISTANCE = 12;
-export const FLICK_MAX_DURATION = 280;
-export const FLICK_MIN_VELOCITY = 0.18;
+export const FLICK_MAX_DURATION = 300;
 export const ORBIT_COMMIT_DISTANCE = 44;
+export const ORBIT_HOLD_DURATION = 180;
 
 export type GestureIntent = "pending" | "tap" | "orbit" | "flick";
 
@@ -22,18 +22,16 @@ export function classifyGestureIntent({
   if (startedOnStage) return distance > TAP_SLOP ? "orbit" : "pending";
   if (released && distance <= TAP_SLOP) return "tap";
 
-  const velocity = distance / Math.max(duration, 1);
   if (released) {
     return distance >= FLICK_MIN_DISTANCE
       && distance < ORBIT_COMMIT_DISTANCE
       && duration <= FLICK_MAX_DURATION
-      && velocity >= FLICK_MIN_VELOCITY
       ? "flick"
       : "orbit";
   }
 
   if (distance >= ORBIT_COMMIT_DISTANCE
-    || (distance >= FLICK_MIN_DISTANCE && (duration > FLICK_MAX_DURATION || velocity < FLICK_MIN_VELOCITY))) {
+    || (distance >= FLICK_MIN_DISTANCE && duration >= ORBIT_HOLD_DURATION)) {
     return "orbit";
   }
   return "pending";
