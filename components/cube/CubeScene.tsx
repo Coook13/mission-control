@@ -100,7 +100,6 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 const MOVE_DURATION = 0.25;
 const CUBIE_STEP = 1.02;
 const SWIPE_THRESHOLD = 11;
-const TAP_THRESHOLD = 7;
 const CUBE_BASE_Y = 0.14;
 const SCRAMBLE_MOVES: readonly CubeMove[] = [
   "R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "U'",
@@ -309,7 +308,6 @@ function CubeObject({
     if (!current || current.pointerId !== event.pointerId) return;
     const dx = event.nativeEvent.clientX - current.x;
     const dy = event.nativeEvent.clientY - current.y;
-    if (gesture.current && Math.hypot(dx, dy) > TAP_THRESHOLD) gesture.current.moved = true;
     const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.007);
     const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.007);
     targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
@@ -362,8 +360,7 @@ function CubeObject({
       return;
     }
     event.stopPropagation();
-    const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    if (!current.moved && distance <= TAP_THRESHOLD && current.sticker.center) {
+    if (!current.moved && current.sticker.center) {
       onSelectFace(current.sticker.faceId);
     }
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
@@ -493,21 +490,25 @@ function CubeObject({
             {cubie.stickers.map((sticker) => {
               const position = sticker.normal.map((value) => value * 0.493) as Vector3Tuple;
               return (
-                <group key={sticker.faceId} position={position} rotation={stickerRotation(sticker.normal)}>
+                <group
+                  key={sticker.faceId}
+                  position={position}
+                  rotation={stickerRotation(sticker.normal)}
+                  onPointerOver={() => {
+                    gl.domElement.style.cursor = "crosshair";
+                  }}
+                  onPointerOut={() => {
+                    gl.domElement.style.cursor = "grab";
+                  }}
+                  onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
+                  onPointerMove={onStickerMove}
+                  onPointerUp={onStickerUp}
+                  onPointerCancel={onStickerUp}
+                >
                   <mesh
                     geometry={stickerGeometry}
                     material={stickerMaterials[sticker.faceId]}
                     castShadow
-                    onPointerOver={() => {
-                      gl.domElement.style.cursor = "crosshair";
-                    }}
-                    onPointerOut={() => {
-                      gl.domElement.style.cursor = "grab";
-                    }}
-                    onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
-                    onPointerMove={onStickerMove}
-                    onPointerUp={onStickerUp}
-                    onPointerCancel={onStickerUp}
                   />
                   {sticker.center && (
                     <mesh position={[0, 0, 0.026]} geometry={labelGeometry} material={labelMaterials[sticker.faceId]} />
