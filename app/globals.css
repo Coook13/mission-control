@@ -279,6 +279,7 @@ a:focus-visible,
 }
 
 .section-index nav > button {
+  position: relative;
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr) 3px;
   gap: 10px;
@@ -292,6 +293,22 @@ a:focus-visible,
   color: var(--muted);
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
+  transition: background-color 180ms ease;
+}
+
+.section-index nav > button::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 30px;
+  height: 1px;
+  background: var(--face-color);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.2);
+  transform-origin: right;
+  transition: opacity 180ms ease, transform 220ms ease;
 }
 
 .section-index__number {
@@ -339,10 +356,25 @@ a:focus-visible,
   transform: translateX(4px);
 }
 
+.section-index nav > button:hover::after,
+.section-index nav > button[aria-current="page"]::after {
+  opacity: 0.8;
+  transform: scaleX(1);
+}
+
+.section-index nav > button[aria-current="page"] {
+  background: linear-gradient(90deg, transparent 35%, color-mix(in srgb, var(--face-color) 9%, transparent));
+}
+
+.section-index nav > button[aria-current="page"] .section-index__number {
+  color: var(--face-color);
+}
+
 .section-index nav > button:hover .section-index__marker,
 .section-index nav > button[aria-current="page"] .section-index__marker {
   height: 40px;
   opacity: 1;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--face-color) 48%, transparent);
 }
 
 .section-index-toggle,
@@ -352,23 +384,29 @@ a:focus-visible,
 
 .spin-hint {
   position: fixed;
-  bottom: 84px;
+  top: 50%;
+  bottom: auto;
   left: 50%;
   z-index: 24;
   margin: 0;
-  color: rgba(242, 244, 246, 0.72);
-  font-size: 10px;
-  font-weight: 700;
+  background: linear-gradient(90deg, #ffffff 0%, #9fb6ff 42%, #f2c94c 72%, #f28a2e 100%);
+  background-clip: text;
+  color: transparent;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 800;
   text-transform: uppercase;
   opacity: 0;
-  transform: translate(-50%, 7px);
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.7));
+  transform: translate(-50%, -42%) scale(0.96);
   transition: opacity 320ms ease, transform 320ms ease;
   pointer-events: none;
+  -webkit-background-clip: text;
 }
 
 .spin-hint.is-visible {
-  opacity: 1;
-  transform: translate(-50%, 0);
+  opacity: 0.92;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .cube-home--selected .spin-hint {
@@ -960,8 +998,9 @@ a:focus-visible,
   }
 
   .spin-hint {
-    bottom: 76px;
-    font-size: 9px;
+    top: 51%;
+    bottom: auto;
+    font-size: 28px;
   }
 
   .cube-home--selected .cube-controls {

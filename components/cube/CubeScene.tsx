@@ -386,8 +386,8 @@ function CubeObject({
       current.moved = true;
       onOrbitStart();
     }
-    const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.007);
-    const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.007);
+    const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.0075);
+    const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.0075);
     targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
     invalidate();
   };
@@ -550,7 +550,7 @@ function CubeObject({
       }
       const angle = root.quaternion.angleTo(displayTarget);
       if (angle > 0.001) {
-        root.quaternion.slerp(displayTarget, 1 - Math.exp(-delta * 11));
+        root.quaternion.slerp(displayTarget, 1 - Math.exp(-delta * 18));
         animating = true;
       } else {
         root.quaternion.copy(displayTarget);
