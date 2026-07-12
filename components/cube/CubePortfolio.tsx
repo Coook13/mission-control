@@ -297,7 +297,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         suppressHydrationWarning
       >
         <span>Spin it</span>
-        <small>Hold a tile to twist</small>
+        <small>Tap a tile, then swipe to twist</small>
       </p>
 
       <aside
