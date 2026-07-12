@@ -16,7 +16,13 @@ import {
   type QuarterTurn,
   type Vector3Tuple,
 } from "./cube-model";
-import { classifyGestureIntent, selectProjectedTurn, TAP_SLOP, type GestureIntent } from "./cube-interaction";
+import {
+  classifyGestureIntent,
+  selectProjectedTurn,
+  TAP_SLOP,
+  TWIST_HOLD_DURATION,
+  type GestureIntent,
+} from "./cube-interaction";
 
 type Sticker = {
   faceId: FaceId;
@@ -49,6 +55,7 @@ type Gesture = {
   startedAt: number;
   pointerId: number;
   intent: GestureIntent;
+  holdTimer: number | null;
 };
 
 type OrbitGesture = {
@@ -97,7 +104,7 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 
 const MOVE_DURATION = 0.34;
 const INTRO_DURATION = 2.1;
-const CUBIE_STEP = 1.02;
+const CUBIE_STEP = 0.98;
 const CUBE_BASE_Y = 0.14;
 const DESKTOP_CAMERA_Z = 9.35;
 const MOBILE_CAMERA_Z = 15.2;
@@ -199,9 +206,10 @@ function CubeObject({
   const introYaw = useRef(new THREE.Quaternion());
   const introPitch = useRef(new THREE.Quaternion());
   const lastFocusRequest = useRef(focusRequest?.requestId ?? -1);
-  const { camera, gl, invalidate } = useThree();
+  const { camera, invalidate } = useThree();
 
   const bodyGeometry = useMemo(() => new RoundedBoxGeometry(0.94, 0.94, 0.94, 5, 0.095), []);
+  const coreGeometry = useMemo(() => new RoundedBoxGeometry(1, 1, 1, 4, 0.08), []);
   const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
   const labelGeometry = useMemo(() => new THREE.PlaneGeometry(0.6, 0.6), []);
   const bodyMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
@@ -210,6 +218,13 @@ function CubeObject({
     metalness: 0.36,
     clearcoat: 0.72,
     clearcoatRoughness: 0.16,
+  }), []);
+  const coreMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: "#030405",
+    roughness: 0.3,
+    metalness: 0.62,
+    clearcoat: 0.46,
+    clearcoatRoughness: 0.2,
   }), []);
   const stickerMaterials = useMemo(() => Object.fromEntries(faceOrder.map((faceId) => [
     faceId,
@@ -295,6 +310,11 @@ function CubeObject({
     if (resetSignal === 0) return;
     activeMove.current = null;
     queuedMoves.current = [];
+    const currentGesture = gesture.current;
+    if (currentGesture?.holdTimer !== null && currentGesture?.holdTimer !== undefined) {
+      window.clearTimeout(currentGesture.holdTimer);
+    }
+    if (currentGesture) cubieRefs.current.get(currentGesture.cubieId)?.scale.setScalar(1);
     gesture.current = null;
     orbitGesture.current = null;
     pendingFocus.current = null;
@@ -401,6 +421,8 @@ function CubeObject({
   };
 
   const beginStickerOrbit = (current: Gesture) => {
+    if (current.holdTimer !== null) window.clearTimeout(current.holdTimer);
+    current.holdTimer = null;
     cancelIntro();
     current.intent = "orbit";
     orbitGesture.current = {
@@ -410,6 +432,10 @@ function CubeObject({
       start: targetQuaternion.current.clone(),
       moved: false,
     };
+  };
+
+  const resetGestureCubie = (current: Gesture) => {
+    cubieRefs.current.get(current.cubieId)?.scale.setScalar(1);
   };
 
   const onStickerDown = (event: ThreeEvent<PointerEvent>, cubie: Cubie, sticker: Sticker) => {
@@ -423,7 +449,15 @@ function CubeObject({
       startedAt: event.nativeEvent.timeStamp,
       pointerId: event.pointerId,
       intent: "pending",
+      holdTimer: null,
     };
+    const current = gesture.current;
+    current.holdTimer = window.setTimeout(() => {
+      if (gesture.current !== current || current.intent !== "pending") return;
+      current.intent = "armed";
+      cubieRefs.current.get(current.cubieId)?.scale.setScalar(1.055);
+      invalidate();
+    }, TWIST_HOLD_DURATION);
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
   };
@@ -436,8 +470,7 @@ function CubeObject({
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId || activeMove.current) return;
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    const duration = event.nativeEvent.timeStamp - current.startedAt;
-    const intent = classifyGestureIntent({ distance, duration, released: false });
+    const intent = classifyGestureIntent({ distance, released: false, armed: current.intent === "armed" });
     if (intent === "orbit") {
       beginStickerOrbit(current);
       updateOrbit(event);
@@ -454,10 +487,10 @@ function CubeObject({
       return;
     }
     event.stopPropagation();
+    if (current.holdTimer !== null) window.clearTimeout(current.holdTimer);
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    const duration = event.nativeEvent.timeStamp - current.startedAt;
-    const intent = classifyGestureIntent({ distance, duration, released: true });
-    if (intent === "flick") {
+    const intent = classifyGestureIntent({ distance, released: true, armed: current.intent === "armed" });
+    if (intent === "twist") {
       const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
       if (turn) startTurn(turn);
     } else if (intent === "tap" && current.sticker.center) {
@@ -467,14 +500,18 @@ function CubeObject({
       updateOrbit(event);
       orbitGesture.current = null;
     }
+    resetGestureCubie(current);
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
     gesture.current = null;
   };
 
   const onStickerCancel = (event: ThreeEvent<PointerEvent>) => {
     if (gesture.current?.pointerId !== event.pointerId) return;
+    const current = gesture.current;
     event.stopPropagation();
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+    if (current.holdTimer !== null) window.clearTimeout(current.holdTimer);
+    resetGestureCubie(current);
     gesture.current = null;
     orbitGesture.current = null;
   };
@@ -602,6 +639,11 @@ function CubeObject({
   return (
     <>
       <group ref={rootRef}>
+        <group>
+          <mesh geometry={coreGeometry} material={coreMaterial} scale={[2.78, 0.78, 0.78]} castShadow />
+          <mesh geometry={coreGeometry} material={coreMaterial} scale={[0.78, 2.78, 0.78]} castShadow />
+          <mesh geometry={coreGeometry} material={coreMaterial} scale={[0.78, 0.78, 2.78]} castShadow />
+        </group>
         {cubies.map((cubie) => (
           <group
             key={cubie.id}
@@ -619,12 +661,6 @@ function CubeObject({
                   key={sticker.faceId}
                   position={position}
                   rotation={stickerRotation(sticker.normal)}
-                  onPointerOver={() => {
-                    gl.domElement.style.cursor = "crosshair";
-                  }}
-                  onPointerOut={() => {
-                    gl.domElement.style.cursor = "grab";
-                  }}
                   onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
                   onPointerMove={onStickerMove}
                   onPointerUp={onStickerUp}

@@ -1,39 +1,26 @@
 import { turnToMove, type Axis, type Direction, type QuarterTurn, type Vector3Tuple } from "./cube-model";
 
 export const TAP_SLOP = 10;
-export const FLICK_MIN_DISTANCE = 12;
-export const FLICK_MAX_DURATION = 300;
-export const ORBIT_COMMIT_DISTANCE = 44;
-export const ORBIT_HOLD_DURATION = 180;
+export const TWIST_MIN_DISTANCE = 12;
+export const TWIST_HOLD_DURATION = 180;
 
-export type GestureIntent = "pending" | "tap" | "orbit" | "flick";
+export type GestureIntent = "pending" | "tap" | "orbit" | "armed" | "twist";
 
 export function classifyGestureIntent({
   distance,
-  duration,
   released,
+  armed = false,
   startedOnStage = false,
 }: {
   distance: number;
-  duration: number;
   released: boolean;
+  armed?: boolean;
   startedOnStage?: boolean;
 }): GestureIntent {
   if (startedOnStage) return distance > TAP_SLOP ? "orbit" : "pending";
+  if (armed) return released && distance >= TWIST_MIN_DISTANCE ? "twist" : "armed";
+  if (distance > TAP_SLOP) return "orbit";
   if (released && distance <= TAP_SLOP) return "tap";
-
-  if (released) {
-    return distance >= FLICK_MIN_DISTANCE
-      && distance < ORBIT_COMMIT_DISTANCE
-      && duration <= FLICK_MAX_DURATION
-      ? "flick"
-      : "orbit";
-  }
-
-  if (distance >= ORBIT_COMMIT_DISTANCE
-    || (distance >= FLICK_MIN_DISTANCE && duration >= ORBIT_HOLD_DURATION)) {
-    return "orbit";
-  }
   return "pending";
 }
 

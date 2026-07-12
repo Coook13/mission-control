@@ -89,15 +89,11 @@ describe("cube move model", () => {
 });
 
 describe("cube interaction", () => {
-  it("separates taps, flicks, and continuous drags", () => {
-    expect(classifyGestureIntent({ distance: 4, duration: 90, released: true })).toBe("tap");
-    expect(classifyGestureIntent({ distance: 36, duration: 70, released: true })).toBe("flick");
-    expect(classifyGestureIntent({ distance: 28, duration: 90, released: false })).toBe("pending");
-    expect(classifyGestureIntent({ distance: 28, duration: 90, released: true })).toBe("flick");
-    expect(classifyGestureIntent({ distance: 60, duration: 45, released: false })).toBe("orbit");
-    expect(classifyGestureIntent({ distance: 60, duration: 45, released: true })).toBe("orbit");
-    expect(classifyGestureIntent({ distance: 28, duration: 340, released: false })).toBe("orbit");
-    expect(classifyGestureIntent({ distance: 20, duration: 340, released: true })).toBe("orbit");
+  it("separates taps, immediate orbit drags, and armed twists", () => {
+    expect(classifyGestureIntent({ distance: 4, released: true })).toBe("tap");
+    expect(classifyGestureIntent({ distance: 18, released: false })).toBe("orbit");
+    expect(classifyGestureIntent({ distance: 0, released: false, armed: true })).toBe("armed");
+    expect(classifyGestureIntent({ distance: 22, released: true, armed: true })).toBe("twist");
   });
 
   it("moves the finger-following outer slice instead of the projected axis", () => {

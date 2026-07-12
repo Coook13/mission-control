@@ -295,7 +295,10 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
         className={`spin-hint${spinHintVisible ? " is-visible" : ""}`}
         aria-hidden="true"
         suppressHydrationWarning
-      >Spin it</p>
+      >
+        <span>Spin it</span>
+        <small>Hold a tile to twist</small>
+      </p>
 
       <aside
         className={`proof-panel${activeContent ? " proof-panel--open" : ""}`}

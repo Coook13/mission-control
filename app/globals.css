@@ -389,6 +389,16 @@ a:focus-visible,
   left: 50%;
   z-index: 24;
   margin: 0;
+  display: grid;
+  justify-items: center;
+  opacity: 0;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.7));
+  transform: translate(-50%, -42%) scale(0.96);
+  transition: opacity 320ms ease, transform 320ms ease;
+  pointer-events: none;
+}
+
+.spin-hint span {
   background: linear-gradient(90deg, #ffffff 0%, #9fb6ff 42%, #f2c94c 72%, #f28a2e 100%);
   background-clip: text;
   color: transparent;
@@ -396,12 +406,16 @@ a:focus-visible,
   line-height: 1;
   font-weight: 800;
   text-transform: uppercase;
-  opacity: 0;
-  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.7));
-  transform: translate(-50%, -42%) scale(0.96);
-  transition: opacity 320ms ease, transform 320ms ease;
-  pointer-events: none;
   -webkit-background-clip: text;
+}
+
+.spin-hint small {
+  margin-top: 8px;
+  color: rgba(242, 244, 246, 0.78);
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 650;
+  text-transform: uppercase;
 }
 
 .spin-hint.is-visible {
@@ -1000,7 +1014,15 @@ a:focus-visible,
   .spin-hint {
     top: 51%;
     bottom: auto;
+  }
+
+  .spin-hint span {
     font-size: 28px;
+  }
+
+  .spin-hint small {
+    margin-top: 6px;
+    font-size: 7px;
   }
 
   .cube-home--selected .cube-controls {
