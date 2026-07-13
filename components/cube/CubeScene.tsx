@@ -20,7 +20,6 @@ import {
   classifyGestureIntent,
   selectProjectedTurn,
   TAP_SLOP,
-  TWIST_HOLD_DURATION,
   type GestureIntent,
 } from "./cube-interaction";
 
@@ -47,23 +46,18 @@ type ActiveMove = {
   }>;
 };
 
-type Gesture = {
+type StickerHit = {
   cubieId: string;
   sticker: Sticker;
-  x: number;
-  y: number;
-  startedAt: number;
-  pointerId: number;
-  intent: GestureIntent;
-  holdTimer: number | null;
 };
 
-type OrbitGesture = {
+type Gesture = {
+  hit: StickerHit | null;
   x: number;
   y: number;
   pointerId: number;
+  intent: GestureIntent;
   start: THREE.Quaternion;
-  moved: boolean;
 };
 
 type ArmedTile = {
@@ -85,9 +79,10 @@ export type CubeStageProps = {
   onSelectFace: (face: FaceId) => void;
   onScrambleChange: (scrambled: boolean) => void;
   onOrbitStart: () => void;
+  onFirstFrame: () => void;
 };
 
-type CubeObjectProps = CubeStageProps & { reduceMotion: boolean };
+type CubeObjectProps = Omit<CubeStageProps, "onFirstFrame"> & { reduceMotion: boolean };
 
 const AXIS_VECTORS: Record<Axis, THREE.Vector3> = {
   x: new THREE.Vector3(1, 0, 0),
@@ -99,13 +94,17 @@ const OPENING_QUATERNION = new THREE.Quaternion().setFromEuler(
   new THREE.Euler(THREE.MathUtils.degToRad(25), THREE.MathUtils.degToRad(-35), 0, "XYZ"),
 );
 
+const PRESENTATION_OFFSET = new THREE.Quaternion().setFromEuler(
+  new THREE.Euler(THREE.MathUtils.degToRad(12), THREE.MathUtils.degToRad(-14), 0, "XYZ"),
+);
+
 const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
-  engineering: new THREE.Quaternion(),
-  venture: new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, -Math.PI / 2),
-  strategy: new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, Math.PI / 2),
-  finance: new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, Math.PI),
-  research: new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, Math.PI / 2),
-  story: new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, -Math.PI / 2),
+  engineering: PRESENTATION_OFFSET.clone(),
+  venture: PRESENTATION_OFFSET.clone().multiply(new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, -Math.PI / 2)),
+  strategy: PRESENTATION_OFFSET.clone().multiply(new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, Math.PI / 2)),
+  finance: PRESENTATION_OFFSET.clone().multiply(new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, Math.PI)),
+  research: PRESENTATION_OFFSET.clone().multiply(new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, Math.PI / 2)),
+  story: PRESENTATION_OFFSET.clone().multiply(new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, -Math.PI / 2)),
 };
 
 const MOVE_DURATION = 0.34;
@@ -176,6 +175,16 @@ function snapVector(vector: THREE.Vector3): Vector3Tuple {
   return result;
 }
 
+function findStickerHit(object: THREE.Object3D): StickerHit | null {
+  let current: THREE.Object3D | null = object;
+  while (current) {
+    const hit = current.userData.stickerHit as StickerHit | undefined;
+    if (hit) return hit;
+    current = current.parent;
+  }
+  return null;
+}
+
 function CubeObject({
   selectedFace,
   previewFace,
@@ -201,7 +210,6 @@ function CubeObject({
   const gesture = useRef<Gesture | null>(null);
   const armedTile = useRef<ArmedTile | null>(null);
   const armedOutlineRefs = useRef(new Map<string, THREE.LineSegments>());
-  const orbitGesture = useRef<OrbitGesture | null>(null);
   const targetQuaternion = useRef((selectedFace ? FACE_QUATERNIONS[selectedFace] : OPENING_QUATERNION).clone());
   const displayQuaternion = useRef(new THREE.Quaternion());
   const idleQuaternion = useRef(new THREE.Quaternion());
@@ -298,7 +306,8 @@ function CubeObject({
         AXIS_VECTORS.z,
         Math.atan2(focusedUp.x, focusedUp.y),
       );
-      targetQuaternion.current.copy(roll.multiply(focusRotation).multiply(root.quaternion)).normalize();
+      const aligned = roll.multiply(focusRotation).multiply(root.quaternion).normalize();
+      targetQuaternion.current.copy(PRESENTATION_OFFSET).multiply(aligned).normalize();
       if (reduceMotion) root.quaternion.copy(targetQuaternion.current);
     }
     selectionFromCenter.current = faceId;
@@ -343,11 +352,6 @@ function CubeObject({
     if (resetSignal === 0) return;
     activeMove.current = null;
     queuedMoves.current = [];
-    const currentGesture = gesture.current;
-    if (currentGesture?.holdTimer !== null && currentGesture?.holdTimer !== undefined) {
-      window.clearTimeout(currentGesture.holdTimer);
-    }
-    if (currentGesture) cubieRefs.current.get(currentGesture.cubieId)?.scale.setScalar(1);
     const selectedTile = armedTile.current;
     if (selectedTile?.expires !== null && selectedTile?.expires !== undefined) {
       window.clearTimeout(selectedTile.expires);
@@ -359,7 +363,6 @@ function CubeObject({
       : null;
     if (selectedOutline) selectedOutline.visible = false;
     gesture.current = null;
-    orbitGesture.current = null;
     pendingFocus.current = null;
     moveHistory.current = [];
     const solved = createSolvedCubies();
@@ -398,10 +401,11 @@ function CubeObject({
   };
 
   const resolveSwipe = (currentGesture: Gesture, clientX: number, clientY: number) => {
-    const cubie = cubiesRef.current.find((item) => item.id === currentGesture.cubieId);
+    if (!currentGesture.hit) return null;
+    const cubie = cubiesRef.current.find((item) => item.id === currentGesture.hit?.cubieId);
     const root = rootRef.current;
     if (!cubie || !root) return null;
-    const normal = new THREE.Vector3(...currentGesture.sticker.normal).applyQuaternion(cubie.quaternion);
+    const normal = new THREE.Vector3(...currentGesture.hit.sticker.normal).applyQuaternion(cubie.quaternion);
     const snappedNormal = snapVector(normal);
     return selectProjectedTurn({
       cubiePosition: cubie.position,
@@ -426,76 +430,15 @@ function CubeObject({
     root.scale.setScalar(1);
   };
 
-  const beginOrbit = (event: ThreeEvent<PointerEvent>) => {
-    if (activeMove.current || queuedMoves.current.length) return;
-    cancelIntro();
-    event.stopPropagation();
-    (event.target as HTMLElement).setPointerCapture(event.pointerId);
-    orbitGesture.current = {
-      x: event.nativeEvent.clientX,
-      y: event.nativeEvent.clientY,
-      pointerId: event.pointerId,
-      start: targetQuaternion.current.clone(),
-      moved: false,
-    };
-  };
-
-  const updateOrbit = (event: ThreeEvent<PointerEvent>) => {
-    const current = orbitGesture.current;
-    if (!current || current.pointerId !== event.pointerId) return;
-    const dx = event.nativeEvent.clientX - current.x;
-    const dy = event.nativeEvent.clientY - current.y;
-    if (!current.moved && Math.hypot(dx, dy) > TAP_SLOP) {
-      current.moved = true;
-      onOrbitStart();
-    }
-    const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.0075);
-    const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.0075);
-    targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
-    invalidate();
-  };
-
-  const finishOrbit = (event: ThreeEvent<PointerEvent>) => {
-    const current = orbitGesture.current;
-    if (!current || current.pointerId !== event.pointerId) return;
-    event.stopPropagation();
-    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
-    orbitGesture.current = null;
-  };
-
-  const beginStickerOrbit = (current: Gesture) => {
-    if (current.holdTimer !== null) window.clearTimeout(current.holdTimer);
-    current.holdTimer = null;
-    const selectedTile = armedTile.current;
-    if (selectedTile?.expires !== null && selectedTile?.expires !== undefined) {
-      window.clearTimeout(selectedTile.expires);
-    }
-    if (selectedTile) cubieRefs.current.get(selectedTile.cubieId)?.scale.setScalar(1);
-    armedTile.current = null;
-    const selectedOutline = selectedTile
-      ? armedOutlineRefs.current.get(`${selectedTile.cubieId}:${selectedTile.faceId}`)
-      : null;
-    if (selectedOutline) selectedOutline.visible = false;
-    cancelIntro();
-    current.intent = "orbit";
-    orbitGesture.current = {
-      x: current.x,
-      y: current.y,
-      pointerId: current.pointerId,
-      start: targetQuaternion.current.clone(),
-      moved: false,
-    };
-  };
-
-  const resetGestureCubie = (current: Gesture) => {
-    cubieRefs.current.get(current.cubieId)?.scale.setScalar(1);
-  };
-
-  const armTile = (current: Gesture) => {
+  const armTile = (hit: StickerHit) => {
     const previous = armedTile.current;
     if (previous?.expires !== null && previous?.expires !== undefined) window.clearTimeout(previous.expires);
-    if (previous) cubieRefs.current.get(previous.cubieId)?.scale.setScalar(1);
-    const selected: ArmedTile = { cubieId: current.cubieId, faceId: current.sticker.faceId, expires: null };
+    if (previous) {
+      cubieRefs.current.get(previous.cubieId)?.scale.setScalar(1);
+      const previousOutline = armedOutlineRefs.current.get(`${previous.cubieId}:${previous.faceId}`);
+      if (previousOutline) previousOutline.visible = false;
+    }
+    const selected: ArmedTile = { cubieId: hit.cubieId, faceId: hit.sticker.faceId, expires: null };
     selected.expires = window.setTimeout(() => {
       if (armedTile.current !== selected) return;
       cubieRefs.current.get(selected.cubieId)?.scale.setScalar(1);
@@ -507,7 +450,7 @@ function CubeObject({
     armedTile.current = selected;
     const outline = armedOutlineRefs.current.get(`${selected.cubieId}:${selected.faceId}`);
     if (outline) outline.visible = true;
-    cubieRefs.current.get(current.cubieId)?.scale.setScalar(1.055);
+    cubieRefs.current.get(hit.cubieId)?.scale.setScalar(1.055);
     invalidate();
   };
 
@@ -522,99 +465,93 @@ function CubeObject({
     }
   };
 
-  const onStickerDown = (event: ThreeEvent<PointerEvent>, cubie: Cubie, sticker: Sticker) => {
+  const beginOrbit = (current: Gesture) => {
+    if (current.intent === "orbit") return;
+    current.intent = "orbit";
+    clearArmedTile();
+    onOrbitStart();
+  };
+
+  const updateOrbit = (current: Gesture, clientX: number, clientY: number) => {
+    const dx = clientX - current.x;
+    const dy = clientY - current.y;
+    if (current.intent !== "orbit") {
+      if (Math.hypot(dx, dy) <= TAP_SLOP) return;
+      beginOrbit(current);
+    }
+    const yaw = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.y, dx * 0.0085);
+    const pitch = new THREE.Quaternion().setFromAxisAngle(AXIS_VECTORS.x, dy * 0.0085);
+    targetQuaternion.current.copy(yaw.multiply(pitch).multiply(current.start));
+    invalidate();
+  };
+
+  const onPointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (activeMove.current || queuedMoves.current.length) return;
+    if (gesture.current) {
+      if (!event.nativeEvent.isPrimary) return;
+      clearArmedTile();
+      gesture.current = null;
+    }
     cancelIntro();
+    const hit = findStickerHit(event.object);
     const selected = armedTile.current;
-    const selectedForTwist = selected?.cubieId === cubie.id && selected.faceId === sticker.faceId;
-    if (selectedForTwist && selected.expires !== null) {
+    const selectedForTwist = hit !== null
+      && selected !== null
+      && selected.cubieId === hit.cubieId
+      && selected.faceId === hit.sticker.faceId;
+    if (selectedForTwist && selected && selected.expires !== null) {
       window.clearTimeout(selected.expires);
       selected.expires = null;
     }
     gesture.current = {
-      cubieId: cubie.id,
-      sticker,
+      hit,
       x: event.nativeEvent.clientX,
       y: event.nativeEvent.clientY,
-      startedAt: event.nativeEvent.timeStamp,
       pointerId: event.pointerId,
       intent: selectedForTwist ? "armed" : "pending",
-      holdTimer: null,
+      start: targetQuaternion.current.clone(),
     };
-    const current = gesture.current;
-    if (!selectedForTwist) {
-      current.holdTimer = window.setTimeout(() => {
-        if (gesture.current !== current || current.intent !== "pending") return;
-        current.intent = "armed";
-        cubieRefs.current.get(current.cubieId)?.scale.setScalar(1.055);
-        invalidate();
-      }, TWIST_HOLD_DURATION);
-    }
     event.stopPropagation();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
   };
 
-  const onStickerMove = (event: ThreeEvent<PointerEvent>) => {
-    if (orbitGesture.current) {
-      updateOrbit(event);
-      return;
-    }
+  const onPointerMove = (event: ThreeEvent<PointerEvent>) => {
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId || activeMove.current) return;
-    const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    const intent = classifyGestureIntent({ distance, released: false, armed: current.intent === "armed" });
-    if (intent === "orbit") {
-      beginStickerOrbit(current);
-      updateOrbit(event);
-    }
+    if (current.intent === "armed") return;
+    updateOrbit(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
   };
 
-  const onStickerUp = (event: ThreeEvent<PointerEvent>) => {
+  const onPointerUp = (event: ThreeEvent<PointerEvent>) => {
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
-    if (orbitGesture.current) {
-      updateOrbit(event);
-      gesture.current = null;
-      finishOrbit(event);
-      return;
-    }
     event.stopPropagation();
-    if (current.holdTimer !== null) window.clearTimeout(current.holdTimer);
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
     const intent = classifyGestureIntent({ distance, released: true, armed: current.intent === "armed" });
-    let keepArmed = false;
-    if (intent === "twist") {
+    if (intent === "twist" && current.hit) {
       clearArmedTile();
       const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
       if (turn) startTurn(turn);
-    } else if (intent === "tap" && current.sticker.center) {
+    } else if (intent === "tap" && current.hit?.sticker.center) {
       clearArmedTile();
-      focusFace(current.sticker.faceId, true);
-    } else if (intent === "tap") {
-      armTile(current);
-      keepArmed = true;
+      focusFace(current.hit.sticker.faceId, true);
+    } else if (intent === "tap" && current.hit) {
+      armTile(current.hit);
     } else if (intent === "armed") {
       clearArmedTile();
     } else if (intent === "orbit") {
-      beginStickerOrbit(current);
-      updateOrbit(event);
-      orbitGesture.current = null;
+      updateOrbit(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
     }
-    if (!keepArmed) resetGestureCubie(current);
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
     gesture.current = null;
   };
 
-  const onStickerCancel = (event: ThreeEvent<PointerEvent>) => {
+  const onPointerCancel = (event: ThreeEvent<PointerEvent>) => {
     if (gesture.current?.pointerId !== event.pointerId) return;
-    const current = gesture.current;
     event.stopPropagation();
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
-    if (current.holdTimer !== null) window.clearTimeout(current.holdTimer);
     clearArmedTile();
-    resetGestureCubie(current);
     gesture.current = null;
-    orbitGesture.current = null;
   };
 
   useFrame((state, delta) => {
@@ -669,7 +606,6 @@ function CubeObject({
     } else {
       const idleActive = !reduceMotion
         && !selectedFace
-        && !orbitGesture.current
         && !gesture.current
         && !activeMove.current
         && queuedMoves.current.length === 0;
@@ -735,11 +671,17 @@ function CubeObject({
       }
     }
 
-    if (animating || orbitGesture.current || queuedMoves.current.length || pendingFocus.current) state.invalidate();
+    if (animating || gesture.current?.intent === "orbit" || queuedMoves.current.length || pendingFocus.current) state.invalidate();
   });
 
   return (
-    <>
+    <group
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onLostPointerCapture={onPointerCancel}
+    >
       <group ref={rootRef}>
         <group>
           <mesh geometry={coreGeometry} material={coreMaterial} scale={[1.72, 1.72, 1.72]} castShadow />
@@ -778,10 +720,7 @@ function CubeObject({
                   key={sticker.faceId}
                   position={position}
                   rotation={stickerRotation(sticker.normal)}
-                  onPointerDown={(event) => onStickerDown(event, cubie, sticker)}
-                  onPointerMove={onStickerMove}
-                  onPointerUp={onStickerUp}
-                  onPointerCancel={onStickerCancel}
+                  userData={{ stickerHit: { cubieId: cubie.id, sticker } satisfies StickerHit }}
                 >
                   <mesh
                     geometry={stickerGeometry}
@@ -811,15 +750,11 @@ function CubeObject({
 
       <mesh
         position={[0, 0, -3.2]}
-        onPointerDown={beginOrbit}
-        onPointerMove={updateOrbit}
-        onPointerUp={finishOrbit}
-        onPointerCancel={finishOrbit}
       >
         <planeGeometry args={[30, 22]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-    </>
+    </group>
   );
 }
 
@@ -907,15 +842,32 @@ function CameraZoom({ mobile, zoom }: { mobile: boolean; zoom: number }) {
   return null;
 }
 
-function CubeCanvasFallback() {
+function FirstFrameSignal({ onFirstFrame }: { onFirstFrame: () => void }) {
+  const signaled = useRef(false);
+
+  useFrame(() => {
+    if (signaled.current) return;
+    signaled.current = true;
+    window.requestAnimationFrame(onFirstFrame);
+  });
+
+  return null;
+}
+
+function CubeCanvasFallback({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    window.requestAnimationFrame(onReady);
+  }, [onReady]);
+
   return (
-    <div className="cube-loading-object" aria-hidden="true">
-      {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
+    <div className="cube-webgl-fallback" role="status">
+      <span>Portfolio index available</span>
     </div>
   );
 }
 
 export function CubeStage(props: CubeStageProps) {
+  const { onFirstFrame, ...cubeProps } = props;
   const [mobile, setMobile] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -941,7 +893,7 @@ export function CubeStage(props: CubeStageProps) {
       dpr={mobile ? [1, 1.5] : [1, 1.75]}
       frameloop="demand"
       shadows
-      fallback={<CubeCanvasFallback />}
+      fallback={<CubeCanvasFallback onReady={onFirstFrame} />}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -954,8 +906,9 @@ export function CubeStage(props: CubeStageProps) {
       <fog attach="fog" args={["#0d1116", mobile ? 13 : 8, mobile ? 30 : 22]} />
       <StudioEnvironment />
       <ProductLights mobile={mobile} />
-      <CameraZoom mobile={mobile} zoom={props.zoom} />
-      <CubeObject {...props} reduceMotion={reduceMotion} />
+      <CameraZoom mobile={mobile} zoom={cubeProps.zoom} />
+      <FirstFrameSignal onFirstFrame={onFirstFrame} />
+      <CubeObject {...cubeProps} reduceMotion={reduceMotion} />
     </Canvas>
   );
 }

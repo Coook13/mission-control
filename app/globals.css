@@ -144,7 +144,7 @@ a:focus-visible,
   z-index: 2;
   cursor: grab;
   touch-action: none;
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cube-stage-shell:active {
@@ -158,32 +158,77 @@ a:focus-visible,
 }
 
 .cube-home--selected .cube-stage-shell {
-  transform: translateX(-8vw) scale(0.84);
+  transform: translateX(-8vw) scale(0.88);
 }
 
-.cube-loading-object {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+.cube-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  width: clamp(150px, 24vw, 220px);
-  aspect-ratio: 1;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid #2d3138;
-  border-radius: 8px;
-  background: #07090c;
-  box-shadow: 26px 32px 45px rgba(0, 0, 0, 0.32);
-  opacity: 0.94;
-  transform: translate(-50%, -50%) rotate(-5deg);
+  place-items: center;
+  background: #0d1116;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+  pointer-events: none;
 }
 
-.cube-loading-object span {
-  min-width: 0;
-  border-radius: 4px;
-  background: #2457e6;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+.cube-boot--ready {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.cube-boot__mark {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.cube-boot__mark span {
+  color: rgba(242, 244, 246, 0.9);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cube-boot__mark i {
+  position: relative;
+  display: block;
+  width: 112px;
+  height: 1px;
+  overflow: hidden;
+  background: #2d3138;
+}
+
+.cube-boot__mark i::after {
+  position: absolute;
+  inset: 0;
+  background: #d8dde4;
+  content: "";
+  transform: translateX(-100%);
+  animation: cube-boot-progress 900ms cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.cube-webgl-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+@keyframes cube-boot-progress {
+  50% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .cube-control-icon,
@@ -873,7 +918,7 @@ a:focus-visible,
   }
 
   .cube-home--selected .cube-stage-shell {
-    transform: translateY(-10vh) scale(0.72);
+    transform: translateY(-12vh) scale(0.82);
   }
 
   .section-index-toggle {
@@ -1173,7 +1218,7 @@ a:focus-visible,
   }
 
   .cube-home--selected .cube-stage-shell {
-    transform: translateY(-12vh) scale(0.62);
+    transform: translateY(-20vh) scale(0.76);
   }
 
   .proof-panel__thesis {

@@ -89,10 +89,14 @@ describe("cube move model", () => {
 });
 
 describe("cube interaction", () => {
-  it("separates taps, immediate orbit drags, and armed twists", () => {
+  it("keeps every unarmed press pending until it moves, regardless of hold time", () => {
+    expect(classifyGestureIntent({ distance: 0, released: false })).toBe("pending");
     expect(classifyGestureIntent({ distance: 4, released: true })).toBe("tap");
     expect(classifyGestureIntent({ distance: 6, released: false })).toBe("orbit");
     expect(classifyGestureIntent({ distance: 18, released: false })).toBe("orbit");
+  });
+
+  it("twists only after a tile has already been armed", () => {
     expect(classifyGestureIntent({ distance: 0, released: false, armed: true })).toBe("armed");
     expect(classifyGestureIntent({ distance: 22, released: true, armed: true })).toBe("twist");
   });

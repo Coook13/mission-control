@@ -7,17 +7,9 @@ import { ExternalLink, List, Mail, RefreshCw, Shuffle, X } from "lucide-react";
 import { faceOrder, faces, profile, type FaceId } from "@/lib/site-data";
 import type { FaceFocusRequest } from "./CubeScene";
 
-function CubeLoading() {
-  return (
-    <div className="cube-loading-object" aria-hidden="true">
-      {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
-    </div>
-  );
-}
-
 const CubeStage = dynamic(() => import("./CubeScene").then((module) => module.CubeStage), {
   ssr: false,
-  loading: () => <CubeLoading />,
+  loading: () => null,
 });
 
 type CubePortfolioProps = { initialFace: FaceId | null };
@@ -59,6 +51,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   const mobile = useSyncExternalStore(subscribeMobile, getMobileSnapshot, () => false);
   const [playIntro, setPlayIntro] = useState(false);
   const [spinHintVisible, setSpinHintVisible] = useState(false);
+  const [cubeReady, setCubeReady] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
   const drawerToggleRef = useRef<HTMLButtonElement>(null);
   const activeContent = selectedFace ? faces[selectedFace] : null;
@@ -144,6 +137,10 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
     window.sessionStorage.setItem("cube-spin-hint-dismissed", "true");
   }, []);
 
+  const markCubeReady = useCallback(() => {
+    setCubeReady(true);
+  }, []);
+
   const moveKeyboardFace = useCallback((direction: -1 | 1) => {
     const current = previewFace ?? selectedFace ?? "engineering";
     const index = faceOrder.indexOf(current);
@@ -177,6 +174,18 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           </a>
         </nav>
       </header>
+
+      <div
+        className={`cube-boot${cubeReady ? " cube-boot--ready" : ""}`}
+        role="status"
+        aria-label={cubeReady ? undefined : "Loading interactive portfolio cube"}
+        aria-hidden={cubeReady}
+      >
+        <div className="cube-boot__mark">
+          <span>Micky Thanawarothon</span>
+          <i aria-hidden="true" />
+        </div>
+      </div>
 
       <section
         className="cube-stage-shell"
@@ -225,6 +234,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           onSelectFace={selectFace}
           onScrambleChange={setScrambled}
           onOrbitStart={dismissSpinHint}
+          onFirstFrame={markCubeReady}
         />
       </section>
 
