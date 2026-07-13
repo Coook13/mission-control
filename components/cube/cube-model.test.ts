@@ -91,6 +91,7 @@ describe("cube move model", () => {
 describe("cube interaction", () => {
   it("separates taps, immediate orbit drags, and armed twists", () => {
     expect(classifyGestureIntent({ distance: 4, released: true })).toBe("tap");
+    expect(classifyGestureIntent({ distance: 6, released: false })).toBe("orbit");
     expect(classifyGestureIntent({ distance: 18, released: false })).toBe("orbit");
     expect(classifyGestureIntent({ distance: 0, released: false, armed: true })).toBe("armed");
     expect(classifyGestureIntent({ distance: 22, released: true, armed: true })).toBe("twist");

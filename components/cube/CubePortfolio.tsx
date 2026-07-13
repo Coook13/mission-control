@@ -23,6 +23,14 @@ const CubeStage = dynamic(() => import("./CubeScene").then((module) => module.Cu
 type CubePortfolioProps = { initialFace: FaceId | null };
 
 const mobileQuery = "(max-width: 700px)";
+const portfolioIndexOrder: readonly FaceId[] = [
+  "story",
+  "engineering",
+  "venture",
+  "strategy",
+  "finance",
+  "research",
+];
 
 function subscribeMobile(callback: () => void) {
   const query = window.matchMedia(mobileQuery);
@@ -261,7 +269,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           </button>
         </div>
         <nav aria-label="Portfolio sections">
-          {faceOrder.map((faceId, index) => (
+          {portfolioIndexOrder.map((faceId, index) => (
             <button
               key={faceId}
               type="button"

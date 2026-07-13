@@ -1,6 +1,6 @@
 import { turnToMove, type Axis, type Direction, type QuarterTurn, type Vector3Tuple } from "./cube-model";
 
-export const TAP_SLOP = 10;
+export const TAP_SLOP = 5;
 export const TWIST_MIN_DISTANCE = 12;
 export const TWIST_HOLD_DURATION = 180;
 

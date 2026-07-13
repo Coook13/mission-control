@@ -109,7 +109,7 @@ const FACE_QUATERNIONS: Record<FaceId, THREE.Quaternion> = {
 };
 
 const MOVE_DURATION = 0.34;
-const INTRO_DURATION = 2.1;
+const INTRO_DURATION = 0.8;
 const CUBIE_STEP = 0.98;
 const CUBE_BASE_Y = 0.14;
 const DESKTOP_CAMERA_Z = 9.35;
@@ -655,7 +655,8 @@ function CubeObject({
       }
     }
     if (!introDone.current) {
-      introElapsed.current += Math.min(delta, 1 / 30);
+      // Keep the entrance tied to real time so slower phones do not stretch it out.
+      introElapsed.current += Math.min(delta, 0.1);
       const progress = Math.min(introElapsed.current / INTRO_DURATION, 1);
       const eased = progress * progress * (3 - 2 * progress);
       introYaw.current.setFromAxisAngle(AXIS_VECTORS.y, eased * Math.PI * 2);
