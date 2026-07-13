@@ -96,9 +96,10 @@ describe("cube interaction", () => {
     expect(classifyGestureIntent({ distance: 18, released: false })).toBe("orbit");
   });
 
-  it("twists only after a tile has already been armed", () => {
-    expect(classifyGestureIntent({ distance: 0, released: false, armed: true })).toBe("armed");
-    expect(classifyGestureIntent({ distance: 22, released: true, armed: true })).toBe("twist");
+  it("taps or twists directly when a gesture starts on a sticker", () => {
+    expect(classifyGestureIntent({ distance: 0, released: false, startedOnSticker: true })).toBe("sticker");
+    expect(classifyGestureIntent({ distance: 0, released: true, startedOnSticker: true })).toBe("tap");
+    expect(classifyGestureIntent({ distance: 22, released: true, startedOnSticker: true })).toBe("twist");
   });
 
   it("moves the finger-following outer slice instead of the projected axis", () => {

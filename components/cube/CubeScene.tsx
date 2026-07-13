@@ -60,12 +60,6 @@ type Gesture = {
   start: THREE.Quaternion;
 };
 
-type ArmedTile = {
-  cubieId: string;
-  faceId: FaceId;
-  expires: number | null;
-};
-
 export type FaceFocusRequest = { faceId: FaceId; requestId: number };
 
 export type CubeStageProps = {
@@ -208,8 +202,6 @@ function CubeObject({
   const pendingFocus = useRef<FaceId | null>(null);
   const selectionFromCenter = useRef<FaceId | null>(null);
   const gesture = useRef<Gesture | null>(null);
-  const armedTile = useRef<ArmedTile | null>(null);
-  const armedOutlineRefs = useRef(new Map<string, THREE.LineSegments>());
   const targetQuaternion = useRef((selectedFace ? FACE_QUATERNIONS[selectedFace] : OPENING_QUATERNION).clone());
   const displayQuaternion = useRef(new THREE.Quaternion());
   const idleQuaternion = useRef(new THREE.Quaternion());
@@ -231,7 +223,6 @@ function CubeObject({
   const coreRingGeometry = useMemo(() => new THREE.TorusGeometry(0.23, 0.045, 10, 28), []);
   const coreFastenerGeometry = useMemo(() => new THREE.CylinderGeometry(0.115, 0.115, 0.075, 24), []);
   const stickerGeometry = useMemo(() => new RoundedBoxGeometry(0.78, 0.78, 0.048, 5, 0.068), []);
-  const stickerEdgeGeometry = useMemo(() => new THREE.EdgesGeometry(stickerGeometry, 24), [stickerGeometry]);
   const labelGeometry = useMemo(() => new THREE.PlaneGeometry(0.6, 0.6), []);
   const bodyMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: "#060708",
@@ -260,12 +251,6 @@ function CubeObject({
     metalness: 0.9,
     clearcoat: 0.38,
     clearcoatRoughness: 0.14,
-  }), []);
-  const armedEdgeMaterial = useMemo(() => new THREE.LineBasicMaterial({
-    color: "#d9f2ff",
-    transparent: true,
-    opacity: 0.95,
-    toneMapped: false,
   }), []);
   const stickerMaterials = useMemo(() => Object.fromEntries(faceOrder.map((faceId) => [
     faceId,
@@ -352,16 +337,6 @@ function CubeObject({
     if (resetSignal === 0) return;
     activeMove.current = null;
     queuedMoves.current = [];
-    const selectedTile = armedTile.current;
-    if (selectedTile?.expires !== null && selectedTile?.expires !== undefined) {
-      window.clearTimeout(selectedTile.expires);
-    }
-    if (selectedTile) cubieRefs.current.get(selectedTile.cubieId)?.scale.setScalar(1);
-    armedTile.current = null;
-    const selectedOutline = selectedTile
-      ? armedOutlineRefs.current.get(`${selectedTile.cubieId}:${selectedTile.faceId}`)
-      : null;
-    if (selectedOutline) selectedOutline.visible = false;
     gesture.current = null;
     pendingFocus.current = null;
     moveHistory.current = [];
@@ -430,45 +405,9 @@ function CubeObject({
     root.scale.setScalar(1);
   };
 
-  const armTile = (hit: StickerHit) => {
-    const previous = armedTile.current;
-    if (previous?.expires !== null && previous?.expires !== undefined) window.clearTimeout(previous.expires);
-    if (previous) {
-      cubieRefs.current.get(previous.cubieId)?.scale.setScalar(1);
-      const previousOutline = armedOutlineRefs.current.get(`${previous.cubieId}:${previous.faceId}`);
-      if (previousOutline) previousOutline.visible = false;
-    }
-    const selected: ArmedTile = { cubieId: hit.cubieId, faceId: hit.sticker.faceId, expires: null };
-    selected.expires = window.setTimeout(() => {
-      if (armedTile.current !== selected) return;
-      cubieRefs.current.get(selected.cubieId)?.scale.setScalar(1);
-      armedTile.current = null;
-      const outline = armedOutlineRefs.current.get(`${selected.cubieId}:${selected.faceId}`);
-      if (outline) outline.visible = false;
-      invalidate();
-    }, 2800);
-    armedTile.current = selected;
-    const outline = armedOutlineRefs.current.get(`${selected.cubieId}:${selected.faceId}`);
-    if (outline) outline.visible = true;
-    cubieRefs.current.get(hit.cubieId)?.scale.setScalar(1.055);
-    invalidate();
-  };
-
-  const clearArmedTile = () => {
-    const selected = armedTile.current;
-    if (selected?.expires !== null && selected?.expires !== undefined) window.clearTimeout(selected.expires);
-    if (selected) cubieRefs.current.get(selected.cubieId)?.scale.setScalar(1);
-    armedTile.current = null;
-    if (selected) {
-      const outline = armedOutlineRefs.current.get(`${selected.cubieId}:${selected.faceId}`);
-      if (outline) outline.visible = false;
-    }
-  };
-
   const beginOrbit = (current: Gesture) => {
     if (current.intent === "orbit") return;
     current.intent = "orbit";
-    clearArmedTile();
     onOrbitStart();
   };
 
@@ -489,26 +428,16 @@ function CubeObject({
     if (activeMove.current || queuedMoves.current.length) return;
     if (gesture.current) {
       if (!event.nativeEvent.isPrimary) return;
-      clearArmedTile();
       gesture.current = null;
     }
     cancelIntro();
     const hit = findStickerHit(event.object);
-    const selected = armedTile.current;
-    const selectedForTwist = hit !== null
-      && selected !== null
-      && selected.cubieId === hit.cubieId
-      && selected.faceId === hit.sticker.faceId;
-    if (selectedForTwist && selected && selected.expires !== null) {
-      window.clearTimeout(selected.expires);
-      selected.expires = null;
-    }
     gesture.current = {
       hit,
       x: event.nativeEvent.clientX,
       y: event.nativeEvent.clientY,
       pointerId: event.pointerId,
-      intent: selectedForTwist ? "armed" : "pending",
+      intent: hit ? "sticker" : "pending",
       start: targetQuaternion.current.clone(),
     };
     event.stopPropagation();
@@ -518,7 +447,7 @@ function CubeObject({
   const onPointerMove = (event: ThreeEvent<PointerEvent>) => {
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId || activeMove.current) return;
-    if (current.intent === "armed") return;
+    if (current.intent === "sticker") return;
     updateOrbit(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
   };
 
@@ -527,18 +456,12 @@ function CubeObject({
     if (!current || current.pointerId !== event.pointerId) return;
     event.stopPropagation();
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    const intent = classifyGestureIntent({ distance, released: true, armed: current.intent === "armed" });
+    const intent = classifyGestureIntent({ distance, released: true, startedOnSticker: current.intent === "sticker" });
     if (intent === "twist" && current.hit) {
-      clearArmedTile();
       const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
       if (turn) startTurn(turn);
     } else if (intent === "tap" && current.hit?.sticker.center) {
-      clearArmedTile();
       focusFace(current.hit.sticker.faceId, true);
-    } else if (intent === "tap" && current.hit) {
-      armTile(current.hit);
-    } else if (intent === "armed") {
-      clearArmedTile();
     } else if (intent === "orbit") {
       updateOrbit(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
     }
@@ -550,7 +473,6 @@ function CubeObject({
     if (gesture.current?.pointerId !== event.pointerId) return;
     event.stopPropagation();
     (event.target as HTMLElement).releasePointerCapture(event.pointerId);
-    clearArmedTile();
     gesture.current = null;
   };
 
@@ -726,17 +648,6 @@ function CubeObject({
                     geometry={stickerGeometry}
                     material={stickerMaterials[sticker.faceId]}
                     castShadow
-                  />
-                  <lineSegments
-                    ref={(outline) => {
-                      const key = `${cubie.id}:${sticker.faceId}`;
-                      if (outline) armedOutlineRefs.current.set(key, outline);
-                      else armedOutlineRefs.current.delete(key);
-                    }}
-                    geometry={stickerEdgeGeometry}
-                    material={armedEdgeMaterial}
-                    scale={1.035}
-                    visible={false}
                   />
                   {sticker.center && (
                     <mesh position={[0, 0, 0.026]} geometry={labelGeometry} material={labelMaterials[sticker.faceId]} />

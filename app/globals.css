@@ -1067,7 +1067,8 @@ a:focus-visible,
 
   .spin-hint small {
     margin-top: 6px;
-    font-size: 7px;
+    font-size: 8px;
+    white-space: nowrap;
   }
 
   .cube-home--selected .cube-controls {
