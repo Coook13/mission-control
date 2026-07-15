@@ -2,6 +2,7 @@ import { turnToMove, type Axis, type Direction, type QuarterTurn, type Vector3Tu
 
 export const TAP_SLOP = 5;
 export const TWIST_MIN_DISTANCE = 12;
+export const CENTER_TAP_SLOP = 26;
 
 export type GestureIntent = "pending" | "tap" | "orbit" | "sticker" | "twist";
 
@@ -9,14 +10,17 @@ export function classifyGestureIntent({
   distance,
   released,
   startedOnSticker = false,
+  startedOnCenter = false,
 }: {
   distance: number;
   released: boolean;
   startedOnSticker?: boolean;
+  startedOnCenter?: boolean;
 }): GestureIntent {
   if (startedOnSticker) {
     if (!released) return "sticker";
-    return distance >= TWIST_MIN_DISTANCE ? "twist" : "tap";
+    const twistThreshold = startedOnCenter ? CENTER_TAP_SLOP : TWIST_MIN_DISTANCE;
+    return distance >= twistThreshold ? "twist" : "tap";
   }
   if (distance > TAP_SLOP) return "orbit";
   if (released && distance <= TAP_SLOP) return "tap";

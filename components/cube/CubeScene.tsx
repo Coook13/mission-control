@@ -456,7 +456,12 @@ function CubeObject({
     if (!current || current.pointerId !== event.pointerId) return;
     event.stopPropagation();
     const distance = Math.hypot(event.nativeEvent.clientX - current.x, event.nativeEvent.clientY - current.y);
-    const intent = classifyGestureIntent({ distance, released: true, startedOnSticker: current.intent === "sticker" });
+    const intent = classifyGestureIntent({
+      distance,
+      released: true,
+      startedOnSticker: current.intent === "sticker",
+      startedOnCenter: current.hit?.sticker.center,
+    });
     if (intent === "twist" && current.hit) {
       const turn = resolveSwipe(current, event.nativeEvent.clientX, event.nativeEvent.clientY);
       if (turn) startTurn(turn);

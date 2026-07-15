@@ -102,6 +102,21 @@ describe("cube interaction", () => {
     expect(classifyGestureIntent({ distance: 22, released: true, startedOnSticker: true })).toBe("twist");
   });
 
+  it("keeps a drifting center press as a tap while preserving deliberate center swipes", () => {
+    expect(classifyGestureIntent({
+      distance: 22,
+      released: true,
+      startedOnSticker: true,
+      startedOnCenter: true,
+    })).toBe("tap");
+    expect(classifyGestureIntent({
+      distance: 28,
+      released: true,
+      startedOnSticker: true,
+      startedOnCenter: true,
+    })).toBe("twist");
+  });
+
   it("moves the finger-following outer slice instead of the projected axis", () => {
     const turn = selectProjectedTurn({
       cubiePosition: [1, 0, 1],
