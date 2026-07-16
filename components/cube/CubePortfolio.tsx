@@ -16,12 +16,12 @@ type CubePortfolioProps = { initialFace: FaceId | null };
 
 const mobileQuery = "(max-width: 700px)";
 const portfolioIndexOrder: readonly FaceId[] = [
-  "story",
-  "engineering",
-  "venture",
   "strategy",
+  "venture",
+  "engineering",
   "finance",
   "research",
+  "story",
 ];
 
 function subscribeMobile(callback: () => void) {
