@@ -16,6 +16,7 @@ export type FaceContent = {
   id: FaceId;
   code: string;
   label: string;
+  navDescription: string;
   color: string;
   thesis: string;
   proofs: readonly FaceProof[];
@@ -38,7 +39,7 @@ export type Project = {
 export const profile = {
   name: "Micky Thanawarothon",
   fullName: "Baramee Thanawarothon",
-  thesis: "Engineer, founder, strategist, investor.",
+  thesis: "Founder and strategist, trained as an engineer.",
   email: "micky.thana@gmail.com",
   linkedin: "https://linkedin.com/in/baramee-thanawarothon/",
   cv: "/Baramee-Thanawarothon-CV.pdf",
@@ -58,6 +59,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "engineering",
     code: "ENG",
     label: "Engineering",
+    navDescription: "Systems & robotics",
     color: "#2457E6",
     thesis: "I turn technical problems into working systems, from vision models to robotics and aerodynamic tools.",
     proofs: [
@@ -71,12 +73,12 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "venture",
     code: "VEN",
     label: "Venture",
+    navDescription: "Companies & growth",
     color: "#E4473A",
     thesis: "I test demand, build the economics, and ship ventures far enough for the market to answer back.",
     proofs: [
-      { label: "AirfoilLearner", result: "Co-founded, \u00A35k raised", href: "/work/airfoillearner" },
-      { label: "CreamCat Gelato", result: "Founded, 70% gross margin", href: "/work/creamcat-gelato" },
-      { label: "KMT Group", result: "Consultancy for Thai SMEs" },
+      { label: "AirfoilLearner", result: "Co-founded, \u00A38k Venture Builder", href: "/work/airfoillearner" },
+      { label: "CreamCat Gelato", result: "Founded, gym-channel D2C", href: "/work/creamcat-gelato" },
     ],
     action: { label: "View AirfoilLearner", href: "/work/airfoillearner" },
   },
@@ -84,12 +86,15 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "strategy",
     code: "STR",
     label: "Strategy",
+    navDescription: "Markets & execution",
     color: "#F2C94C",
     thesis: "I connect customer evidence, unit economics, and execution into decisions people can act on.",
     proofs: [
+      { label: "Bus In Case 2026", result: "Round 1 in, ~1,200 teams" },
       { label: "Deliveroo student plan", result: "EMEA strategy runner-up", href: "/work/deliveroo-case" },
-      { label: "AirfoilLearner", result: "50+ customer interviews", href: "/work/airfoillearner" },
-      { label: "KMT Group", result: "Commercial work for Thai SMEs" },
+      { label: "Bus In Case 2026", result: "Round 1 in, 1,200 teams" },
+      { label: "AirfoilLearner", result: "20+ engineer interviews", href: "/work/airfoillearner" },
+      { label: "KMT Group", result: "Early consulting work, Thai SMEs" },
     ],
     action: { label: "Read the Deliveroo case", href: "/work/deliveroo-case" },
   },
@@ -97,6 +102,7 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "finance",
     code: "FIN",
     label: "Finance",
+    navDescription: "Capital & quantitative",
     color: "#2F9E5B",
     thesis: "I use markets and capital allocation as disciplines for making clearer decisions under uncertainty.",
     proofs: [
@@ -110,11 +116,12 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "research",
     code: "R&D",
     label: "Research",
+    navDescription: "Sensors & materials",
     color: "#F28A2E",
     thesis: "I am comfortable working where the answer is not obvious yet: labs, prototypes, and first-principles investigation.",
     proofs: [
       { label: "NECTEC sensor", result: "Graphene quantum-dot R&D", href: "/work/nectec-research" },
-      { label: "Supercapacitor", result: "Engineered and tested 20 electrodes", href: "/work/nectec-research" },
+      { label: "Supercapacitor", result: "~20% capacitance improvement", href: "/work/nectec-research" },
       { label: "ISSDC", result: "NASA global finalist" },
     ],
     action: { label: "View NECTEC research", href: "/work/nectec-research" },
@@ -123,12 +130,13 @@ export const faces: Record<FaceId, FaceContent> = {
     id: "story",
     code: "MICKY",
     label: "Story",
+    navDescription: "Background & CV",
     color: "#ECEDEF",
     thesis: "Bangkok raised, Manchester trained. I am at my best where engineering meets a P&L.",
     proofs: [
       { label: "University of Manchester", result: "91% first-year average, predicted First" },
       { label: "Bangkok to Manchester", result: "Technical training with a commercial lens" },
-      { label: "Founder", result: "Three companies built" },
+      { label: "Founder", result: "AirfoilLearner and CreamCat" },
     ],
     action: { label: "Open CV", href: profile.cv, external: true },
   },
@@ -142,9 +150,9 @@ export const projects: Project[] = [
     kicker: "Venture / AI / CFD",
     oneLine: "An AI product for a slow and expensive aerodynamic optimisation loop.",
     problem: "Airfoil and CFD optimisation is iterative, specialist, and costly. The early product needed to solve a real workflow problem rather than simply place AI beside an engineering process.",
-    action: "I co-founded the venture, interviewed more than 50 engineers and students, mapped the workflow bottlenecks, and used that evidence to define the first product scope, feature priorities, and pricing direction.",
-    result: "We raised \u00A35k through Manchester's Venture Builder. The research also identified changes expected to reduce projected churn by around 20%, and the product remains in active development.",
-    meta: { role: "Co-Founder", period: "Sep 2025 to present", place: "Manchester, UK", outcome: "\u00A35k raised" },
+    action: "I co-founded the venture, interviewed more than 20 engineers and students, mapped the workflow bottlenecks, and used that evidence to define the first product scope, feature priorities, and pricing direction.",
+    result: "AirfoilLearner received \u00A38k from Manchester's Venture Builder and reached 221% month-on-month user growth, with a market-fit report scoring an NPS of 35. The product remains in active development.",
+    meta: { role: "Co-Founder", period: "Sep 2025 to present", place: "Manchester, UK", outcome: "\u00A38k, Venture Builder" },
     tags: ["founder", "AI", "CFD"],
   },
   {
@@ -166,9 +174,9 @@ export const projects: Project[] = [
     kicker: "Research / Materials",
     oneLine: "Graphene sensor and supercapacitor work inside Thailand's national electronics research centre.",
     problem: "The research brief combined technical performance with commercial constraints: sensing accuracy, manufacturability, electrode behaviour, and unit cost all mattered.",
-    action: "I manufactured a graphene quantum-dot sensor, engineered 20 supercapacitor electrodes, ran electrochemical impedance work, and built a comparative cost and pricing model.",
-    result: "The sensor met its accuracy and unit-cost targets. I recommended an electrolyte redesign and demonstrated a cost-of-goods advantage against peer designs.",
-    meta: { role: "Research Trainee", period: "Jul to Aug 2024", place: "Pathum Thani, Thailand", outcome: "Accuracy and cost targets met" },
+    action: "I synthesised a graphene quantum-dot sensor from a plant leaf, engineered the electrodes and electrolyte for a graphene supercapacitor, and characterised materials with Raman spectroscopy for the terahertz team.",
+    result: "The sensor detected heavy metals as fluorescence under UV light, and the supercapacitor reached around 20% higher measured capacitance.",
+    meta: { role: "Research Trainee", period: "Jul to Aug 2024", place: "Pathum Thani, Thailand", outcome: "Working sensor, ~20% capacitance gain" },
     tags: ["graphene", "sensors", "hardware"],
   },
   {
@@ -178,8 +186,8 @@ export const projects: Project[] = [
     kicker: "Engineering / Computer vision",
     oneLine: "A defect-inspection model designed for utility-scale solar operations.",
     problem: "Manual inspection does not scale cleanly across large solar farms. The technical problem was hotspot detection; the commercial question was whether drone inspection could produce a credible operating return.",
-    action: "I built and benchmarked a convolutional model, adapted the workflow to drone footage, and developed a five-year ROI and pricing model for deployment.",
-    result: "The model reached 97.2% validation accuracy. The operating model projected roughly \u00A3360k in annual savings per 100 MW and about \u00A3200k in potential ARR.",
+    action: "I built and benchmarked a convolutional neural network, then adapted it to automate panel inspection in place of manual thermal checks.",
+    result: "The model reached 97.2% validation accuracy and cut projected inspection time by around 80%.",
     meta: { role: "Engineering Intern", period: "Sep 2023 to Jun 2024", place: "Remote", outcome: "97.2% accuracy" },
     tags: ["computer vision", "energy", "modelling"],
   },
@@ -202,9 +210,9 @@ export const projects: Project[] = [
     kicker: "Venture / Operations",
     oneLine: "A high-protein gelato business built around capital-light distribution.",
     problem: "The venture needed a route into gym channels that could preserve margin after commissions while avoiding a capital-heavy retail footprint.",
-    action: "I founded the business, built a three-route channel P&L, selected a partner-led model, and secured a launch partnership.",
-    result: "CreamCat operated at a 70% gross profit margin with a capital-light route to market.",
-    meta: { role: "Founder", period: "Jul to Nov 2025", place: "Bangkok, Thailand", outcome: "70% gross margin" },
+    action: "I founded the business, built a three-route channel P&L, and chose a partner-led model to reach gym channels without a capital-heavy retail footprint.",
+    result: "CreamCat launched through gym channels on a capital-light, partner-led model.",
+    meta: { role: "Founder", period: "Jul to Nov 2025", place: "Bangkok, Thailand", outcome: "Gym-channel launch" },
     tags: ["founder", "operations", "go-to-market"],
   },
 ];

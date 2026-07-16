@@ -12,15 +12,15 @@ const grotesk = Schibsted_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL("https://mickythana.com"),
   title: {
-    default: "Micky Thanawarothon | Engineer, founder, strategist, investor",
+    default: "Micky Thanawarothon | Founder and strategist, trained as an engineer",
     template: "%s | Micky Thanawarothon",
   },
-  description: "Micky Thanawarothon's work across engineering, venture, strategy, finance, and research.",
+  description: "Micky Thanawarothon's work across strategy, venture, engineering, finance, and research.",
   authors: [{ name: "Baramee Thanawarothon" }],
   creator: "Baramee Thanawarothon",
   openGraph: {
     title: "Micky Thanawarothon",
-    description: "Engineer, founder, strategist, investor.",
+    description: "Founder and strategist, trained as an engineer.",
     url: "https://mickythana.com",
     siteName: "Micky Thanawarothon",
     locale: "en_GB",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Micky Thanawarothon",
-    description: "Engineer, founder, strategist, investor.",
+    description: "Founder and strategist, trained as an engineer.",
   },
 };
 

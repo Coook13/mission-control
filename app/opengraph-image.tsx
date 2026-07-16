@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Micky Thanawarothon - Engineer, founder, strategist, investor.";
+export const alt = "Micky Thanawarothon - Founder and strategist, trained as an engineer.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -11,7 +11,7 @@ export default function OpengraphImage() {
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: "58%" }}>
         <span style={{ fontSize: 24, fontWeight: 700 }}>Micky Thanawarothon</span>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <strong style={{ fontSize: 72, lineHeight: 1.02, letterSpacing: 0 }}>Engineer, founder,<br />strategist, investor.</strong>
+          <strong style={{ fontSize: 64, lineHeight: 1.04, letterSpacing: 0 }}>Founder and strategist,<br />trained as an engineer.</strong>
           <span style={{ marginTop: 28, fontSize: 21 }}>Manchester / Bangkok</span>
         </div>
       </div>
