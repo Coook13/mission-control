@@ -10,7 +10,7 @@ const grotesk = Schibsted_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mickythana.com"),
+  metadataBase: new URL("https://micky-portfolio-1.vercel.app"),
   title: {
     default: "Micky Thanawarothon | Founder and strategist, trained as an engineer",
     template: "%s | Micky Thanawarothon",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Micky Thanawarothon",
     description: "Founder and strategist, trained as an engineer.",
-    url: "https://mickythana.com",
+    url: "https://micky-portfolio-1.vercel.app",
     siteName: "Micky Thanawarothon",
     locale: "en_GB",
     type: "website",
