@@ -90,9 +90,7 @@ export const faces: Record<FaceId, FaceContent> = {
     color: "#F2C94C",
     thesis: "I connect customer evidence, unit economics, and execution into decisions people can act on.",
     proofs: [
-      { label: "Bus In Case 2026", result: "Round 1 in, ~1,200 teams" },
       { label: "Deliveroo student plan", result: "EMEA strategy runner-up", href: "/work/deliveroo-case" },
-      { label: "Bus In Case 2026", result: "Round 1 in, 1,200 teams" },
       { label: "AirfoilLearner", result: "20+ engineer interviews", href: "/work/airfoillearner" },
       { label: "KMT Group", result: "Early consulting work, Thai SMEs" },
     ],
