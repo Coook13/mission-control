@@ -91,7 +91,6 @@ export const faces: Record<FaceId, FaceContent> = {
     thesis: "I connect customer evidence, unit economics, and execution into decisions people can act on.",
     proofs: [
       { label: "Deliveroo student plan", result: "EMEA strategy runner-up", href: "/work/deliveroo-case" },
-      { label: "Bus In Case 2026", result: "Round 1 in, 1,200 teams", href: "/work/bus-in-case" },
       { label: "AirfoilLearner", result: "20+ engineer interviews", href: "/work/airfoillearner" },
       { label: "KMT Group", result: "Early consulting work, Thai SMEs", href: "/work/kmt-group" },
     ],
@@ -213,18 +212,6 @@ export const projects: Project[] = [
     result: "CreamCat launched through gym channels on a capital-light, partner-led model.",
     meta: { role: "Founder", period: "Jul to Nov 2025", place: "Bangkok, Thailand", outcome: "Gym-channel launch" },
     tags: ["founder", "operations", "go-to-market"],
-  },
-  {
-    slug: "bus-in-case",
-    faceId: "strategy",
-    title: "Bus In Case 2026",
-    kicker: "Strategy / Brand / Gen Z",
-    oneLine: "A year-long Gen Z campaign for Taokaenoi, entered against roughly 1,200 teams.",
-    problem: "Taokaenoi owns 64% of Thai crispy seaweed and near-total 7-Eleven coverage, yet holds no single consumption occasion. The brief asked for a year-long campaign on a THB 2,000,000 budget that lifts purchase frequency across the year.",
-    action: "I read Taokaenoi's 246-page annual filing to check the market data, which showed the brand already runs the creator-led playbook at scale. We rebuilt the strategy around the gap that left. The THB 11 pack became a good-luck charm eaten before exams and interviews, with a working precedent in Japan's Kit Kat.",
-    result: "The funnel priced out at 48,600 trials and 12,229 repeat buyers in year one. Round 1 went in against roughly 1,200 teams, with the Top 20 announced in late July.",
-    meta: { role: "Strategy lead", period: "Jul 2026", place: "Thailand (online)", outcome: "Round 1 in, 1,200 teams" },
-    tags: ["strategy", "brand", "consumer"],
   },
   {
     slug: "kmt-group",
