@@ -585,6 +585,32 @@ a:focus-visible,
 
 .proof-row--link {
   padding-right: 24px;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.proof-row--link > span:first-child,
+.proof-row--link strong {
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.proof-row--link:hover,
+.proof-row--link:focus-visible {
+  background: color-mix(in srgb, var(--face-color) 6%, transparent);
+  box-shadow: inset 2px 0 var(--face-color);
+}
+
+.proof-row--link:focus-visible {
+  outline-offset: -2px;
+}
+
+.proof-row--link:hover > span:first-child,
+.proof-row--link:focus-visible > span:first-child {
+  color: #d8dbe0;
+}
+
+.proof-row--link:hover strong,
+.proof-row--link:focus-visible strong {
+  transform: translateX(2px);
 }
 
 .proof-row--link > span:last-child {
@@ -595,7 +621,8 @@ a:focus-visible,
   transition: transform 160ms ease;
 }
 
-.proof-row--link:hover > span:last-child {
+.proof-row--link:hover > span:last-child,
+.proof-row--link:focus-visible > span:last-child {
   transform: translate(2px, -2px);
 }
 
@@ -641,8 +668,28 @@ a:focus-visible,
 }
 
 .case-header a {
+  position: relative;
   font-size: 13px;
   font-weight: 600;
+}
+
+.case-header a::after {
+  position: absolute;
+  right: 0;
+  bottom: -7px;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 180ms ease;
+}
+
+.case-header a:hover::after,
+.case-header a:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 .case-back {
@@ -655,6 +702,12 @@ a:focus-visible,
 .case-back svg {
   width: 16px;
   height: 16px;
+  transition: transform 180ms ease;
+}
+
+.case-back:hover svg,
+.case-back:focus-visible svg {
+  transform: translateX(-2px);
 }
 
 .case-article {
@@ -702,6 +755,11 @@ a:focus-visible,
 
 .case-hero img {
   object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.case-hero:hover img {
+  transform: scale(1.012);
 }
 
 .case-hero--fallback {
@@ -808,6 +866,12 @@ a:focus-visible,
 .case-next svg {
   width: 21px;
   height: 21px;
+  transition: transform 180ms ease;
+}
+
+.case-next:hover svg,
+.case-next:focus-visible svg {
+  transform: translate(3px, -3px);
 }
 
 .not-found {
