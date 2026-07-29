@@ -133,7 +133,7 @@ export const faces: Record<FaceId, FaceContent> = {
     color: "#ECEDEF",
     thesis: "Bangkok raised, Manchester trained. I am at my best where engineering meets a P&L.",
     proofs: [
-      { label: "University of Manchester", result: "91% first-year average, predicted First", href: "/work/manchester" },
+      { label: "University of Manchester", result: "88% first-year average, predicted First", href: "/work/manchester" },
       { label: "Bangkok to Manchester", result: "Technical training with a commercial lens", href: "/work/bangkok-to-manchester" },
       { label: "Founder", result: "AirfoilLearner and CreamCat", href: "/work/founder" },
     ],
@@ -294,8 +294,8 @@ export const projects: Project[] = [
     oneLine: "Electrical and Electronic Engineering, on track for a First.",
     problem: "I chose engineering for the technical foundation, then pushed it toward commercial and strategy work rather than a pure hardware path.",
     action: "I study EEE while running ventures, case competitions, and consulting work alongside the degree.",
-    result: "91% average across the first year, on a predicted First. I entered on A-levels including A* Maths and A* Chemistry.",
-    meta: { role: "BEng EEE", period: "2025 to 2028", place: "Manchester, UK", outcome: "91%, predicted First" },
+    result: "88% average across the first year, on a predicted First. I entered on A-levels including A* Maths and A* Chemistry.",
+    meta: { role: "BEng EEE", period: "2025 to 2028", place: "Manchester, UK", outcome: "88%, predicted First" },
     tags: ["engineering", "education", "first-class"],
   },
   {
