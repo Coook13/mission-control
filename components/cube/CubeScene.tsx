@@ -8,8 +8,11 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { faceOrder, faces, type FaceId } from "@/lib/site-data";
 import {
   FACE_NORMALS,
+  generateScramble,
+  inverseMove,
   moveToTurn,
   rotateTuple,
+  solutionForMoves,
   validateMoveSequence,
   type Axis,
   type CubeMove,
@@ -39,11 +42,17 @@ type Cubie = {
 type ActiveMove = {
   turn: QuarterTurn;
   elapsed: number;
+  historyMode: "record" | "undo";
   affected: Array<{
     cubie: Cubie;
     position: THREE.Vector3;
     quaternion: THREE.Quaternion;
   }>;
+};
+
+type QueuedMove = {
+  turn: QuarterTurn;
+  historyMode: "record" | "undo";
 };
 
 type StickerHit = {
@@ -69,7 +78,7 @@ export type CubeStageProps = {
   focusRequest: FaceFocusRequest | null;
   playIntro: boolean;
   scrambleSignal: number;
-  resetSignal: number;
+  solveSignal: number;
   onSelectFace: (face: FaceId) => void;
   onScrambleChange: (scrambled: boolean) => void;
   onOrbitStart: () => void;
@@ -107,10 +116,6 @@ const CUBIE_STEP = 0.98;
 const CUBE_BASE_Y = 0.14;
 const DESKTOP_CAMERA_Z = 9.35;
 const MOBILE_CAMERA_Z = 15.2;
-const SCRAMBLE_MOVES: readonly CubeMove[] = [
-  "R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "U'",
-];
-
 function createSolvedCubies(): Cubie[] {
   const cubies: Cubie[] = [];
   for (const x of [-1, 0, 1]) {
@@ -185,7 +190,7 @@ function CubeObject({
   focusRequest,
   playIntro,
   scrambleSignal,
-  resetSignal,
+  solveSignal,
   onSelectFace,
   onScrambleChange,
   onOrbitStart,
@@ -196,9 +201,12 @@ function CubeObject({
   const cubies = useMemo(() => createSolvedCubies(), []);
   const cubiesRef = useRef(cubies);
   const activeMove = useRef<ActiveMove | null>(null);
-  const queuedMoves = useRef<QuarterTurn[]>([]);
+  const queuedMoves = useRef<QueuedMove[]>([]);
   const lastScrambleSignal = useRef(scrambleSignal);
+  const lastSolveSignal = useRef(solveSignal);
+  const lastScramble = useRef<CubeMove[]>([]);
   const moveHistory = useRef<CubeMove[]>([]);
+  const solving = useRef(false);
   const pendingFocus = useRef<FaceId | null>(null);
   const selectionFromCenter = useRef<FaceId | null>(null);
   const gesture = useRef<Gesture | null>(null);
@@ -317,7 +325,6 @@ function CubeObject({
     if (!focusRequest || focusRequest.requestId === lastFocusRequest.current) return;
     lastFocusRequest.current = focusRequest.requestId;
     if (activeMove.current || queuedMoves.current.length) {
-      queuedMoves.current = [];
       pendingFocus.current = focusRequest.faceId;
       invalidate();
     } else {
@@ -333,30 +340,11 @@ function CubeObject({
     invalidate();
   }, [invalidate, playIntro]);
 
-  useEffect(() => {
-    if (resetSignal === 0) return;
-    activeMove.current = null;
-    queuedMoves.current = [];
-    gesture.current = null;
-    pendingFocus.current = null;
-    moveHistory.current = [];
-    const solved = createSolvedCubies();
-    cubiesRef.current.forEach((cubie, index) => {
-      cubie.position = [...solved[index].position];
-      cubie.quaternion.identity();
-      const group = cubieRefs.current.get(cubie.id);
-      if (group) {
-        group.position.set(...cubie.position).multiplyScalar(CUBIE_STEP);
-        group.quaternion.identity();
-      }
-    });
-    targetQuaternion.current.copy(OPENING_QUATERNION);
-    selectionFromCenter.current = null;
-    onScrambleChange(false);
-    invalidate();
-  }, [invalidate, onScrambleChange, resetSignal]);
-
-  const startTurn = (turn: QuarterTurn, notify = true) => {
+  const startTurn = (
+    turn: QuarterTurn,
+    notify = true,
+    historyMode: "record" | "undo" = "record",
+  ) => {
     if (activeMove.current) return;
     const axisIndex = turn.axis === "x" ? 0 : turn.axis === "y" ? 1 : 2;
     const affected = cubiesRef.current
@@ -366,12 +354,14 @@ function CubeObject({
         position: new THREE.Vector3(...cubie.position).multiplyScalar(CUBIE_STEP),
         quaternion: cubie.quaternion.clone(),
       }));
-    activeMove.current = { turn, elapsed: 0, affected };
-    moveHistory.current.push(turn.notation);
-    if (notify) onScrambleChange(true);
-    void validateMoveSequence(moveHistory.current).catch((error) => {
-      console.error("Cube move validation failed", error);
-    });
+    activeMove.current = { turn, elapsed: 0, historyMode, affected };
+    if (historyMode === "record") {
+      moveHistory.current.push(turn.notation);
+      if (notify) onScrambleChange(true);
+      void validateMoveSequence(moveHistory.current).catch((error) => {
+        console.error("Cube move validation failed", error);
+      });
+    }
     invalidate();
   };
 
@@ -488,12 +478,36 @@ function CubeObject({
 
     if (scrambleSignal !== lastScrambleSignal.current) {
       lastScrambleSignal.current = scrambleSignal;
-      queuedMoves.current = SCRAMBLE_MOVES.map(moveToTurn);
+      solving.current = false;
+      let scramble = generateScramble();
+      if (scramble.join(" ") === lastScramble.current.join(" ")) {
+        scramble = [...scramble];
+        scramble[0] = inverseMove(scramble[0]);
+      }
+      lastScramble.current = scramble;
+      queuedMoves.current = scramble.map((move) => ({
+        turn: moveToTurn(move),
+        historyMode: "record",
+      }));
+      onScrambleChange(true);
+    }
+
+    if (solveSignal !== lastSolveSignal.current) {
+      lastSolveSignal.current = solveSignal;
+      if (!solving.current) {
+        const solution = solutionForMoves(moveHistory.current);
+        queuedMoves.current = solution.map((move) => ({
+          turn: moveToTurn(move),
+          historyMode: "undo",
+        }));
+        solving.current = solution.length > 0;
+        if (!solution.length) onScrambleChange(false);
+      }
     }
 
     if (!activeMove.current && queuedMoves.current.length) {
-      const nextTurn = queuedMoves.current.shift();
-      if (nextTurn) startTurn(nextTurn, false);
+      const nextMove = queuedMoves.current.shift();
+      if (nextMove) startTurn(nextMove.turn, false, nextMove.historyMode);
       animating = true;
     }
 
@@ -592,10 +606,16 @@ function CubeObject({
             group.quaternion.copy(item.cubie.quaternion);
           }
         }
+        if (move.historyMode === "undo") moveHistory.current.pop();
         activeMove.current = null;
       } else {
         animating = true;
       }
+    }
+
+    if (!activeMove.current && queuedMoves.current.length === 0 && solving.current) {
+      solving.current = false;
+      onScrambleChange(moveHistory.current.length > 0);
     }
 
     if (animating || gesture.current?.intent === "orbit" || queuedMoves.current.length || pendingFocus.current) state.invalidate();

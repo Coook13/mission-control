@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { faceOrder, parseFaceQuery } from "@/lib/site-data";
 import {
   applyTurnToPositions,
+  generateScramble,
   inverseMove,
   moveToTurn,
   rotateTuple,
+  solutionForMoves,
   swipeToTurn,
   turnToMove,
   validateMoveSequence,
@@ -80,6 +82,30 @@ describe("cube move model", () => {
     const scramble: CubeMove[] = ["R", "U", "F'", "L", "D'", "B", "R'", "U'", "F", "L'", "D", "B'", "R", "F", "U'", "L", "B", "D'", "R'", "F'"];
     const transformation = await validateMoveSequence(scramble);
     expect(transformation.isIdentityTransformation()).toBe(false);
+  });
+
+  it("generates varied legal scrambles without repeating the same axis", async () => {
+    const values = [0.01, 0.24, 0.48, 0.72, 0.96];
+    let index = 0;
+    const scramble = generateScramble(20, () => values[index++ % values.length]);
+    expect(scramble).toHaveLength(20);
+    for (let moveIndex = 1; moveIndex < scramble.length; moveIndex += 1) {
+      expect(moveToTurn(scramble[moveIndex]).axis).not.toBe(moveToTurn(scramble[moveIndex - 1]).axis);
+    }
+    expect((await validateMoveSequence(scramble)).isIdentityTransformation()).toBe(false);
+  });
+
+  it("builds an animated solution from the exact inverse move history", async () => {
+    const scramble = generateScramble(20, (() => {
+      let state = 17;
+      return () => {
+        state = (state * 48271) % 2147483647;
+        return state / 2147483647;
+      };
+    })());
+    const solution = solutionForMoves(scramble);
+    expect(solution).toEqual([...scramble].reverse().map(inverseMove));
+    expect((await validateMoveSequence([...scramble, ...solution])).isIdentityTransformation()).toBe(true);
   });
 
   it("validates middle-slice notation with cubing KPuzzle", async () => {

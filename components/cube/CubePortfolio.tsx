@@ -44,7 +44,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   const [previewFace, setPreviewFace] = useState<FaceId | null>(null);
   const [scrambled, setScrambled] = useState(false);
   const [scrambleSignal, setScrambleSignal] = useState(0);
-  const [resetSignal, setResetSignal] = useState(0);
+  const [solveSignal, setSolveSignal] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [focusRequest, setFocusRequest] = useState<FaceFocusRequest | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -112,13 +112,8 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
     replaceFaceQuery(null);
   }, []);
 
-  const resetCube = useCallback(() => {
-    setSelectedFace(null);
-    setPreviewFace(null);
-    setScrambled(false);
-    setZoom(1);
-    setResetSignal((value) => value + 1);
-    replaceFaceQuery(null);
+  const solveCube = useCallback(() => {
+    setSolveSignal((value) => value + 1);
   }, []);
 
   const scrambleCube = useCallback(() => {
@@ -151,7 +146,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
   }, [previewFace, selectedFace]);
 
   const keyboardDescription = useMemo(
-    () => "Use arrow keys to rotate between faces, Enter to open the focused face, plus and minus to zoom, R to reset, and Escape to close a panel.",
+    () => "Use arrow keys to rotate between faces, Enter to open the focused face, plus and minus to zoom, R to solve, and Escape to close a panel.",
     [],
   );
 
@@ -210,7 +205,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
             openIndexedFace(previewFace ?? selectedFace ?? "engineering");
           } else if (event.key.toLowerCase() === "r") {
             event.preventDefault();
-            resetCube();
+            solveCube();
           } else if (event.key === "+" || event.key === "=") {
             event.preventDefault();
             setZoom((current) => Math.min(1.35, current + 0.1));
@@ -230,7 +225,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           focusRequest={focusRequest}
           playIntro={playIntro}
           scrambleSignal={scrambleSignal}
-          resetSignal={resetSignal}
+          solveSignal={solveSignal}
           onSelectFace={selectFace}
           onScrambleChange={setScrambled}
           onOrbitStart={dismissSpinHint}
@@ -303,7 +298,7 @@ export function CubePortfolio({ initialFace }: CubePortfolioProps) {
           <Shuffle aria-hidden="true" />
         </button>
         {scrambled && (
-          <button className="cube-control-icon" type="button" onClick={resetCube} aria-label="Reset cube" title="Reset cube">
+          <button className="cube-control-icon" type="button" onClick={solveCube} aria-label="Solve cube" title="Solve cube">
             <RefreshCw aria-hidden="true" />
           </button>
         )}
