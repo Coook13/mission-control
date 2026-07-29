@@ -17,6 +17,21 @@ export type QuarterTurn = {
   notation: CubeMove;
 };
 
+const OUTER_MOVES: readonly CubeMove[] = [
+  "R", "R'", "L", "L'",
+  "U", "U'", "D", "D'",
+  "F", "F'", "B", "B'",
+];
+
+const MOVE_AXES: Record<string, Axis> = {
+  R: "x",
+  L: "x",
+  U: "y",
+  D: "y",
+  F: "z",
+  B: "z",
+};
+
 export const FACE_NORMALS: Record<FaceId, Vector3Tuple> = {
   engineering: [0, 0, 1],
   venture: [1, 0, 0],
@@ -55,6 +70,31 @@ export function moveToTurn(move: CubeMove): QuarterTurn {
 
 export function inverseMove(move: CubeMove): CubeMove {
   return (move.endsWith("'") ? move[0] : `${move}'`) as CubeMove;
+}
+
+export function generateScramble(
+  length = 20,
+  random: () => number = Math.random,
+): CubeMove[] {
+  const moves: CubeMove[] = [];
+  let previousAxis: Axis | null = null;
+
+  while (moves.length < Math.max(0, Math.floor(length))) {
+    const candidates = OUTER_MOVES.filter((move) => MOVE_AXES[move[0]] !== previousAxis);
+    const randomIndex = Math.min(
+      candidates.length - 1,
+      Math.floor(Math.max(0, random()) * candidates.length),
+    );
+    const move = candidates[randomIndex];
+    moves.push(move);
+    previousAxis = MOVE_AXES[move[0]];
+  }
+
+  return moves;
+}
+
+export function solutionForMoves(moves: readonly CubeMove[]): CubeMove[] {
+  return [...moves].reverse().map(inverseMove);
 }
 
 export function rotateTuple(position: Vector3Tuple, axis: Axis, direction: Direction): Vector3Tuple {
