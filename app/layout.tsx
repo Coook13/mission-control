@@ -12,7 +12,7 @@ const grotesk = Schibsted_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL("https://micky-portfolio-1.vercel.app"),
   title: {
-    default: "Micky Thanawarothon | Founder and strategist, trained as an engineer",
+    default: "Micky Thanawarothon | Founder, strategist, investor, engineer",
     template: "%s | Micky Thanawarothon",
   },
   description: "Micky Thanawarothon's work across strategy, venture, engineering, finance, and research.",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   creator: "Baramee Thanawarothon",
   openGraph: {
     title: "Micky Thanawarothon",
-    description: "Founder and strategist, trained as an engineer.",
+    description: "Founder, strategist, investor, engineer.",
     url: "https://micky-portfolio-1.vercel.app",
     siteName: "Micky Thanawarothon",
     locale: "en_GB",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Micky Thanawarothon",
-    description: "Founder and strategist, trained as an engineer.",
+    description: "Founder, strategist, investor, engineer.",
   },
 };
 
